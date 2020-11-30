@@ -1,16 +1,15 @@
 package apiserver
 
 import (
-	"log"
 	"time"
 	"io"
 	"fmt"
-	"sort"
 	"net/http"
 	"encoding/json"
 
 	"github.com/gorilla/mux"
 	simplejson "github.com/bitly/go-simplejson"
+	log        "github.com/sirupsen/logrus"
 
 	"covid19api/coviddb"
 )
@@ -31,8 +30,10 @@ func (apiserver *APIServer) hello(w http.ResponseWriter, req *http.Request) {
 }
 
 func (apiserver *APIServer) search(w http.ResponseWriter, req *http.Request) {
+	output := apiserver.apihandler.search()
+	log.Debugf("/search: '%s'", output)
+	targetsJson, _ := json.Marshal(output)
 	w.WriteHeader(http.StatusOK)
-	targetsJson, _ := json.Marshal(apiserver.apihandler.search())
 	w.Write(targetsJson)
 }
 
@@ -41,6 +42,15 @@ type RequestParameters struct {
 	From time.Time
 	To time.Time
 	Targets []string
+}
+
+func isValidTarget(target string, validTargets []string) (bool) {
+	for _, t := range validTargets {
+		if t == target {
+			return true
+		}
+	}
+	return false
 }
 
 func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, error) {
@@ -52,35 +62,41 @@ func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, er
 	}
 
 	parameters.MaxDataPoints = js.Get("maxDataPoints").MustInt()
-	parameters.From, err     = time.Parse("2006-01-02", js.Get("range").Get("from").MustString())
-	parameters.To, err       = time.Parse("2006-01-02", js.Get("range").Get("to").MustString())
+	parameters.From, _     = time.Parse("2006-01-02T15:04:05.000Z", js.Get("range").Get("from").MustString())
+	parameters.To, _       = time.Parse("2006-01-02T15:04:05.000Z", js.Get("range").Get("to").MustString())
 	for i := 0; i < len(js.Get("targets").MustArray()); i++ {
 		target := js.Get("targets").GetIndex(i).Get("target").MustString()
-		if sort.SearchStrings(validTargets, target) > 0 {
+		if isValidTarget(target, validTargets) {
 			parameters.Targets = append(parameters.Targets, target)
 		} else {
-			log.Printf("Unsupported target: '%s'. Dropping", target)
+			log.Warningf("Unsupported target: '%s'. Dropping", target)
 		}
 	}
 
-	return parameters, err
+	return parameters, nil
 }
 
 func (apiserver *APIServer) query(w http.ResponseWriter, req *http.Request) {
+	log.Info("/query")
 	parameters, err := parseRequest(req.Body, apiserver.apihandler.search())
 
 	if err != nil {
+		log.Debug("got an error parsing the request. Aborting")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	log.Debugf("parameters: %v", parameters)
+
 	output, err := apiserver.apihandler.query(parameters)
 
 	if err != nil {
+		log.Debug("Internal Server Error")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	log.Debugf("/query: %v", output)
 	w.WriteHeader(http.StatusOK)
 	targetsJson, _ := json.Marshal(output)
 	w.Write(targetsJson)
@@ -98,16 +114,16 @@ func (apiserver *APIServer) Run() {
 // Handler
 
 var (
-		targets = []string{
-			"active",
-			"active-delta",
-			"confirmed",
-			"confirmed-delta",
-			"death",
-			"death-delta",
-			"recovered",
-			"recovered-delta",
-		}
+	targets = []string{
+		"active",
+		"active-delta",
+		"confirmed",
+		"confirmed-delta",
+		"death",
+		"death-delta",
+		"recovered",
+		"recovered-delta",
+	}
 )
 
 type APIHandler struct {
@@ -123,8 +139,8 @@ func (apihandler *APIHandler) search() ([]string) {
 }
 
 type series struct {
-	Target string
-	Datapoints [][]int64
+	Target string           `json:"target"`
+	Datapoints [][]int64    `json:"datapoints"`
 }
 
 func (apihandler *APIHandler) query(params *RequestParameters) ([]series, error) {
@@ -133,6 +149,8 @@ func (apihandler *APIHandler) query(params *RequestParameters) ([]series, error)
 	if err != nil {
 		return make([]series, 0), err
 	}
+
+	log.Debugf("Found %d entries in DB", len(entries))
 
 	return buildSeries(entries, params.Targets), nil
 }

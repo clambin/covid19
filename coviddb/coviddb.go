@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
 	"github.com/mpvl/unique"
+	log "github.com/sirupsen/logrus"
 
 	_ "github.com/lib/pq"
 )
@@ -15,8 +17,8 @@ const (
 	DEATHS    = 2
 	ACTIVE    = 3
 
-	TIMESTAMP = 0
-	VALUE     = 1
+	VALUE     = 0
+	TIMESTAMP = 1
 )
 
 type CovidDB struct {
@@ -42,25 +44,26 @@ type CountryEntry struct {
 func (db *CovidDB) List() ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
-	dbh, err := sql.Open("postgres", db.psqlInfo)
+	dbh, _ := sql.Open("postgres", db.psqlInfo)
 
-	if err == nil {
-		rows, err := dbh.Query("SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 ORDER BY 1")
+	rows, err := dbh.Query("SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 ORDER BY 1")
 
-		if err == nil {
-			defer rows.Close()
-			for rows.Next() {
-				var entry CountryEntry
-				err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
-				if err != nil {
-					break
-				} else {
-					entries = append(entries, entry)
-				}
+	if err != nil {
+		log.Debug(err)
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			var entry CountryEntry
+			err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
+			if err != nil {
+				break
+			} else {
+				entries = append(entries, entry)
 			}
 		}
-		dbh.Close()
+		log.Debugf("Found %d records", len(entries))
 	}
+	dbh.Close()
 
 	return entries, err
 }
@@ -127,10 +130,10 @@ func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 		}
 		// TODO: convert timestamp to grafana representatation (msec since epoch?)
 		epoch := timestamp.UnixNano() / 1000000
-		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], []int64{epoch, confirmed})
-		consolidated[RECOVERED] = append(consolidated[RECOVERED], []int64{epoch, recovered})
-		consolidated[DEATHS]    = append(consolidated[DEATHS],    []int64{epoch, deaths})
-		consolidated[ACTIVE]    = append(consolidated[ACTIVE],    []int64{epoch, confirmed - recovered - deaths})
+		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], []int64{confirmed,                      epoch})
+		consolidated[RECOVERED] = append(consolidated[RECOVERED], []int64{recovered,                      epoch})
+		consolidated[DEATHS]    = append(consolidated[DEATHS],    []int64{deaths,                         epoch})
+		consolidated[ACTIVE]    = append(consolidated[ACTIVE],    []int64{confirmed - recovered - deaths, epoch})
 	}
 
 	return consolidated
@@ -142,8 +145,8 @@ func GetTotalDeltas (rows [][]int64) ([][]int64) {
 	var value int64
 	value = 0
 	for _, row := range rows {
-		deltas = append(deltas, []int64{row[0], row[1] - value})
-		value = row[1]
+		deltas = append(deltas, []int64{row[0] - value, row[1]})
+		value = row[0]
 	}
 
 	return deltas

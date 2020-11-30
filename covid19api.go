@@ -1,11 +1,11 @@
 package main
 
 import (
-	// "fmt"
 	"path/filepath"
 	"os"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	log     "github.com/sirupsen/logrus"
 
 	"covid19api/coviddb"
 	"covid19api/apiserver"
@@ -27,6 +27,7 @@ func main() {
 	a.HelpFlag.Short('h')
 
 	a.Flag("port", "API listener port").Default("5000").IntVar(&cfg.port)
+	a.Flag("debug", "Log debug messages").BoolVar(&cfg.debug)
 	a.Flag("postgres-host", "Postgres DB Host").Default("postgres").StringVar(&cfg.postgres_host)
 	a.Flag("postgres-port", "Postgres DB Port").Default("5432").IntVar(&cfg.postgres_port)
 	a.Flag("postgres-database", "Postgres DB Name").Default("covid19").StringVar(&cfg.postgres_database)
@@ -39,10 +40,12 @@ func main() {
 		os.Exit(2)
 	}
 
+	if cfg.debug {
+		log.SetLevel(log.DebugLevel)
+	}
+
 	db := coviddb.Create(cfg.postgres_host, cfg.postgres_port, cfg.postgres_database, cfg.postgres_user, cfg.postgres_password)
-
 	server := apiserver.Server(apiserver.Handler(db))
-
 	server.Run()
 }
 
