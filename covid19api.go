@@ -1,41 +1,45 @@
 package main
 
 import (
-	"log"
-	"covid19api/coviddb"
-)
+	"fmt"
+	"path/filepath"
+	"os"
 
-const (
-	host     = "192.168.0.11"
-	port     = 31000
-	dbname   = "covid19"
-	user     = "covid"
-	password = "its4covid"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	"covid19api/grafana"
 )
 
 func main() {
-	db, err := coviddb.Connect(host, port, dbname, user, password)
+	cfg := struct {
+		port              int
+		debug             bool
+		postgres_host     string
+		postgres_port     int
+		postgres_database string
+		postgres_user     string
+		postgres_password string
+	}{}
 
+	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 grafana API server")
+
+	a.HelpFlag.Short('h')
+
+	a.Flag("port", "API listener port").Default("5000").IntVar(&cfg.port)
+	a.Flag("postgres-host", "Postgres DB Host").Default("postgres").StringVar(&cfg.postgres_host)
+	a.Flag("postgres-port", "Postgres DB Port").Default("5432").IntVar(&cfg.postgres_port)
+	a.Flag("postgres-database", "Postgres DB Name").Default("covid19").StringVar(&cfg.postgres_database)
+	a.Flag("postgres-user", "Postgres DB User").Default("covid").StringVar(&cfg.postgres_user)
+	a.Flag("postgres-password", "Postgres DB Password").StringVar(&cfg.postgres_password)
+
+	_, err := a.Parse(os.Args[1:])
 	if err != nil {
-		panic("failed to connect to database")
+		fmt.Fprintln(os.Stderr, "Error parsing commandline arguments: %s", err)
+		a.Usage(os.Args[1:])
+		os.Exit(2)
 	}
 
-	log.Printf("Successfully connected!")
-
-	rows, err := db.List()
-
-	if err != nil {
-		panic(err)
-	}
-
-	log.Printf("Found %d entries", len(rows))
-
-	totalRows := coviddb.GetTotalCases(rows)
-	totalRows =  coviddb.GetTotalDeltas(totalRows)
-
-	for _, totalRow := range totalRows {
-		log.Printf("%s-%d-%d-%d", totalRow.Timestamp, totalRow.Confirmed, totalRow.Recovered, totalRow.Deaths)
-	}
-
-	db.Close()
+	grafana.Run()
 }
+
+

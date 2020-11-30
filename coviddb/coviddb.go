@@ -10,7 +10,16 @@ import (
 )
 
 type CovidDB struct {
-	pgdb *sql.DB
+	host      string
+	port      int
+	database  string
+	user      string
+	password  string
+	pgdb     *sql.DB
+}
+
+func Create(host string, port int, dbname string, user string, password string) (*CovidDB, error) {
+	return CovidDB{host: host, port: int,  database: database, user: user, password: password}
 }
 
 func Connect(host string, port int, dbname string, user string, password string) (*CovidDB, error) {
