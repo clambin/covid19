@@ -9,49 +9,25 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	CONFIRMED = 0
+	RECOVERED = 1
+	DEATHS    = 2
+	ACTIVE    = 3
+
+	TIMESTAMP = 0
+	VALUE     = 1
+)
+
 type CovidDB struct {
-	host      string
-	port      int
-	database  string
-	user      string
-	password  string
-	pgdb     *sql.DB
+	psqlInfo  string
 }
 
-func Create(host string, port int, dbname string, user string, password string) (*CovidDB, error) {
-	return CovidDB{host: host, port: int,  database: database, user: user, password: password}
-}
-
-func Connect(host string, port int, dbname string, user string, password string) (*CovidDB, error) {
-	var coviddb CovidDB
-
+func Create(host string, port int, database string, user string, password string) (*CovidDB) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+		host, port, user, password, database)
 
-	db, err := sql.Open("postgres",  psqlInfo)
-
-	if err == nil {
-			coviddb.pgdb = db
-	}
-
-	return &coviddb, err
-}
-
-func (db *CovidDB) Close() {
-	db.pgdb.Close()
-}
-
-type CovidData struct {
-	Confirmed int64
-	Recovered int64
-	Deaths int64
-}
-
-type Entry struct {
-	Timestamp time.Time
-	Confirmed int64
-	Recovered int64
-	Deaths int64
+	return &CovidDB{psqlInfo: psqlInfo}
 }
 
 type CountryEntry struct {
@@ -66,18 +42,24 @@ type CountryEntry struct {
 func (db *CovidDB) List() ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
-	rows, err := db.pgdb.Query("SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 ORDER BY 1")
+	dbh, err := sql.Open("postgres", db.psqlInfo)
 
 	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var entry CountryEntry
-			err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
-			if err != nil {
-				panic(err)
+		rows, err := dbh.Query("SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 ORDER BY 1")
+
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var entry CountryEntry
+				err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
+				if err != nil {
+					break
+				} else {
+					entries = append(entries, entry)
+				}
 			}
-			entries = append(entries, entry)
 		}
+		dbh.Close()
 	}
 
 	return entries, err
@@ -103,7 +85,19 @@ func (p timestampSlice) Truncate(n int) {
 	(*p.P) = (*p.P)[:n]
 }
 
-func GetTotalCases (rows []CountryEntry) ([]Entry) {
+type covidData struct {
+	Confirmed int64
+	Recovered int64
+	Deaths int64
+	Active int64
+}
+
+type Entry struct {
+	Timestamp time.Time
+	Value int64
+}
+
+func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 	var confirmed, recovered, deaths int64
 
 	// Group data by timestamp
@@ -119,11 +113,11 @@ func GetTotalCases (rows []CountryEntry) ([]Entry) {
 	unique.Sort(timestampSlice{&timestamps})
 
 	// Go through each timestamp, record running total for each country & compute total cases
-	countryMap := make(map[string]CovidData)
-	consolidated := make([]Entry, 0)
+	countryMap := make(map[string]covidData)
+	consolidated := make([][][]int64, 4)
 	for _, timestamp := range timestamps {
 		for _, row := range timeMap[timestamp] {
-			countryMap[row.Code] = CovidData{Confirmed: row.Confirmed, Recovered: row.Recovered, Deaths: row.Deaths}
+			countryMap[row.Code] = covidData{Confirmed: row.Confirmed, Recovered: row.Recovered, Deaths: row.Deaths}
 		}
 		confirmed, recovered, deaths = 0, 0, 0
 		for _, data := range countryMap {
@@ -131,25 +125,27 @@ func GetTotalCases (rows []CountryEntry) ([]Entry) {
 			recovered += data.Recovered
 			deaths    += data.Deaths
 		}
-		consolidated = append(consolidated, Entry{Timestamp: timestamp, Confirmed: confirmed, Recovered: recovered, Deaths: deaths})
+		// TODO: convert timestamp to grafana representatation (msec since epoch?)
+		epoch := timestamp.UnixNano() / 1000000
+		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], []int64{epoch, confirmed})
+		consolidated[RECOVERED] = append(consolidated[RECOVERED], []int64{epoch, recovered})
+		consolidated[DEATHS]    = append(consolidated[DEATHS],    []int64{epoch, deaths})
+		consolidated[ACTIVE]    = append(consolidated[ACTIVE],    []int64{epoch, confirmed - recovered - deaths})
 	}
 
 	return consolidated
 }
 
-func GetTotalDeltas (rows []Entry) ([]Entry) {
-	deltas := make([]Entry, 0)
+func GetTotalDeltas (rows [][]int64) ([][]int64) {
+	deltas := make([][]int64, 0)
 
-	var confirmed, recovered, deaths int64
-	confirmed, recovered, deaths = 0, 0, 0
+	var value int64
+	value = 0
 	for _, row := range rows {
-		deltas = append(deltas, Entry{
-			Timestamp: row.Timestamp,
-			Confirmed: row.Confirmed - confirmed,
-			Recovered: row.Recovered - recovered,
-			Deaths:    row.Deaths    - deaths})
-		confirmed, recovered, deaths = row.Confirmed,  row.Recovered, row.Deaths
+		deltas = append(deltas, []int64{row[0], row[1] - value})
+		value = row[1]
 	}
 
 	return deltas
 }
+

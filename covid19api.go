@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"path/filepath"
 	"os"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"covid19api/grafana"
+	"covid19api/coviddb"
+	"covid19api/apiserver"
 )
 
 func main() {
@@ -34,12 +35,15 @@ func main() {
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error parsing commandline arguments: %s", err)
 		a.Usage(os.Args[1:])
 		os.Exit(2)
 	}
 
-	grafana.Run()
+	db := coviddb.Create(cfg.postgres_host, cfg.postgres_port, cfg.postgres_database, cfg.postgres_user, cfg.postgres_password)
+
+	server := apiserver.Server(apiserver.Handler(db))
+
+	server.Run()
 }
 
 

@@ -7,15 +7,14 @@ import(
 )
 
 func TestDBConnection (t *testing.T) {
-	pgdb, err := Connect("192.168.0.11", 31000, "cicd", "cicd", "its4cicd")
-	if err == nil {
-		entries, _ := pgdb.List()
-		pgdb.Close()
-		if len(entries) == 0 {
-			t.Error("No entries found")
-		}
-	} else {
+	db := Create("192.168.0.11", 31000, "cicd", "cicd", "its4cicd")
+
+	entries, err := db.List()
+
+	if err != nil {
 		t.Error(err)
+	} else if len(entries) == 0 {
+		t.Error("No entries found")
 	}
 }
 
@@ -57,35 +56,29 @@ func TestTotalAndDelta (t *testing.T) {
 
 	allcases := GetTotalCases(entries)
 
-	assert.Equal(t, 3,         len(allcases))
-	assert.Equal(t, parseDate("2020-11-01"), allcases[0].Timestamp)
-	assert.Equal(t, parseDate("2020-11-02"), allcases[1].Timestamp)
-	assert.Equal(t, parseDate("2020-11-04"), allcases[2].Timestamp)
-	assert.Equal(t, int64(1),  allcases[0].Confirmed)
-	assert.Equal(t, int64(6),  allcases[1].Confirmed)
-	assert.Equal(t, int64(13), allcases[2].Confirmed)
-	assert.Equal(t, int64(0),  allcases[0].Recovered)
-	assert.Equal(t, int64(1),  allcases[1].Recovered)
-	assert.Equal(t, int64(6),  allcases[2].Recovered)
-	assert.Equal(t, int64(0),  allcases[0].Deaths)
-	assert.Equal(t, int64(0),  allcases[1].Deaths)
-	assert.Equal(t, int64(1),  allcases[2].Deaths)
+	assert.Equal(t, 4,         len(allcases))
+	assert.Equal(t, int64(1604188800000), allcases[CONFIRMED][0][TIMESTAMP])
+	assert.Equal(t, int64(1604275200000), allcases[CONFIRMED][1][TIMESTAMP])
+	assert.Equal(t, int64(1604448000000), allcases[CONFIRMED][2][TIMESTAMP])
+	assert.Equal(t, int64(1),             allcases[CONFIRMED][0][VALUE])
+	assert.Equal(t, int64(6),             allcases[CONFIRMED][1][VALUE])
+	assert.Equal(t, int64(13),            allcases[CONFIRMED][2][VALUE])
+	assert.Equal(t, int64(0),             allcases[RECOVERED][0][VALUE])
+	assert.Equal(t, int64(1),             allcases[RECOVERED][1][VALUE])
+	assert.Equal(t, int64(6),             allcases[RECOVERED][2][VALUE])
+	assert.Equal(t, int64(0),             allcases[DEATHS][0][VALUE])
+	assert.Equal(t, int64(0),             allcases[DEATHS][1][VALUE])
+	assert.Equal(t, int64(1),             allcases[DEATHS][2][VALUE])
 
-	alldeltas := GetTotalDeltas(allcases)
+	deltas := GetTotalDeltas(allcases[CONFIRMED])
 
-	assert.Equal(t, 3,        len(alldeltas))
-	assert.Equal(t, parseDate("2020-11-01"), alldeltas[0].Timestamp)
-	assert.Equal(t, parseDate("2020-11-02"), alldeltas[1].Timestamp)
-	assert.Equal(t, parseDate("2020-11-04"), alldeltas[2].Timestamp)
-	assert.Equal(t, int64(1), alldeltas[0].Confirmed)
-	assert.Equal(t, int64(5), alldeltas[1].Confirmed)
-	assert.Equal(t, int64(7), alldeltas[2].Confirmed)
-	assert.Equal(t, int64(0), alldeltas[0].Recovered)
-	assert.Equal(t, int64(1), alldeltas[1].Recovered)
-	assert.Equal(t, int64(5), alldeltas[2].Recovered)
-	assert.Equal(t, int64(0), alldeltas[0].Deaths)
-	assert.Equal(t, int64(0), alldeltas[1].Deaths)
-	assert.Equal(t, int64(1), alldeltas[2].Deaths)
+	assert.Equal(t, 3,        len(deltas))
+	assert.Equal(t, int64(1604188800000), deltas[0][TIMESTAMP])
+	assert.Equal(t, int64(1604275200000), deltas[1][TIMESTAMP])
+	assert.Equal(t, int64(1604448000000), deltas[2][TIMESTAMP])
+	assert.Equal(t, int64(1),             deltas[0][VALUE])
+	assert.Equal(t, int64(5),             deltas[1][VALUE])
+	assert.Equal(t, int64(7),             deltas[2][VALUE])
 }
 
 
