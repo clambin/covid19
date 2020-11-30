@@ -8,6 +8,9 @@ import (
 	"encoding/json"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	simplejson "github.com/bitly/go-simplejson"
 	log        "github.com/sirupsen/logrus"
 
@@ -81,7 +84,7 @@ func (apiserver *APIServer) query(w http.ResponseWriter, req *http.Request) {
 	parameters, err := parseRequest(req.Body, apiserver.apihandler.search())
 
 	if err != nil {
-		log.Debug("got an error parsing the request. Aborting")
+		log.Debugf("error parsing the request (%v). Aborting", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -102,8 +105,29 @@ func (apiserver *APIServer) query(w http.ResponseWriter, req *http.Request) {
 	w.Write(targetsJson)
 }
 
+var (
+  httpDuration = promauto.NewSummaryVec(prometheus.SummaryOpts{
+    Name: "covid19_http_duration_seconds",
+    Help: "Duration of HTTP requests.",
+  }, []string{"path"})
+)
+
+// prometheusMiddleware implements mux.MiddlewareFunc.
+func prometheusMiddleware(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    route := mux.CurrentRoute(r)
+    path, _ := route.GetPathTemplate()
+    timer := prometheus.NewTimer(httpDuration.WithLabelValues(path))
+    next.ServeHTTP(w, r)
+    timer.ObserveDuration()
+  })
+}
+
+
 func (apiserver *APIServer) Run() {
 		r := mux.NewRouter()
+		r.Use(prometheusMiddleware)
+		r.Path("/metrics").Handler(promhttp.Handler())
 		r.HandleFunc("/", apiserver.hello)
 		r.HandleFunc("/search", apiserver.search).Methods("POST")
 		r.HandleFunc("/query", apiserver.query).Methods("POST")

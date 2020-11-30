@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/lib/pq v1.8.0
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de
+	github.com/prometheus/client_golang v1.8.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.6.1
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6

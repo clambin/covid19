@@ -9,20 +9,23 @@ import(
 	"covid19api/coviddb"
 )
 
-func TestIsValidTarget(t *testing.T) {
-		var tests = []struct {
-			input string
-			expected bool
-		}{
-			{"active", true},
-			{"active-delta", true},
-			{"invalid", false},
-			{"zzzzz", false},
-		}
+func TestServerHello(t *testing.T) {
+}
 
-		for _, tt := range tests {
-			assert.Equal(t, isValidTarget(tt.input, targets), tt.expected)
-		}
+func TestIsValidTarget(t *testing.T) {
+	var tests = []struct {
+		input string
+		expected bool
+	}{
+		{"active", true},
+		{"active-delta", true},
+		{"invalid", false},
+		{"zzzzz", false},
+	}
+
+	for _, tt := range tests {
+		assert.Equal(t, isValidTarget(tt.input, targets), tt.expected)
+	}
 }
 
 func parseDate(dateString string) (time.Time) {
