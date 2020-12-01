@@ -4,8 +4,8 @@ import(
 	"time"
 	"testing"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
-	"io/ioutil"
 
 	"github.com/stretchr/testify/assert"
 
@@ -13,25 +13,35 @@ import(
 )
 
 func TestServerHello(t *testing.T) {
-		handler  := Handler(nil)
-		server   := Server(handler)
-		recorder := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/", nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+    recorder := httptest.NewRecorder()
+    server   := Server(Handler(nil))
+    handler := http.HandlerFunc(server.hello)
 
-		server.hello(recorder, nil)
-		body, _ := ioutil.ReadAll(recorder.Result().Body)
+    handler.ServeHTTP(recorder, req)
 
-		assert.Equal(t, "Hello", string(body))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	expected := `Hello`
+	assert.Equal(t, expected, recorder.Body.String())
 }
 
-func TestServerSearch(t *testing.T) {
-		handler  := Handler(nil)
-		server   := Server(handler)
-		recorder := httptest.NewRecorder()
+func TestHandlerSearch(t *testing.T) {
+	req, err := http.NewRequest("POST", "/search", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	server   := Server(Handler(nil))
+	handler := http.HandlerFunc(server.search)
 
-		server.search(recorder, nil)
-		body, _ := ioutil.ReadAll(recorder.Result().Body)
+	handler.ServeHTTP(recorder, req)
 
-		assert.Equal(t, "[\"active\",\"active-delta\",\"confirmed\",\"confirmed-delta\",\"death\",\"death-delta\",\"recovered\",\"recovered-delta\"]", string(body))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	expected := `["active","active-delta","confirmed","confirmed-delta","death","death-delta","recovered","recovered-delta"]`
+	assert.Equal(t, expected, recorder.Body.String())
 }
 
 func TestIsValidTarget(t *testing.T) {
