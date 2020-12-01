@@ -41,12 +41,13 @@ type CountryEntry struct {
 	Deaths int64
 }
 
-func (db *CovidDB) List() ([]CountryEntry, error) {
+func (db *CovidDB) List(enddate time.Time) ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
 	dbh, _ := sql.Open("postgres", db.psqlInfo)
-
-	rows, err := dbh.Query("SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 ORDER BY 1")
+	rows, err := dbh.Query(fmt.Sprintf(
+        "SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
+        enddate.Format("2006-01-02 15:04:05")))
 
 	if err != nil {
 		log.Debug(err)

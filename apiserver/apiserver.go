@@ -169,7 +169,7 @@ type series struct {
 }
 
 func (apihandler *APIHandler) query(params *RequestParameters) ([]series, error) {
-	entries, err := apihandler.db.List()
+	entries, err := apihandler.db.List(params.To)
 
 	if err != nil {
 		return make([]series, 0), err

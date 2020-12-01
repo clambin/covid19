@@ -9,7 +9,7 @@ import(
 func TestDBConnection (t *testing.T) {
 	db := Create("192.168.0.11", 31000, "cicd", "cicd", "its4cicd")
 
-	entries, err := db.List()
+	entries, err := db.List(time.Now())
 
 	if err != nil {
 		t.Error(err)
