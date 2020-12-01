@@ -65,8 +65,9 @@ func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, er
 	}
 
 	parameters.MaxDataPoints = js.Get("maxDataPoints").MustInt()
-	parameters.From, _     = time.Parse("2006-01-02T15:04:05.000Z", js.Get("range").Get("from").MustString())
-	parameters.To, _       = time.Parse("2006-01-02T15:04:05.000Z", js.Get("range").Get("to").MustString())
+	parameters.From, _       = time.Parse("2006-01-02T15:04:05.000Z", js.Get("range").Get("from").MustString())
+	parameters.To, _         = time.Parse("2006-01-02T15:04:05.000Z", js.Get("range").Get("to").MustString())
+
 	for i := 0; i < len(js.Get("targets").MustArray()); i++ {
 		target := js.Get("targets").GetIndex(i).Get("target").MustString()
 		if isValidTarget(target, validTargets) {

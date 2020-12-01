@@ -4,12 +4,34 @@ import(
 	"time"
 	"testing"
 	"encoding/json"
+	"net/http/httptest"
+	"io/ioutil"
+
 	"github.com/stretchr/testify/assert"
 
 	"covid19api/coviddb"
 )
 
 func TestServerHello(t *testing.T) {
+		handler  := Handler(nil)
+		server   := Server(handler)
+		recorder := httptest.NewRecorder()
+
+		server.hello(recorder, nil)
+		body, _ := ioutil.ReadAll(recorder.Result().Body)
+
+		assert.Equal(t, "Hello", string(body))
+}
+
+func TestServerSearch(t *testing.T) {
+		handler  := Handler(nil)
+		server   := Server(handler)
+		recorder := httptest.NewRecorder()
+
+		server.search(recorder, nil)
+		body, _ := ioutil.ReadAll(recorder.Result().Body)
+
+		assert.Equal(t, "[\"active\",\"active-delta\",\"confirmed\",\"confirmed-delta\",\"death\",\"death-delta\",\"recovered\",\"recovered-delta\"]", string(body))
 }
 
 func TestIsValidTarget(t *testing.T) {
