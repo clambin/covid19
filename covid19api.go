@@ -3,6 +3,7 @@ package main
 import (
 	"path/filepath"
 	"os"
+	"runtime/pprof"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	log     "github.com/sirupsen/logrus"
@@ -12,6 +13,13 @@ import (
 )
 
 func main() {
+	f, ferr := os.Create("covid19api.prof")
+	if ferr != nil {
+		log.Fatal(ferr)
+	}
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
+
 	cfg := struct {
 		port              int
 		debug             bool
@@ -48,5 +56,3 @@ func main() {
 	server := apiserver.Server(apiserver.Handler(db))
 	server.Run()
 }
-
-

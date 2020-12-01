@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"encoding/json"
 
+	// "os"
+	// "runtime/pprof"
+
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -81,6 +84,14 @@ func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, er
 }
 
 func (apiserver *APIServer) query(w http.ResponseWriter, req *http.Request) {
+    // f, ferr := os.Create("covid19api.prof")
+    // if ferr != nil {
+    //     log.Fatal(ferr)
+    // }
+    // pprof.StartCPUProfile(f)
+    // defer pprof.StopCPUProfile()
+
+
 	log.Info("/query")
 	parameters, err := parseRequest(req.Body, apiserver.apihandler.search())
 
