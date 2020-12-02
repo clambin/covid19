@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"encoding/json"
 
+	// "os"
+	// "runtime/pprof"
+
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -136,6 +139,19 @@ func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, er
 
 func (apiserver *GrafanaAPIServer) query(w http.ResponseWriter, req *http.Request) {
 	log.Info("/query")
+
+	/* 
+	f, err := os.Create("query.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = pprof.StartCPUProfile(f)
+	if err != nil {
+		log.Fatal("could not start CPU profile: ", err)
+	}
+	*/
+
 	parameters, err := parseRequest(req.Body, apiserver.apihandler.search())
 
 	if err != nil {
@@ -156,4 +172,8 @@ func (apiserver *GrafanaAPIServer) query(w http.ResponseWriter, req *http.Reques
 	w.WriteHeader(http.StatusOK)
 	targetsJSON, _ := json.Marshal(output)
 	w.Write(targetsJSON)
+	/*
+	pprof.StopCPUProfile()
+	f.Close()
+	*/
 }

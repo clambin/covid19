@@ -2,7 +2,6 @@ package apiserver
 
 import (
 	"errors"
-	log        "github.com/sirupsen/logrus"
 
 	"covid19api/coviddb"
 )
@@ -41,23 +40,17 @@ type series struct {
 
 // query the DB and return the requested targets
 func (apihandler CovidAPIHandler) query(params RequestParameters) ([]series, error) {
-	if  apihandler.db == nil {
+	if apihandler.db == nil {
 		return make([]series, 0), errors.New("No database configured")
 	}
-	entries, err := apihandler.db.List(params.To)
+
+	entries, err := apihandler.db.List(params.To) 
 
 	if err != nil {
 		return make([]series, 0), err
 	}
 
-	log.Debugf("Entries in DB: %v", entries)
-	log.Debugf("Found %d entries in DB", len(entries))
-
-	output, err := buildTargets(entries, params.Targets), nil
-
-	log.Debugf("Output: %v", output)
-
-	return output, err
+	return buildTargets(entries, params.Targets), nil
 }
 
 // build the requested targets
