@@ -1,4 +1,4 @@
-package covid19api
+package main
 
 import (
 	"path/filepath"

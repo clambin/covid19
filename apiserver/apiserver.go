@@ -62,7 +62,6 @@ func (apiserver *GrafanaAPIServer) Run() {
 // API endpoints
 
 func (apiserver GrafanaAPIServer) hello(w http.ResponseWriter, req *http.Request) {
-	log.Info("/")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Hello")
 }
