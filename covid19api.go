@@ -1,9 +1,9 @@
-package main
+package covid19api
 
 import (
 	"path/filepath"
 	"os"
-	"runtime/pprof"
+	// "runtime/pprof"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	log     "github.com/sirupsen/logrus"
@@ -13,12 +13,12 @@ import (
 )
 
 func main() {
-	f, ferr := os.Create("covid19api.prof")
-	if ferr != nil {
-		log.Fatal(ferr)
-	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	// f, ferr := os.Create("covid19api.prof")
+	// if ferr != nil {
+	// 	log.Fatal(ferr)
+	// }
+	// pprof.StartCPUProfile(f)
+	// defer pprof.StopCPUProfile()
 
 	cfg := struct {
 		port              int
@@ -53,6 +53,7 @@ func main() {
 	}
 
 	db := coviddb.Create(cfg.postgres_host, cfg.postgres_port, cfg.postgres_database, cfg.postgres_user, cfg.postgres_password)
-	server := apiserver.Server(apiserver.Handler(db))
+	handler := apiserver.CreateCovidAPIHandler(db)
+	server := apiserver.CreateGrafanaAPIServer(handler)
 	server.Run()
 }

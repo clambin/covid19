@@ -80,5 +80,3 @@ func TestTotalAndDelta (t *testing.T) {
 	assert.Equal(t, int64(5),             deltas[1][VALUE])
 	assert.Equal(t, int64(7),             deltas[2][VALUE])
 }
-
-

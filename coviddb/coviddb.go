@@ -11,6 +11,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type CovidDB interface {
+	List(time.Time) ([]CountryEntry, error)
+}
+
 const (
 	CONFIRMED = 0
 	RECOVERED = 1
@@ -21,15 +25,15 @@ const (
 	TIMESTAMP = 1
 )
 
-type CovidDB struct {
+type PostgresCovidDB struct {
 	psqlInfo  string
 }
 
-func Create(host string, port int, database string, user string, password string) (*CovidDB) {
+func Create(host string, port int, database string, user string, password string) (PostgresCovidDB) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
 
-	return &CovidDB{psqlInfo: psqlInfo}
+	return PostgresCovidDB{psqlInfo: psqlInfo}
 }
 
 type CountryEntry struct {
@@ -41,7 +45,7 @@ type CountryEntry struct {
 	Deaths int64
 }
 
-func (db *CovidDB) List(enddate time.Time) ([]CountryEntry, error) {
+func (db PostgresCovidDB) List(enddate time.Time) ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
 	dbh, _ := sql.Open("postgres", db.psqlInfo)
@@ -96,11 +100,6 @@ type covidData struct {
 	Active int64
 }
 
-type Entry struct {
-	Timestamp time.Time
-	Value int64
-}
-
 func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 	var confirmed, recovered, deaths int64
 
@@ -129,7 +128,6 @@ func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 			recovered += data.Recovered
 			deaths    += data.Deaths
 		}
-		// TODO: convert timestamp to grafana representatation (msec since epoch?)
 		epoch := timestamp.UnixNano() / 1000000
 		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], []int64{confirmed,                      epoch})
 		consolidated[RECOVERED] = append(consolidated[RECOVERED], []int64{recovered,                      epoch})
