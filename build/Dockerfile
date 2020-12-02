@@ -3,7 +3,7 @@ FROM golang:1.15 AS builder
 WORKDIR /build
 
 COPY . ./
-RUN CGO_ENABLED=0 go build
+RUN CGO_ENABLED=0 go build cmd/covid19api/covid19api.go
 
 FROM alpine
 

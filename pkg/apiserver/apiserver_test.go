@@ -10,8 +10,8 @@ import(
 	"github.com/stretchr/testify/assert"
 	// log     "github.com/sirupsen/logrus"
 
-	"covid19api/coviddb"
-	"covid19api/coviddb/mock"
+	"covid19api/pkg/coviddb"
+	"covid19api/pkg/coviddb/mock"
 )
 
 func TestServerHello(t *testing.T) {
@@ -89,8 +89,8 @@ func TestHandlerQuery(t *testing.T) {
 				{ "target": "confirmed-delta" },
 				{ "target": "recovered" },
 				{ "target": "recovered-delta" },
-				{ "target": "deaths" },
-				{ "target": "deaths-delta" },
+				{ "target": "death" },
+				{ "target": "death-delta" },
 				{ "target": "active" },
 				{ "target": "active-delta" },
 				{ "target": "invalid" }
@@ -108,7 +108,7 @@ func TestHandlerQuery(t *testing.T) {
 
 	handler.ServeHTTP(recorder, req)
 	assert.Equal(t, http.StatusOK, recorder.Code)
-	expected := `[{"target":"confirmed","datapoints":[[1,1604188800000],[6,1604275200000],[13,1604448000000]]},{"target":"confirmed-delta","datapoints":[[1,1604188800000],[5,1604275200000],[7,1604448000000]]},{"target":"recovered","datapoints":[[0,1604188800000],[1,1604275200000],[6,1604448000000]]},{"target":"recovered-delta","datapoints":[[0,1604188800000],[1,1604275200000],[5,1604448000000]]},{"target":"active","datapoints":[[1,1604188800000],[5,1604275200000],[6,1604448000000]]},{"target":"active-delta","datapoints":[[1,1604188800000],[4,1604275200000],[1,1604448000000]]}]`
+	expected := "[{\"target\":\"confirmed\",\"datapoints\":[[1,1604188800000],[6,1604275200000],[13,1604448000000]]},{\"target\":\"confirmed-delta\",\"datapoints\":[[1,1604188800000],[5,1604275200000],[7,1604448000000]]},{\"target\":\"recovered\",\"datapoints\":[[0,1604188800000],[1,1604275200000],[6,1604448000000]]},{\"target\":\"recovered-delta\",\"datapoints\":[[0,1604188800000],[1,1604275200000],[5,1604448000000]]},{\"target\":\"death\",\"datapoints\":[[0,1604188800000],[0,1604275200000],[1,1604448000000]]},{\"target\":\"death-delta\",\"datapoints\":[[0,1604188800000],[0,1604275200000],[1,1604448000000]]},{\"target\":\"active\",\"datapoints\":[[1,1604188800000],[5,1604275200000],[6,1604448000000]]},{\"target\":\"active-delta\",\"datapoints\":[[1,1604188800000],[4,1604275200000],[1,1604448000000]]}]"
 	assert.Equal(t, expected, recorder.Body.String())
 }
 
@@ -161,3 +161,51 @@ func parseDate(dateString string) (time.Time) {
 		return date
 }
 
+func BenchmarkHandlerQuery(b *testing.B) {
+	// Build a large DB
+	type country struct{code, name string}
+	countries := []country{
+			country {code:"BE", name:"Belgium"},
+			country {code:"US", name:"USA"},
+			country {code:"FR", name:"France"},
+			country {code:"NL", name:"Netherlands"},
+			country {code:"UK", name:"United Kingdom"}}
+	timestamp := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+	entries := make([]coviddb.CountryEntry, 0)
+	for i:=0; i<365; i++ {
+		for _, country := range countries {
+				entries = append(entries, coviddb.CountryEntry{Timestamp: timestamp, Code: country.code, Name: country.name, Confirmed: int64(i), Recovered: 0, Deaths: 0})
+		}
+		timestamp = timestamp.Add(24 * time.Hour)
+	}
+	db := mock.Create(entries)
+
+	// Set up client & server
+	body := []byte(`{
+			"range": { 
+				"from": "2020-01-01T00:00:00.000Z", 
+				"to": "2020-12-31T23:59:59.999Z"
+			},
+			"targets": [
+				{ "target": "confirmed" },
+				{ "target": "confirmed-delta" },
+				{ "target": "recovered" },
+				{ "target": "recovered-delta" },
+				{ "target": "death" },
+				{ "target": "death-delta" },
+				{ "target": "active" },
+				{ "target": "active-delta" }
+			]}`)
+	req, err := http.NewRequest("POST", "/query", bytes.NewBuffer(body))
+	if err != nil {
+		b.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(db))
+	handler  := http.HandlerFunc(server.query)
+
+	// Run the benchmark
+	b.ResetTimer()
+	handler.ServeHTTP(recorder, req)
+	assert.Equal(b, http.StatusOK, recorder.Code)
+}

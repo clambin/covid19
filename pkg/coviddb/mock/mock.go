@@ -5,7 +5,7 @@ import (
 
 	log     "github.com/sirupsen/logrus"
 
-	"covid19api/coviddb"
+	"covid19api/pkg/coviddb"
 )
 
 // CovidDB mock database used for unittesting 

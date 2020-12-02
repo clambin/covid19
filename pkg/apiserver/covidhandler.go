@@ -3,7 +3,7 @@ package apiserver
 import (
 	"errors"
 
-	"covid19api/coviddb"
+	"covid19api/pkg/coviddb"
 )
 
 // CovidAPIHandler implements by business logic for GrafanaAPIHandler
@@ -68,9 +68,9 @@ func buildTargets(entries []coviddb.CountryEntry, targets []string) ([]series) {
 			seriesList = append(seriesList, series{Target: target, Datapoints: totalcases[coviddb.RECOVERED]})
 		case "recovered-delta":
 			seriesList = append(seriesList, series{Target: target, Datapoints: coviddb.GetTotalDeltas(totalcases[coviddb.RECOVERED])})
-		case "deaths":
+		case "death":
 			seriesList = append(seriesList, series{Target: target, Datapoints: totalcases[coviddb.DEATHS]})
-		case "deaths-delta":
+		case "death-delta":
 			seriesList = append(seriesList, series{Target: target, Datapoints: coviddb.GetTotalDeltas(totalcases[coviddb.DEATHS])})
 		case "active":
 			seriesList = append(seriesList, series{Target: target, Datapoints: totalcases[coviddb.ACTIVE]})
