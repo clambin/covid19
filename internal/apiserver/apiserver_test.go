@@ -10,8 +10,8 @@ import(
 	"github.com/stretchr/testify/assert"
 	// log     "github.com/sirupsen/logrus"
 
-	"covid19api/pkg/coviddb"
-	"covid19api/pkg/coviddb/mock"
+	"covid19api/internal/coviddb"
+	"covid19api/internal/coviddb/mock"
 )
 
 func TestServerHello(t *testing.T) {

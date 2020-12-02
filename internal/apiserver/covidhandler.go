@@ -3,7 +3,7 @@ package apiserver
 import (
 	"errors"
 
-	"covid19api/pkg/coviddb"
+	"covid19api/internal/coviddb"
 )
 
 // CovidAPIHandler implements by business logic for GrafanaAPIHandler
