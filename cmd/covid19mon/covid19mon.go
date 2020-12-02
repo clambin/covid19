@@ -8,8 +8,8 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	log     "github.com/sirupsen/logrus"
 
-	"covid19api/internal/coviddb"
-	"covid19api/internal/scheduler"
+	"covid19/internal/coviddb"
+	"covid19/internal/scheduler"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module covid19api
+module covid19
 
 go 1.15
 
