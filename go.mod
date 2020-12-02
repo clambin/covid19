@@ -12,5 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.8.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.6.1
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/tools v0.0.0-20201201210846-92771a23d8e3 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )

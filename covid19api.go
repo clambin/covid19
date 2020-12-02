@@ -21,13 +21,13 @@ func main() {
 	// defer pprof.StopCPUProfile()
 
 	cfg := struct {
-		port              int
-		debug             bool
-		postgres_host     string
-		postgres_port     int
-		postgres_database string
-		postgres_user     string
-		postgres_password string
+		port             int
+		debug            bool
+		postgresHost     string
+		postgresPort     int
+		postgresDatabase string
+		postgresUser     string
+		postgresPassword string
 	}{}
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 grafana API server")
@@ -36,11 +36,11 @@ func main() {
 
 	a.Flag("port", "API listener port").Default("5000").IntVar(&cfg.port)
 	a.Flag("debug", "Log debug messages").BoolVar(&cfg.debug)
-	a.Flag("postgres-host", "Postgres DB Host").Default("postgres").StringVar(&cfg.postgres_host)
-	a.Flag("postgres-port", "Postgres DB Port").Default("5432").IntVar(&cfg.postgres_port)
-	a.Flag("postgres-database", "Postgres DB Name").Default("covid19").StringVar(&cfg.postgres_database)
-	a.Flag("postgres-user", "Postgres DB User").Default("covid").StringVar(&cfg.postgres_user)
-	a.Flag("postgres-password", "Postgres DB Password").StringVar(&cfg.postgres_password)
+	a.Flag("postgres-host", "Postgres DB Host").Default("postgres").StringVar(&cfg.postgresHost)
+	a.Flag("postgres-port", "Postgres DB Port").Default("5432").IntVar(&cfg.postgresPort)
+	a.Flag("postgres-database", "Postgres DB Name").Default("covid19").StringVar(&cfg.postgresDatabase)
+	a.Flag("postgres-user", "Postgres DB User").Default("covid").StringVar(&cfg.postgresUser)
+	a.Flag("postgres-password", "Postgres DB Password").StringVar(&cfg.postgresPassword)
 
 	_, err := a.Parse(os.Args[1:])
 	if err != nil {
@@ -52,7 +52,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	db := coviddb.Create(cfg.postgres_host, cfg.postgres_port, cfg.postgres_database, cfg.postgres_user, cfg.postgres_password)
+	db := coviddb.Create(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
 	handler := apiserver.CreateCovidAPIHandler(db)
 	server := apiserver.CreateGrafanaAPIServer(handler)
 	server.Run()

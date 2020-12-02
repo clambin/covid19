@@ -8,19 +8,22 @@ import (
 	"covid19api/coviddb"
 )
 
-type MockCovidDB struct {
+// CovidDB mock database used for unittesting 
+type CovidDB struct {
 	data []coviddb.CountryEntry
 }
 
-func Create(data []coviddb.CountryEntry) (MockCovidDB) {
-	return MockCovidDB{data: data}
+// Create a mock CovidDB
+func Create(data []coviddb.CountryEntry) (CovidDB) {
+	return CovidDB{data: data}
 }
 
-func (db MockCovidDB) List(enddate time.Time) ([]coviddb.CountryEntry, error) {
+// List the records in the DB up to enddate
+func (db CovidDB) List(endDate time.Time) ([]coviddb.CountryEntry, error) {
 	entries := make([]coviddb.CountryEntry, 0)
 
 	for _, entry := range db.data {
-		if entry.Timestamp.Before(enddate) {
+		if entry.Timestamp.Before(endDate) {
 			entries = append(entries, entry)
 		} else {
 			log.Debugf("Dropping '%s'", entry.Timestamp)

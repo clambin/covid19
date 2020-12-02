@@ -15,22 +15,25 @@ import (
 	log        "github.com/sirupsen/logrus"
 )
 
-// Server
-
+// GrafanaAPIHandler implements the business logic of the Grafana API datasource so that 
+// GrafanaAPIServer can be limited to providing the generic search/queury framework
 type GrafanaAPIHandler interface{
 	search()                  ([]string)
 	// FIXME: best way to make query signature independent from expected output
 	query(RequestParameters)  ([]series, error)
 }
 
+// GrafanaAPIServer implements a generic frameworks for the Grafana simpleJson API datasource 
 type GrafanaAPIServer struct {
 	apihandler GrafanaAPIHandler
 }
 
+// CreateGrafanaAPIServer creates a GrafanaAPIServer object
 func CreateGrafanaAPIServer(apihandler GrafanaAPIHandler) (GrafanaAPIServer) {
 	return GrafanaAPIServer{apihandler: apihandler}
 }
 
+// Prometheus metrics
 var (
   httpDuration = promauto.NewSummaryVec(prometheus.SummaryOpts{
     Name: "grafana_api_duration_seconds",
@@ -48,6 +51,7 @@ func prometheusMiddleware(next http.Handler) http.Handler {
   })
 }
 
+// Run the API Server
 func (apiserver *GrafanaAPIServer) Run() {
 		r := mux.NewRouter()
 		r.Use(prometheusMiddleware)
@@ -56,10 +60,14 @@ func (apiserver *GrafanaAPIServer) Run() {
 		r.HandleFunc("/search", apiserver.search).Methods("POST")
 		r.HandleFunc("/query", apiserver.query).Methods("POST")
 
+		// TODO: use cfg.port
 		http.ListenAndServe(":5000", r)
 }
 
-// API endpoints
+// Implement three endpoints. /search and /query are used by Grafana's simple json API datasource
+// We also implement / to be used as a K8s liveness probe
+//
+// Code in these functions is generic. Business logic is provided by GrafanaAPIHandler object
 
 func (apiserver GrafanaAPIServer) hello(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
@@ -70,11 +78,12 @@ func (apiserver GrafanaAPIServer) search(w http.ResponseWriter, req *http.Reques
 	log.Info("/search")
 	output := apiserver.apihandler.search()
 	log.Debugf("/search: '%s'", output)
-	targetsJson, _ := json.Marshal(output)
+	targetsJSON, _ := json.Marshal(output)
 	w.WriteHeader(http.StatusOK)
-	w.Write(targetsJson)
+	w.Write(targetsJSON)
 }
 
+// RequestParameters contains the (needed) parameters supplied to /query
 type RequestParameters struct {
 	// MaxDataPoints int
 	From time.Time
@@ -145,6 +154,6 @@ func (apiserver *GrafanaAPIServer) query(w http.ResponseWriter, req *http.Reques
 
 	log.Debugf("/query: %v", output)
 	w.WriteHeader(http.StatusOK)
-	targetsJson, _ := json.Marshal(output)
-	w.Write(targetsJson)
+	targetsJSON, _ := json.Marshal(output)
+	w.Write(targetsJSON)
 }

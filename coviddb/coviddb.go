@@ -8,13 +8,16 @@ import (
 	"github.com/mpvl/unique"
 	log "github.com/sirupsen/logrus"
 
+	// needed for database/sql
 	_ "github.com/lib/pq"
 )
 
+// CovidDB interface representing a Covid batabase
 type CovidDB interface {
 	List(time.Time) ([]CountryEntry, error)
 }
 
+// Indexes for the output arrays of GetTotalCases / GetTotalDeltas
 const (
 	CONFIRMED = 0
 	RECOVERED = 1
@@ -25,10 +28,12 @@ const (
 	TIMESTAMP = 1
 )
 
+// PostgresCovidDB implementation of CovidDB
 type PostgresCovidDB struct {
 	psqlInfo  string
 }
 
+// Create a PostgresCovidDB object
 func Create(host string, port int, database string, user string, password string) (PostgresCovidDB) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
@@ -36,6 +41,7 @@ func Create(host string, port int, database string, user string, password string
 	return PostgresCovidDB{psqlInfo: psqlInfo}
 }
 
+// CountryEntry represents one row in the Covid DB
 type CountryEntry struct {
 	Timestamp time.Time
 	Code string
@@ -45,13 +51,14 @@ type CountryEntry struct {
 	Deaths int64
 }
 
-func (db PostgresCovidDB) List(enddate time.Time) ([]CountryEntry, error) {
+// List retrieved all records from the database up to endDate
+func (db PostgresCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
 	dbh, _ := sql.Open("postgres", db.psqlInfo)
 	rows, err := dbh.Query(fmt.Sprintf(
         "SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
-        enddate.Format("2006-01-02 15:04:05")))
+        endDate.Format("2006-01-02 15:04:05")))
 
 	if err != nil {
 		log.Debug(err)
@@ -73,8 +80,7 @@ func (db PostgresCovidDB) List(enddate time.Time) ([]CountryEntry, error) {
 	return entries, err
 }
 
-// Helper code to use unique.Sort()
-
+// Helper code for unique.Sort()
 type timestampSlice struct { P *[]time.Time }
 
 func (p timestampSlice) Len() int {
@@ -90,18 +96,21 @@ func (p timestampSlice) Swap(i, j int) {
 }
 
 func (p timestampSlice) Truncate(n int) {
-	(*p.P) = (*p.P)[:n]
+		(*p.P) = (*p.P)[:n]
 }
 
-type covidData struct {
-	Confirmed int64
-	Recovered int64
-	Deaths int64
-	Active int64
-}
-
+// GetTotalCases calculates the total cases cross all countries over time
+// Output is structured for easy export to HTTP Response (JSON)
 func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 	var confirmed, recovered, deaths int64
+
+	// Helper datastructure to keep running 
+	type covidData struct {
+		Confirmed int64
+		Recovered int64
+		Deaths int64
+		Active int64
+	}
 
 	// Group data by timestamp
 	timeMap := make(map[time.Time][]CountryEntry)
@@ -138,6 +147,8 @@ func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 	return consolidated
 }
 
+// GetTotalDeltas calculates deltas of cases returned by GetTotalCases
+// Output is structured for easy export to HTTP Response (JSON)
 func GetTotalDeltas (rows [][]int64) ([][]int64) {
 	deltas := make([][]int64, 0)
 
