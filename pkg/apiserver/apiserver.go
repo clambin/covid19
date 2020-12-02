@@ -32,8 +32,8 @@ type GrafanaAPIServer struct {
 }
 
 // CreateGrafanaAPIServer creates a GrafanaAPIServer object
-func CreateGrafanaAPIServer(apihandler GrafanaAPIHandler) (GrafanaAPIServer) {
-	return GrafanaAPIServer{apihandler: apihandler}
+func CreateGrafanaAPIServer(apihandler GrafanaAPIHandler) (*GrafanaAPIServer) {
+	return &GrafanaAPIServer{apihandler: apihandler}
 }
 
 // Prometheus metrics
@@ -72,12 +72,12 @@ func (apiserver *GrafanaAPIServer) Run() {
 //
 // Code in these functions is generic. Business logic is provided by GrafanaAPIHandler object
 
-func (apiserver GrafanaAPIServer) hello(w http.ResponseWriter, req *http.Request) {
+func (apiserver *GrafanaAPIServer) hello(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Hello")
 }
 
-func (apiserver GrafanaAPIServer) search(w http.ResponseWriter, req *http.Request) {
+func (apiserver *GrafanaAPIServer) search(w http.ResponseWriter, req *http.Request) {
 	log.Info("/search")
 	output := apiserver.apihandler.search()
 	log.Debugf("/search: '%s'", output)
@@ -140,7 +140,7 @@ func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, er
 func (apiserver *GrafanaAPIServer) query(w http.ResponseWriter, req *http.Request) {
 	log.Info("/query")
 
-	/* 
+	/*
 	f, err := os.Create("query.prof")
 	if err != nil {
 		log.Fatal(err)

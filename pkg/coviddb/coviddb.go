@@ -34,11 +34,11 @@ type PostgresCovidDB struct {
 }
 
 // Create a PostgresCovidDB object
-func Create(host string, port int, database string, user string, password string) (PostgresCovidDB) {
+func Create(host string, port int, database string, user string, password string) (*PostgresCovidDB) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
 
-	return PostgresCovidDB{psqlInfo: psqlInfo}
+	return &PostgresCovidDB{psqlInfo: psqlInfo}
 }
 
 // CountryEntry represents one row in the Covid DB
@@ -52,7 +52,7 @@ type CountryEntry struct {
 }
 
 // List retrieved all records from the database up to endDate
-func (db PostgresCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
+func (db *PostgresCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
 	dbh, _ := sql.Open("postgres", db.psqlInfo)

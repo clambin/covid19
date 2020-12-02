@@ -14,12 +14,12 @@ type CovidDB struct {
 }
 
 // Create a mock CovidDB
-func Create(data []coviddb.CountryEntry) (CovidDB) {
-	return CovidDB{data: data}
+func Create(data []coviddb.CountryEntry) (*CovidDB) {
+	return &CovidDB{data: data}
 }
 
 // List the records in the DB up to enddate
-func (db CovidDB) List(endDate time.Time) ([]coviddb.CountryEntry, error) {
+func (db *CovidDB) List(endDate time.Time) ([]coviddb.CountryEntry, error) {
 	entries := make([]coviddb.CountryEntry, 0)
 
 	for _, entry := range db.data {

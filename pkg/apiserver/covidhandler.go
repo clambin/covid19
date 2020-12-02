@@ -12,8 +12,8 @@ type CovidAPIHandler struct {
 }
 
 // CreateCovidAPIHandler creates a CovidAPIHandler object
-func CreateCovidAPIHandler(db coviddb.CovidDB) (CovidAPIHandler) {
-	return CovidAPIHandler{db: db}
+func CreateCovidAPIHandler(db coviddb.CovidDB) (*CovidAPIHandler) {
+	return &CovidAPIHandler{db: db}
 }
 
 var (
@@ -29,7 +29,7 @@ var (
 	}
 )
 
-func (apihandler CovidAPIHandler) search() ([]string) {
+func (apihandler *CovidAPIHandler) search() ([]string) {
 	return targets
 }
 
@@ -39,9 +39,9 @@ type series struct {
 }
 
 // query the DB and return the requested targets
-func (apihandler CovidAPIHandler) query(params RequestParameters) ([]series, error) {
+func (apihandler *CovidAPIHandler) query(params RequestParameters) ([]series, error) {
 	if apihandler.db == nil {
-		return make([]series, 0), errors.New("No database configured")
+		return make([]series, 0), errors.New("no database configured")
 	}
 
 	entries, err := apihandler.db.List(params.To) 
