@@ -8,7 +8,7 @@ import(
 	"bytes"
 
 	"github.com/stretchr/testify/assert"
-	// log     "github.com/sirupsen/logrus"
+	log     "github.com/sirupsen/logrus"
 
 	"covid19/internal/coviddb"
 	"covid19/internal/coviddb/mock"
@@ -44,6 +44,35 @@ func TestHandlerSearch(t *testing.T) {
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	expected := `["active","active-delta","confirmed","confirmed-delta","death","death-delta","recovered","recovered-delta"]`
 	assert.Equal(t, expected, recorder.Body.String())
+}
+
+func TestParseRequest(t *testing.T) {
+	// validTargets := []string{"confirmed", "confirmed-delta"}
+	body := []byte(`{
+	 		"range": { 
+	 			"from": "2020-01-01T00:00:00.000Z", 
+				"to": "2020-12-31T23:59:59.000Z"
+			},
+			"targets": [
+				{ "target": "confirmed" },
+				{ "target": "confirmed-delta" },
+				{ "target": "recovered" },
+				{ "target": "recovered-delta" },
+				{ "target": "death" },
+				{ "target": "death-delta" },
+				{ "target": "active" },
+				{ "target": "active-delta" },
+				{ "target": "invalid" }
+			]}`)
+	reader := bytes.NewReader(body)
+	params, err := parseRequest(reader, targets)
+
+	assert.Equal(t, nil,                        err)
+	assert.Equal(t, time.Date(2020, time.January,   1,  0,  0,  0, 0, time.UTC), params.Range["from"])
+	assert.Equal(t, time.Date(2020, time.December, 31, 23, 59, 59, 0, time.UTC), params.Range["to"])
+	if err == nil {
+		log.Printf("%v", params.Targets)
+	}
 }
 
 func TestHandlerQuery(t *testing.T) {

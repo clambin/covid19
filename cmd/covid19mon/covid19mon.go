@@ -10,6 +10,7 @@ import (
 
 	"covid19/internal/coviddb"
 	"covid19/internal/scheduler"
+	"covid19/internal/covidprobe"
 )
 
 func main() {
@@ -51,7 +52,7 @@ func main() {
 
 	db := coviddb.Create(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
 
-	probe := covidprobe.Create(cfg.apiKey, cfg.pushGateway)
+	probe := covidprobe.NewCovidProbe(db, cfg.apiKey, cfg.pushGateway)
 	scheduler := scheduler.NewScheduler()
 	scheduler.Register(probe, time.Duration(cfg.interval) * time.Second)
 	scheduler.Run(cfg.once)

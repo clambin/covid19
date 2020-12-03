@@ -14,7 +14,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	simplejson "github.com/bitly/go-simplejson"
 	log        "github.com/sirupsen/logrus"
 )
 
@@ -88,53 +87,17 @@ func (apiserver *GrafanaAPIServer) search(w http.ResponseWriter, req *http.Reque
 
 // RequestParameters contains the (needed) parameters supplied to /query
 type RequestParameters struct {
-	// MaxDataPoints int
-	From time.Time
-	To time.Time
-	Targets []string
-}
-
-func isValidTarget(target string, validTargets []string) (bool) {
-	for _, t := range validTargets {
-		if t == target {
-			return true
-		}
-	}
-	return false
+	Range map[string]time.Time
+	Targets []struct{Target string}
 }
 
 func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, error) {
-	var timestamp string
-	parameters := new(RequestParameters)
-	js, err := simplejson.NewFromReader(body)
-
-	// if err == nil {
-	//	parameters.MaxDataPoints, err  = js.Get("maxDataPoints").Int()
-	// }
-	if err == nil {
-		timestamp, err = js.Get("range").Get("from").String()
+		var params RequestParameters
+		decoder := json.NewDecoder(body)
+		err := decoder.Decode(&params)
 		if err == nil {
-			parameters.From, err = time.Parse("2006-01-02T15:04:05.000Z", timestamp)
 		}
-	}
-	if err == nil {
-		timestamp, err = js.Get("range").Get("to").String()
-		if err == nil {
-			parameters.To, err = time.Parse("2006-01-02T15:04:05.000Z", timestamp)
-		}
-	}
-	if err == nil {
-		for i := 0; i < len(js.Get("targets").MustArray()); i++ {
-			target := js.Get("targets").GetIndex(i).Get("target").MustString()
-			if isValidTarget(target, validTargets) {
-				parameters.Targets = append(parameters.Targets, target)
-			} else {
-				log.Warningf("Unsupported target: '%s'. Dropping", target)
-			}
-		}
-	}
-
-	return parameters, err
+		return &params, err
 }
 
 func (apiserver *GrafanaAPIServer) query(w http.ResponseWriter, req *http.Request) {
