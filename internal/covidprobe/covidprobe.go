@@ -7,40 +7,44 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"covid19/internal/coviddb"
+	"covid19/internal/pushgateway"
 )
 
 // CovidProbe handle
 type CovidProbe struct {
 	apiClient      *CovidAPIClient
 	db              coviddb.CovidDB
-	pushGateway     string
+	pushGateway    *pushgateway.PushGateway
 }
 
 // NewCovidProbe creates a new CovidProbe handle
-func NewCovidProbe(apiClient *CovidAPIClient, db coviddb.CovidDB, pushGateway string) (*CovidProbe) {
+func NewCovidProbe(apiClient *CovidAPIClient, db coviddb.CovidDB, pushGateway *pushgateway.PushGateway) (*CovidProbe) {
 	return &CovidProbe{apiClient: apiClient, db: db, pushGateway: pushGateway}
 }
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
 func (probe *CovidProbe) Run() (error) {
-	log.Debug("CovidProbe::Run{")
 	// Call the API
 	countryStats, err := probe.apiClient.GetCountryStats()
 
 	if err == nil && len(countryStats) > 0 {
-		log.Debugf("CovidProbe::Run : received %d entries", len(countryStats))
+		log.Debugf("Got %d new entries", len(countryStats))
 
 		dbRecords, err := probe.findNewCountryStats(countryStats)
 
-		if err == nil {
-			log.Debugf("CovidProbe::Run : will add  %d entries", len(dbRecords))
+		if err == nil && len(dbRecords) > 0 {
+			log.Infof("Adding %d new entries", len(dbRecords))
 
-			// Add entries to DB
 			err = probe.db.Add(dbRecords)
 		}
 
-		if err == nil && probe.pushGateway != "" {
-			log.Debug("Call pushgateway here")
+		if err == nil && probe.pushGateway != nil {
+			countries := make([]string, 0, len(dbRecords))
+			for _,entry := range dbRecords {
+				countries = append(countries, entry.Name)
+			}
+
+			probe.pushGateway.Push(countries)
 		}
 	}
 

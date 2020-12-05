@@ -12,6 +12,7 @@ import (
 	"covid19/internal/coviddb"
 	"covid19/internal/scheduler"
 	"covid19/internal/covidprobe"
+	"covid19/internal/pushgateway"
 )
 
 func main() {
@@ -40,7 +41,7 @@ func main() {
 	a.Flag("postgres-user", "Postgres DB User").Default("covid").StringVar(&cfg.postgresUser)
 	a.Flag("postgres-password", "Postgres DB Password").StringVar(&cfg.postgresPassword)
 	a.Flag("api-key", "API Key for RapidAPI Covid19 API").StringVar(&cfg.apiKey)
-	a.Flag("push-gateway", "URL of Prometheus pushgateway").StringVar(&cfg.pushGateway)
+	a.Flag("pushgateway", "URL of Prometheus pushgateway").StringVar(&cfg.pushGateway)
 
 	if _, err := a.Parse(os.Args[1:]); err != nil {
 		a.Usage(os.Args[1:])
@@ -53,8 +54,9 @@ func main() {
 
 	db := coviddb.Create(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
 	apiClient := covidprobe.NewCovidAPIClient(&http.Client{}, cfg.apiKey)
+	pushGateway := pushgateway.NewPushGateway(cfg.pushGateway)
 
-	probe := covidprobe.NewCovidProbe(apiClient, db, cfg.pushGateway)
+	probe := covidprobe.NewCovidProbe(apiClient, db, pushGateway)
 	scheduler := scheduler.NewScheduler()
 	scheduler.Register(probe, time.Duration(cfg.interval) * time.Second)
 	scheduler.Run(cfg.once)

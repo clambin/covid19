@@ -60,27 +60,26 @@ type CountryEntry struct {
 func (db *PostgresCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
-	dbh, _ := sql.Open("postgres", db.psqlInfo)
-	rows, err := dbh.Query(fmt.Sprintf(
-        "SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
-        endDate.Format("2006-01-02 15:04:05")))
+	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil {
-		log.Debug(err)
-	} else {
-		defer rows.Close()
-		for rows.Next() {
-			var entry CountryEntry
-			err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
-			if err != nil {
-				break
-			} else {
+	if err == nil {
+		defer dbh.Close()
+
+		rows, err := dbh.Query(fmt.Sprintf(
+        	"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
+        	endDate.Format("2006-01-02 15:04:05")))
+
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var entry CountryEntry
+				err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
+				if err != nil { break }
 				entries = append(entries, entry)
 			}
+			log.Debugf("Found %d records", len(entries))
 		}
-		log.Debugf("Found %d records", len(entries))
 	}
-	dbh.Close()
 
 	return entries, err
 }
@@ -91,28 +90,24 @@ func (db *PostgresCovidDB) ListLatestByCountry() (map[string]time.Time, error) {
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil { return entries, err }
-	defer dbh.Close()
+	if err == nil {
+		defer dbh.Close()
 
-	rows, err := dbh.Query(fmt.Sprintf("SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name"))
+		rows, err := dbh.Query(fmt.Sprintf("SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name"))
 
-	if err != nil {
-		log.Debug(err)
-	} else {
-		defer rows.Close()
-		for rows.Next() {
-			var (
-				country string
-				timestamp time.Time
-			)
-			err = rows.Scan(&country, &timestamp)
-			if err != nil {
-				break
-			} else {
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var (
+					country string
+					timestamp time.Time
+				)
+				err = rows.Scan(&country, &timestamp)
+				if err != nil { break }
 				entries[country] = timestamp
 			}
+			log.Debugf("Found %d records", len(entries))
 		}
-		log.Debugf("Found %d records", len(entries))
 	}
 
 	return entries, err

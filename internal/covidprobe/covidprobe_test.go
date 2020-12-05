@@ -12,7 +12,7 @@ import (
 func TestCovidProbeWhite(t *testing.T) {
 	apiClient := makeClient()
 	db        := mock.Create(testDBData)
-	probe     := NewCovidProbe(apiClient, db, "")
+	probe     := NewCovidProbe(apiClient, db, nil)
 
 	countryStats, err := probe.apiClient.GetCountryStats()
 	assert.Equal(t, nil, err)
@@ -40,7 +40,7 @@ func TestCovidProbeWhite(t *testing.T) {
 func TestCovidProbeBlack(t *testing.T) {
 	apiClient := makeClient()
 	db        := mock.Create(testDBData)
-	probe     := NewCovidProbe(apiClient, db, "")
+	probe     := NewCovidProbe(apiClient, db, nil)
 
 	err := probe.Run()
 

@@ -1,0 +1,13 @@
+go build cmd/covid19mon/covid19mon.go &&
+./covid19mon \
+	--debug \
+	--interval 30 \
+	--api-key 75f069b0d0mshb3c1017c5d7ee9dp11bc14jsn120bffb267a8 \
+	--postgres-host 192.168.0.11 \
+	--postgres-port 31000 \
+	--postgres-database cicd \
+	--postgres-user cicd \
+	--postgres-password its4cicd \
+	--pushgateway http://pushgateway.192.168.0.11.nip.io \
+
+
