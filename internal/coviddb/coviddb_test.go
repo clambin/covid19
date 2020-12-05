@@ -1,6 +1,7 @@
 package coviddb
 
 import(
+	"fmt"
 	"time"
 	"testing"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,31 @@ func TestDBConnection (t *testing.T) {
 	} else if len(entries) == 0 {
 		t.Error("No entries found")
 	}
+
+	lastEntries, err := db.ListLatestByCountry()
+
+	if err != nil {
+		t.Error(err)
+	} else if len(entries) == 0 {
+		t.Error("No entries found")
+	}
+	if beEntry, ok := lastEntries["Belgium"]; ok == false {
+		t.Error("No data for Belgium?")
+	} else {
+		fmt.Println(beEntry)
+	}
+
+	err = db.Add([]CountryEntry{
+			CountryEntry{
+				Timestamp: time.Now(),
+				Name: "A",
+				Code: "AA",
+				Confirmed: 0,
+				Deaths: 0,
+				Recovered: 0}})
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func parseDate(dateString string) (time.Time) {
@@ -23,37 +49,40 @@ func parseDate(dateString string) (time.Time) {
 	return date
 }
 
-func TestTotalAndDelta (t *testing.T) {
-	entries := []CountryEntry{
-		CountryEntry{
-			Timestamp: parseDate("2020-11-01"),
-			Code: "BE",
-			Name: "Belgium",
-			Confirmed: 1,
-			Recovered: 0,
-			Deaths: 0},
-		CountryEntry{
-			Timestamp: parseDate("2020-11-02"),
-			Code: "US",
-			Name: "United States",
-			Confirmed: 3,
-			Recovered: 0,
-			Deaths: 0},
-		CountryEntry{
-			Timestamp: parseDate("2020-11-02"),
-			Code: "BE",
-			Name: "Belgium",
-			Confirmed: 3,
-			Recovered: 1,
-			Deaths: 0},
-		CountryEntry{
-			Timestamp: parseDate("2020-11-04"),
-			Code: "US",
-			Name: "United States",
-			Confirmed: 10,
-			Recovered: 5,
-			Deaths: 1}}
+var (
+	testData = []CountryEntry{
+	CountryEntry{
+		Timestamp: parseDate("2020-11-01"),
+		Code: "BE",
+		Name: "Belgium",
+		Confirmed: 1,
+		Recovered: 0,
+		Deaths: 0},
+	CountryEntry{
+		Timestamp: parseDate("2020-11-02"),
+		Code: "US",
+		Name: "United States",
+		Confirmed: 3,
+		Recovered: 0,
+		Deaths: 0},
+	CountryEntry{
+		Timestamp: parseDate("2020-11-02"),
+		Code: "BE",
+		Name: "Belgium",
+		Confirmed: 3,
+		Recovered: 1,
+		Deaths: 0},
+	CountryEntry{
+		Timestamp: parseDate("2020-11-04"),
+		Code: "US",
+		Name: "United States",
+		Confirmed: 10,
+		Recovered: 5,
+		Deaths: 1}}
+)
 
+func TestTotalAndDelta (t *testing.T) {
+	entries := testData
 	allcases := GetTotalCases(entries)
 
 	assert.Equal(t, 4,         len(allcases))

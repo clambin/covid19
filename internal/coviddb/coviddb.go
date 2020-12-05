@@ -1,20 +1,25 @@
 package coviddb
 
+// TODO:
+// - create the tables etc
+// - try to init the DB on each public call
+
 import (
-	"database/sql"
 	"fmt"
 	"time"
+	"database/sql"
 
+	"github.com/lib/pq"
 	"github.com/mpvl/unique"
 	log "github.com/sirupsen/logrus"
 
-	// needed for database/sql
-	_ "github.com/lib/pq"
 )
 
 // CovidDB interface representing a Covid batabase
 type CovidDB interface {
 	List(time.Time) ([]CountryEntry, error)
+	ListLatestByCountry() (map[string]time.Time, error)
+	Add([]CountryEntry) (error)
 }
 
 // Indexes for the output arrays of GetTotalCases / GetTotalDeltas
@@ -80,6 +85,69 @@ func (db *PostgresCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
 	return entries, err
 }
 
+// ListLatestByCountry returns the timestamp of each country's last update
+func (db *PostgresCovidDB) ListLatestByCountry() (map[string]time.Time, error) {
+	entries := make(map[string]time.Time, 0)
+
+	dbh, err := sql.Open("postgres", db.psqlInfo)
+
+	if err != nil { return entries, err }
+	defer dbh.Close()
+
+	rows, err := dbh.Query(fmt.Sprintf("SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name"))
+
+	if err != nil {
+		log.Debug(err)
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			var (
+				country string
+				timestamp time.Time
+			)
+			err = rows.Scan(&country, &timestamp)
+			if err != nil {
+				break
+			} else {
+				entries[country] = timestamp
+			}
+		}
+		log.Debugf("Found %d records", len(entries))
+	}
+
+	return entries, err
+}
+
+// Add inserts all specified records in the covid19 database table
+func (db *PostgresCovidDB) Add(entries []CountryEntry) (error) {
+	dbh, err := sql.Open("postgres", db.psqlInfo)
+
+	if err != nil { return err }
+	defer dbh.Close()
+
+	txn, err := dbh.Begin()
+	if err != nil { return err }
+
+	stmt, err := txn.Prepare(pq.CopyIn("covid19", "time", "country_code", "country_name", "confirmed", "death", "recovered"))
+	if err != nil { return err }
+
+	for _, entry := range entries {
+		_, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered)
+		if err != nil { return err }
+	}
+
+	_, err = stmt.Exec()
+	if err != nil { return err }
+
+	err = stmt.Close()
+	if err != nil { return err }
+
+	err = txn.Commit()
+	if err != nil { return err }
+
+	return nil
+}
+
 // Helper code for unique.Sort()
 type timestampSlice struct { P *[]time.Time }
 
@@ -104,7 +172,7 @@ func (p timestampSlice) Truncate(n int) {
 func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 	var confirmed, recovered, deaths int64
 
-	// Helper datastructure to keep running 
+	// Helper datastructure to keep running count
 	type covidData struct {
 		Confirmed int64
 		Recovered int64

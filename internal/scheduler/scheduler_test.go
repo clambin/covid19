@@ -18,7 +18,7 @@ func TestScheduler (t *testing.T) {
 		scheduler.Register(probe, time.Duration(interval[i]) * time.Second)
 	}
 
-	assert.Equal(t, len(interval),    len(scheduler.probes))
+	assert.Equal(t, len(interval),    len(scheduler.scheduledItems))
 	scheduler.Run(true)
 	for i:=0; i<len(interval); i++ {
 		assert.Equal(t, 1, probes[i].runCount)

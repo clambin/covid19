@@ -1,9 +1,10 @@
-package covid19mon
+package main
 
 import (
 	"os"
 	"time"
 	"path/filepath"
+	"net/http"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	log     "github.com/sirupsen/logrus"
@@ -27,7 +28,7 @@ func main() {
 		pushGateway      string
 	}{}
 
-	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 grafana API server")
+	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 monitor")
 
 	a.HelpFlag.Short('h')
 	a.Flag("debug", "Log debug messages").BoolVar(&cfg.debug)
@@ -51,8 +52,9 @@ func main() {
 	}
 
 	db := coviddb.Create(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
+	apiClient := covidprobe.NewCovidAPIClient(&http.Client{}, cfg.apiKey)
 
-	probe := covidprobe.NewCovidProbe(db, cfg.apiKey, cfg.pushGateway)
+	probe := covidprobe.NewCovidProbe(apiClient, db, cfg.pushGateway)
 	scheduler := scheduler.NewScheduler()
 	scheduler.Register(probe, time.Duration(cfg.interval) * time.Second)
 	scheduler.Run(cfg.once)

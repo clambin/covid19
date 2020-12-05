@@ -5,32 +5,33 @@ import (
 	log     "github.com/sirupsen/logrus"
 )
 
-// Scheduler maintains a list of probes to be scheduled at configured intervals
+// Scheduler maintains a list of scheduledItems to be run at configured intervals
 type Scheduler struct {
-	probes []*scheduled
+	scheduledItems []*scheduled
 }
 
 // NewScheduler creates a scheduler
 func NewScheduler () *Scheduler {
-	return &Scheduler{probes: make([]*scheduled, 0)}
+	return &Scheduler{scheduledItems: make([]*scheduled, 0)}
 }
 
 // Register a new probe
 func (scheduler *Scheduler) Register(probe Runnable, interval time.Duration) {
 	scheduled := newScheduled(probe, interval)
-	scheduler.probes = append(scheduler.probes, scheduled)
+	scheduler.scheduledItems = append(scheduler.scheduledItems, scheduled)
 }
 
-// Run all registered probes
+// Run all registered scheduledItems
 func (scheduler *Scheduler) Run(once bool) {
 	for {
 		sleepTime, _ := time.ParseDuration("5m")
-		for i, probe := range scheduler.probes {
-			shouldRun, waitTime := probe.shouldRun()
-			log.Debugf("Probe %d: shouldRun: %v, waitTime: %f", i, shouldRun, waitTime.Seconds())
+		for i, scheduledItem := range scheduler.scheduledItems {
+			shouldRun, waitTime := scheduledItem.shouldRun()
+			log.Debugf("scheduledItem %d: shouldRun: %v, waitTime: %f", i, shouldRun, waitTime.Seconds())
 			if shouldRun {
-				probe.Run()
-			} else if waitTime < sleepTime {
+				scheduledItem.Run()
+			}
+			if waitTime < sleepTime {
 				sleepTime = waitTime
 			}
 		}

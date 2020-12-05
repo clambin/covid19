@@ -95,8 +95,6 @@ func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, er
 		var params RequestParameters
 		decoder := json.NewDecoder(body)
 		err := decoder.Decode(&params)
-		if err == nil {
-		}
 		return &params, err
 }
 

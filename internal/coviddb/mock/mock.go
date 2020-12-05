@@ -33,3 +33,24 @@ func (db *CovidDB) List(endDate time.Time) ([]coviddb.CountryEntry, error) {
 	return entries, nil
 }
 
+// ListLatestByCountry lists the last date per country
+func (db *CovidDB) ListLatestByCountry()  (map[string]time.Time, error) {
+	entries := make(map[string]time.Time, 0)
+
+	for _, entry := range db.data {
+		record, ok := entries[entry.Name]
+		if ok == false || record.Before(entry.Timestamp) {
+			entries[entry.Name]  = entry.Timestamp
+		}
+	}
+
+	return entries, nil
+}
+
+// Add inserts all specified records in the covid19 database table
+func (db *CovidDB) Add(entries []coviddb.CountryEntry)  (error) {
+	for _, entry := range entries {
+		db.data = append(db.data, entry)
+	}
+	return nil
+}

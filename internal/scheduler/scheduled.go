@@ -11,28 +11,27 @@ type Runnable interface {
 
 // scheduled contains a scheduled probe & its configuration data
 type scheduled struct {
-	probe    Runnable
+	task     Runnable
 	interval time.Duration
 	nextRun  time.Time
 }
 
-func newScheduled (p Runnable, interval time.Duration)  (*scheduled) {
-	return &scheduled{probe: p, interval: interval}
+func newScheduled (task Runnable, interval time.Duration)  (*scheduled) {
+	return &scheduled{task: task, interval: interval}
 }
 
-// run a probe
-func (probe *scheduled) Run() error {
-	err := probe.probe.Run()
-	probe.nextRun = time.Now().Add(probe.interval)
+// run a scheduled task
+func (scheduledItem *scheduled) Run() error {
+	err := scheduledItem.task.Run()
+	scheduledItem.nextRun = time.Now().Add(scheduledItem.interval)
 	return err
 }
 
 // shouldRun checks if a probe be run
-func (probe *scheduled) shouldRun() (bool, time.Duration) {
-	if time.Now().After(probe.nextRun) {
-		return true, 0
-	} else {
-		return false, probe.nextRun.Sub(time.Now())
+func (scheduledItem *scheduled) shouldRun() (bool, time.Duration) {
+	if time.Now().After(scheduledItem.nextRun) {
+		return true, scheduledItem.interval
 	}
+	return false, scheduledItem.nextRun.Sub(time.Now())
 }
 
