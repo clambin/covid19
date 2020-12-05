@@ -54,6 +54,6 @@ func main() {
 
 	db := coviddb.Create(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
 	handler := apiserver.CreateCovidAPIHandler(db)
-	server := apiserver.CreateGrafanaAPIServer(handler)
+	server := apiserver.CreateGrafanaAPIServer(handler, cfg.port)
 	server.Run()
 }

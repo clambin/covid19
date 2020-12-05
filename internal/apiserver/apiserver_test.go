@@ -20,7 +20,7 @@ func TestServerHello(t *testing.T) {
 		t.Fatal(err)
 	}
 	recorder := httptest.NewRecorder()
-	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(nil))
+	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(nil), -1)
 	handler := http.HandlerFunc(server.hello)
 
 	handler.ServeHTTP(recorder, req)
@@ -36,7 +36,7 @@ func TestHandlerSearch(t *testing.T) {
 		t.Fatal(err)
 	}
 	recorder := httptest.NewRecorder()
-	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(nil))
+	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(nil), -1)
 	handler := http.HandlerFunc(server.search)
 
 	handler.ServeHTTP(recorder, req)
@@ -132,7 +132,7 @@ func TestHandlerQuery(t *testing.T) {
 	// log.SetLevel(log.DebugLevel)
 
 	recorder := httptest.NewRecorder()
-	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(db))
+	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(db), -1)
 	handler  := http.HandlerFunc(server.query)
 
 	handler.ServeHTTP(recorder, req)
@@ -156,7 +156,7 @@ func TestHandlerQueryBadRequest(t *testing.T) {
 	}
 
 	recorder := httptest.NewRecorder()
-	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(db))
+	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(db), -1)
 	handler  := http.HandlerFunc(server.query)
 
 	handler.ServeHTTP(recorder, req)
@@ -178,7 +178,7 @@ func TestHandlerQueryRequestError(t *testing.T) {
 	}
 
 	recorder := httptest.NewRecorder()
-	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(nil))
+	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(nil), -1)
 	handler  := http.HandlerFunc(server.query)
 
 	handler.ServeHTTP(recorder, req)
@@ -230,7 +230,7 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		b.Fatal(err)
 	}
 	recorder := httptest.NewRecorder()
-	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(db))
+	server   := CreateGrafanaAPIServer(CreateCovidAPIHandler(db), -1)
 	handler  := http.HandlerFunc(server.query)
 
 	// Run the benchmark

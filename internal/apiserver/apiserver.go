@@ -28,11 +28,12 @@ type GrafanaAPIHandler interface{
 // GrafanaAPIServer implements a generic frameworks for the Grafana simpleJson API datasource 
 type GrafanaAPIServer struct {
 	apihandler GrafanaAPIHandler
+	port       int
 }
 
 // CreateGrafanaAPIServer creates a GrafanaAPIServer object
-func CreateGrafanaAPIServer(apihandler GrafanaAPIHandler) (*GrafanaAPIServer) {
-	return &GrafanaAPIServer{apihandler: apihandler}
+func CreateGrafanaAPIServer(apihandler GrafanaAPIHandler, port int) (*GrafanaAPIServer) {
+	return &GrafanaAPIServer{apihandler: apihandler, port: port}
 }
 
 // Prometheus metrics
@@ -62,8 +63,7 @@ func (apiserver *GrafanaAPIServer) Run() {
 		r.HandleFunc("/search", apiserver.search).Methods("POST")
 		r.HandleFunc("/query", apiserver.query).Methods("POST")
 
-		// TODO: use cfg.port
-		http.ListenAndServe(":5000", r)
+		http.ListenAndServe(fmt.Sprintf(":%d", apiserver.port), r)
 }
 
 // Implement three endpoints. /search and /query are used by Grafana's simple json API datasource

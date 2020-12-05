@@ -1,9 +1,5 @@
 package coviddb
 
-// TODO:
-// - create the tables etc
-// - try to init the DB on each public call
-
 import (
 	"fmt"
 	"time"
@@ -35,7 +31,8 @@ const (
 
 // PostgresCovidDB implementation of CovidDB
 type PostgresCovidDB struct {
-	psqlInfo  string
+	psqlInfo    string
+	initialized bool
 }
 
 // Create a PostgresCovidDB object
@@ -43,7 +40,7 @@ func Create(host string, port int, database string, user string, password string
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
 
-	return &PostgresCovidDB{psqlInfo: psqlInfo}
+	return &PostgresCovidDB{psqlInfo: psqlInfo, initialized: false}
 }
 
 // CountryEntry represents one row in the Covid DB
@@ -60,14 +57,18 @@ type CountryEntry struct {
 func (db *PostgresCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
+	if err := db.initializeDB(); err != nil {
+		return entries, err
+	}
+
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
 	if err == nil {
 		defer dbh.Close()
 
 		rows, err := dbh.Query(fmt.Sprintf(
-        	"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
-        	endDate.Format("2006-01-02 15:04:05")))
+			"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
+			endDate.Format("2006-01-02 15:04:05")))
 
 		if err == nil {
 			defer rows.Close()
@@ -87,6 +88,10 @@ func (db *PostgresCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
 // ListLatestByCountry returns the timestamp of each country's last update
 func (db *PostgresCovidDB) ListLatestByCountry() (map[string]time.Time, error) {
 	entries := make(map[string]time.Time, 0)
+
+	if err := db.initializeDB(); err != nil {
+		return entries, err
+	}
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
@@ -115,6 +120,10 @@ func (db *PostgresCovidDB) ListLatestByCountry() (map[string]time.Time, error) {
 
 // Add inserts all specified records in the covid19 database table
 func (db *PostgresCovidDB) Add(entries []CountryEntry) (error) {
+	if err := db.initializeDB(); err != nil {
+		return err
+	}
+
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
 	if err != nil { return err }
@@ -225,3 +234,34 @@ func GetTotalDeltas (rows [][]int64) ([][]int64) {
 	return deltas
 }
 
+// initializeDB created the required tables
+func (db *PostgresCovidDB) initializeDB() (error) {
+	if db.initialized {
+		return nil
+	}
+
+	dbh, err := sql.Open("postgres", db.psqlInfo)
+
+	if err != nil { return err }
+	defer dbh.Close()
+
+	_, err = dbh.Exec(`
+		CREATE TABLE IF NOT EXISTS covid19 (
+			time TIMESTAMP WITHOUT TIME ZONE,
+			country_code TEXT,
+			country_name TEXT,
+			confirmed BIGINT,
+			death BIGINT,
+			recovered BIGINT
+		);
+		CREATE INDEX IF NOT EXISTS idx_covid_country_name ON covid19(country_name);
+		CREATE INDEX IF NOT EXISTS idx_covid_country_code ON covid19(country_code);
+		CREATE INDEX IF NOT EXISTS idx_covid_time ON covid19(time);
+	`)
+
+	if err == nil {
+		db.initialized = true
+	}
+
+	return err
+}

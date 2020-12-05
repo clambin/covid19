@@ -4,7 +4,6 @@ import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 
-	// "covid19/internal/coviddb"
 	"covid19/internal/coviddb/mock"
 )
 
@@ -20,18 +19,30 @@ func TestCovidProbeWhite(t *testing.T) {
 	newRecords, err := probe.findNewCountryStats(countryStats)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, 2, len(newRecords))
-	assert.Equal(t, true, newRecords[0].Timestamp.Equal(lastUpdate))
-	assert.Equal(t, "A", newRecords[0].Name)
-	assert.Equal(t, "AA", newRecords[0].Code)
-	assert.Equal(t, int64(3), newRecords[0].Confirmed)
-	assert.Equal(t, int64(2), newRecords[0].Deaths)
-	assert.Equal(t, int64(1), newRecords[0].Recovered)
-	assert.Equal(t, true, newRecords[1].Timestamp.Equal(lastUpdate))
-	assert.Equal(t, "B", newRecords[1].Name)
-	assert.Equal(t, "BB", newRecords[1].Code)
-	assert.Equal(t, int64(6), newRecords[1].Confirmed)
-	assert.Equal(t, int64(5), newRecords[1].Deaths)
-	assert.Equal(t, int64(4), newRecords[1].Recovered)
+
+	// go doesn't guarantee we will get our records in the expected order
+	indices := []struct{ name string; index int}{
+		{ name: "A", index: 0, },
+		{ name: "B", index: 1, }}
+
+	if newRecords[0].Name == "B" {
+		indices[0].index = 1
+		indices[1].index = 0
+	}
+
+	assert.Equal(t, true,     newRecords[indices[0].index].Timestamp.Equal(lastUpdate))
+	assert.Equal(t, "A",      newRecords[indices[0].index].Name)
+	assert.Equal(t, "AA",     newRecords[indices[0].index].Code)
+	assert.Equal(t, int64(3), newRecords[indices[0].index].Confirmed)
+	assert.Equal(t, int64(2), newRecords[indices[0].index].Deaths)
+	assert.Equal(t, int64(1), newRecords[indices[0].index].Recovered)
+
+	assert.Equal(t, true,     newRecords[indices[1].index].Timestamp.Equal(lastUpdate))
+	assert.Equal(t, "B",      newRecords[indices[1].index].Name)
+	assert.Equal(t, "BB",     newRecords[indices[1].index].Code)
+	assert.Equal(t, int64(6), newRecords[indices[1].index].Confirmed)
+	assert.Equal(t, int64(5), newRecords[indices[1].index].Deaths)
+	assert.Equal(t, int64(4), newRecords[indices[1].index].Recovered)
 
 	return
 }
