@@ -7,6 +7,18 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+       options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
@@ -20,6 +32,11 @@ jobs:
     # TODO: run postgres for DB tests
     - name: test
       run: |
+        export pg_host=postgres
+        export pg_port=5432
+        export pg_db=postgres
+        export pg_user=postgres
+        export pg_password=postgres
         go test ./... -race -coverprofile=coverage.txt -covermode=atomic
     - uses: codecov/codecov-action@v1
       with:
@@ -47,7 +64,7 @@ jobs:
     - uses: docker/build-push-action@v2
       with:
         context: .
-        file: ./docker/Dockerfile-covid19mon
+        file: ./build/Dockerfile-covid19mon
         platforms: linux/amd64,linux/arm/v7
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.covid19mon_meta.outputs.tags }}
@@ -64,7 +81,7 @@ jobs:
     - uses: docker/build-push-action@v2
       with:
         context: .
-        file: ./docker/Dockerfile-covid19api
+        file: ./build/Dockerfile-covid19api
         platforms: linux/amd64,linux/arm/v7
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.covid19api_meta.outputs.tags }}
