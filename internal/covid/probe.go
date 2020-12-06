@@ -55,10 +55,7 @@ func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats)
 	if err != nil { return result, err }
 
 	for country, stats := range newCountryStats {
-		// FIXME ???
-		// lastUpdate, ok := lastDBEntries[country]
-		lastUpdate := lastDBEntries[country]
-		ok := true
+		lastUpdate, ok := lastDBEntries[country]
 		if ok == false || stats.LastUpdate.After(lastUpdate) {
 			code, ok := countryCodes[country]
 			if ok == false {

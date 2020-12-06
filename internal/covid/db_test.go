@@ -1,8 +1,6 @@
 package covid_test
 
 import (
-	"fmt"
-
 	"os"
 	"strconv"
 	"time"
@@ -59,12 +57,9 @@ func TestDB(t *testing.T) {
 
 	latest, err := db.ListLatestByCountry()
 	assert.Nil(t, err)
-	t.Log(latest)
 	latestTime, found := latest["???"]
 	assert.True(t, found)
 	assert.True(t, latestTime.Equal(now))
-	fmt.Println(now)
-	fmt.Println(latestTime)
 
 
 	allEntries, err := db.List(time.Now())
