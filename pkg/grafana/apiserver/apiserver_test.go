@@ -9,7 +9,6 @@ import(
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	log     "github.com/sirupsen/logrus"
 )
 
 func TestHello(t *testing.T) {
@@ -158,9 +157,6 @@ func TestParseRequest(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, time.Date(2019, time.December,  31, 23, 59, 59, 0, time.UTC).Equal(params.Range.From))
 	assert.True(t, time.Date(2020, time.December,  31, 23, 59, 59, 0, time.UTC).Equal(params.Range.To))
-	if err == nil {
-		log.Printf("%v", params.Targets)
-	}
 	for _, target := range targets {
 		found := false
 		for _, parsedTarget := range params.Targets {

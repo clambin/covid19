@@ -82,19 +82,17 @@ func (apiserver *APIServer) search(w http.ResponseWriter, req *http.Request) {
 }
 
 func parseRequest(body io.Reader, validTargets []string) (*APIQueryRequest, error) {
-	buf, bodyErr := ioutil.ReadAll(body)
-	if bodyErr != nil {
-		log.Warningf("bodyErr %s", bodyErr.Error())
-		return nil, bodyErr
-	}
-	rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
-	rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
-	log.Debugf("BODY: %q", rdr1)
-	body = rdr2
-
 	var params APIQueryRequest
-	decoder := json.NewDecoder(body)
-	err := decoder.Decode(&params)
+	buf, err := ioutil.ReadAll(body)
+	if err == nil {
+		rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
+		rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
+		log.Debugf("BODY: %q", rdr1)
+		body = rdr2
+
+		decoder := json.NewDecoder(body)
+		err = decoder.Decode(&params)
+	}
 	return &params, err
 }
 
