@@ -62,6 +62,7 @@ func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 			for rows.Next() {
 				var entry CountryEntry
 				err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
+				entry.Timestamp = entry.Timestamp.UTC()
 				if err != nil { break }
 				entries = append(entries, entry)
 			}
@@ -96,7 +97,7 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 				)
 				err = rows.Scan(&country, &timestamp)
 				if err != nil { break }
-				entries[country] = timestamp
+				entries[country] = timestamp.UTC()
 			}
 			log.Debugf("Found %d records", len(entries))
 		}
