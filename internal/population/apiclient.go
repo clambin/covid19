@@ -15,7 +15,7 @@ type APIClient struct {
 	apiKey  string
 }
 
-// NewCovidAPIClient creates a new Covid API Client
+// NewAPIClient creates a new Covid API Client
 func NewAPIClient(client *http.Client, apiKey string) (*APIClient) {
 	return &APIClient{client: client, apiKey: apiKey}
 }

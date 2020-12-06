@@ -1,4 +1,4 @@
-package covidprobe
+package covid
 
 var (
 	countryCodes = map[string]string{

@@ -1,4 +1,4 @@
-package covidprobe
+package covid_test
 
 import (
 	"time"
@@ -6,34 +6,33 @@ import (
 	"bytes"
 	"io/ioutil"
 
-	"covid19/internal/coviddb"
-
+	"covid19/internal/covid"
 )
 
 var (
-	testDBData = []coviddb.CountryEntry{
-	coviddb.CountryEntry{
+	testDBData = []covid.CountryEntry{
+	covid.CountryEntry{
 		Timestamp: parseDate("2020-11-01"),
 		Code: "A",
 		Name: "A",
 		Confirmed: 1,
 		Recovered: 0,
 		Deaths: 0},
-	coviddb.CountryEntry{
+	covid.CountryEntry{
 		Timestamp: parseDate("2020-11-02"),
 		Code: "B",
 		Name: "B",
 		Confirmed: 3,
 		Recovered: 0,
 		Deaths: 0},
-	coviddb.CountryEntry{
+	covid.CountryEntry{
 		Timestamp: parseDate("2020-11-02"),
 		Code: "A",
 		Name: "A",
 		Confirmed: 3,
 		Recovered: 1,
 		Deaths: 0},
-	coviddb.CountryEntry{
+	covid.CountryEntry{
 		Timestamp: parseDate("2020-11-04"),
 		Code: "B",
 		Name: "B",
@@ -110,11 +109,9 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 	}
 }
 
-// makeClient returns a stubbed CovidAPIClient
-func makeClient() (*CovidAPIClient) {
+// makeClient returns a stubbed covid.APIClient
+func makeClient() (*covid.APIClient) {
 	client := NewTestClient(func(req *http.Request) *http.Response {
-	// Test request parameters
-	// equals(t, req.URL.String(), "http://example.com/some/path")
 		return &http.Response{
 			StatusCode: 200,
 			Header:	 make(http.Header),
@@ -122,6 +119,6 @@ func makeClient() (*CovidAPIClient) {
 		}
 	})
 
-	return NewCovidAPIClient(client, "")
+	return covid.NewAPIClient(client, "")
 }
 

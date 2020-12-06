@@ -11,10 +11,8 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	log     "github.com/sirupsen/logrus"
 
-	"covid19/internal/coviddb"
+	"covid19/internal/covid"
 	"covid19/internal/scheduler"
-	"covid19/internal/covidprobe"
-	"covid19/internal/pushgateway"
 	"covid19/internal/population"
 )
 
@@ -67,10 +65,10 @@ func main() {
 	scheduler := scheduler.NewScheduler()
 
 	// Add the covid probe
-	covidProbe := covidprobe.NewCovidProbe(
-		covidprobe.NewCovidAPIClient(&http.Client{}, cfg.apiKey),
-		coviddb.Create(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
-		pushgateway.NewPushGateway(cfg.pushGateway))
+	covidProbe := covid.NewCovidProbe(
+		covid.NewAPIClient(&http.Client{}, cfg.apiKey),
+		covid.NewPGCovidDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
+		covid.NewPushGateway(cfg.pushGateway))
 	scheduler.Register(covidProbe, time.Duration(cfg.interval) * time.Second)
 
 	// Add the population probe

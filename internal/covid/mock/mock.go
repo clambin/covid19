@@ -5,22 +5,22 @@ import (
 
 	log     "github.com/sirupsen/logrus"
 
-	"covid19/internal/coviddb"
+	"covid19/internal/covid"
 )
 
 // CovidDB mock database used for unittesting 
 type CovidDB struct {
-	data []coviddb.CountryEntry
+	data []covid.CountryEntry
 }
 
 // Create a mock CovidDB
-func Create(data []coviddb.CountryEntry) (*CovidDB) {
+func Create(data []covid.CountryEntry) (*CovidDB) {
 	return &CovidDB{data: data}
 }
 
 // List the records in the DB up to enddate
-func (db *CovidDB) List(endDate time.Time) ([]coviddb.CountryEntry, error) {
-	entries := make([]coviddb.CountryEntry, 0)
+func (db *CovidDB) List(endDate time.Time) ([]covid.CountryEntry, error) {
+	entries := make([]covid.CountryEntry, 0)
 
 	for _, entry := range db.data {
 		if entry.Timestamp.Before(endDate) {
@@ -48,7 +48,7 @@ func (db *CovidDB) ListLatestByCountry()  (map[string]time.Time, error) {
 }
 
 // Add inserts all specified records in the covid19 database table
-func (db *CovidDB) Add(entries []coviddb.CountryEntry)  (error) {
+func (db *CovidDB) Add(entries []covid.CountryEntry)  (error) {
 	for _, entry := range entries {
 		db.data = append(db.data, entry)
 	}

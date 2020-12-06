@@ -10,8 +10,8 @@ import(
 	"github.com/stretchr/testify/assert"
 	log     "github.com/sirupsen/logrus"
 
-	"covid19/internal/coviddb"
-	"covid19/internal/coviddb/mock"
+	"covid19/internal/covid"
+	"covid19/internal/covid/mock"
 )
 
 func TestServerHello(t *testing.T) {
@@ -76,29 +76,29 @@ func TestParseRequest(t *testing.T) {
 }
 
 func TestHandlerQuery(t *testing.T) {
-	entries := []coviddb.CountryEntry{
-		coviddb.CountryEntry{
+	entries := []covid.CountryEntry{
+		covid.CountryEntry{
 			Timestamp: parseDate("2020-11-01T00:00:00.000Z"),
 			Code: "BE",
 			Name: "Belgium",
 			Confirmed: 1,
 			Recovered: 0,
 			Deaths: 0},
-		coviddb.CountryEntry{
+		covid.CountryEntry{
 			Timestamp: parseDate("2020-11-02T00:00:00.000Z"),
 			Code: "US",
 			Name: "United States",
 			Confirmed: 3,
 			Recovered: 0,
 			Deaths: 0},
-		coviddb.CountryEntry{
+		covid.CountryEntry{
 			Timestamp: parseDate("2020-11-02T00:00:00.000Z"),
 			Code: "BE",
 			Name: "Belgium",
 			Confirmed: 3,
 			Recovered: 1,
 			Deaths: 0},
-		coviddb.CountryEntry{
+		covid.CountryEntry{
 			Timestamp: parseDate("2020-11-04T00:00:00.000Z"),
 			Code: "US",
 			Name: "United States",
@@ -142,7 +142,7 @@ func TestHandlerQuery(t *testing.T) {
 }
 
 func TestHandlerQueryBadRequest(t *testing.T) {
-	entries := []coviddb.CountryEntry{}
+	entries := []covid.CountryEntry{}
 	db := mock.Create(entries)
 
 	body := []byte(`{
@@ -200,10 +200,10 @@ func BenchmarkHandlerQuery(b *testing.B) {
 			country {code:"NL", name:"Netherlands"},
 			country {code:"UK", name:"United Kingdom"}}
 	timestamp := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
-	entries := make([]coviddb.CountryEntry, 0)
+	entries := make([]covid.CountryEntry, 0)
 	for i:=0; i<365; i++ {
 		for _, country := range countries {
-				entries = append(entries, coviddb.CountryEntry{Timestamp: timestamp, Code: country.code, Name: country.name, Confirmed: int64(i), Recovered: 0, Deaths: 0})
+				entries = append(entries, covid.CountryEntry{Timestamp: timestamp, Code: country.code, Name: country.name, Confirmed: int64(i), Recovered: 0, Deaths: 0})
 		}
 		timestamp = timestamp.Add(24 * time.Hour)
 	}

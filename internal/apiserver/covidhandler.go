@@ -5,16 +5,16 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"covid19/internal/coviddb"
+	"covid19/internal/covid"
 )
 
 // CovidAPIHandler implements by business logic for GrafanaAPIHandler
 type CovidAPIHandler struct {
-	db coviddb.CovidDB
+	db covid.CovidDB
 }
 
 // CreateCovidAPIHandler creates a CovidAPIHandler object
-func CreateCovidAPIHandler(db coviddb.CovidDB) (*CovidAPIHandler) {
+func CreateCovidAPIHandler(db covid.CovidDB) (*CovidAPIHandler) {
 	return &CovidAPIHandler{db: db}
 }
 
@@ -56,28 +56,28 @@ func (apihandler *CovidAPIHandler) query(params RequestParameters) ([]series, er
 }
 
 // build the requested targets
-func buildTargets(entries []coviddb.CountryEntry, targets []struct {Target string}) ([]series) {
+func buildTargets(entries []covid.CountryEntry, targets []struct {Target string}) ([]series) {
 	seriesList := make([]series, 0)
-	totalcases  := coviddb.GetTotalCases(entries)
+	totalcases  := covid.GetTotalCases(entries)
 
 	for _, target := range targets {
 		switch target.Target {
 		case "confirmed":
-			seriesList = append(seriesList, series{Target: target.Target, Datapoints: totalcases[coviddb.CONFIRMED]})
+			seriesList = append(seriesList, series{Target: target.Target, Datapoints: totalcases[covid.CONFIRMED]})
 		case "confirmed-delta":
-			seriesList = append(seriesList, series{Target: target.Target, Datapoints: coviddb.GetTotalDeltas(totalcases[coviddb.CONFIRMED])})
+			seriesList = append(seriesList, series{Target: target.Target, Datapoints: covid.GetTotalDeltas(totalcases[covid.CONFIRMED])})
 		case "recovered":
-			seriesList = append(seriesList, series{Target: target.Target, Datapoints: totalcases[coviddb.RECOVERED]})
+			seriesList = append(seriesList, series{Target: target.Target, Datapoints: totalcases[covid.RECOVERED]})
 		case "recovered-delta":
-			seriesList = append(seriesList, series{Target: target.Target, Datapoints: coviddb.GetTotalDeltas(totalcases[coviddb.RECOVERED])})
+			seriesList = append(seriesList, series{Target: target.Target, Datapoints: covid.GetTotalDeltas(totalcases[covid.RECOVERED])})
 		case "death":
-			seriesList = append(seriesList, series{Target: target.Target, Datapoints: totalcases[coviddb.DEATHS]})
+			seriesList = append(seriesList, series{Target: target.Target, Datapoints: totalcases[covid.DEATHS]})
 		case "death-delta":
-			seriesList = append(seriesList, series{Target: target.Target, Datapoints: coviddb.GetTotalDeltas(totalcases[coviddb.DEATHS])})
+			seriesList = append(seriesList, series{Target: target.Target, Datapoints: covid.GetTotalDeltas(totalcases[covid.DEATHS])})
 		case "active":
-			seriesList = append(seriesList, series{Target: target.Target, Datapoints: totalcases[coviddb.ACTIVE]})
+			seriesList = append(seriesList, series{Target: target.Target, Datapoints: totalcases[covid.ACTIVE]})
 		case "active-delta":
-			seriesList = append(seriesList, series{Target: target.Target, Datapoints: coviddb.GetTotalDeltas(totalcases[coviddb.ACTIVE])})
+			seriesList = append(seriesList, series{Target: target.Target, Datapoints: covid.GetTotalDeltas(totalcases[covid.ACTIVE])})
 		default:
 			log.Warningf("dropping unsupported target: %s", target.Target)
 		}
