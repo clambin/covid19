@@ -33,7 +33,10 @@ func getdbenv() (map[string]string, bool) {
 
 func TestDB(t *testing.T) {
 	values, ok := getdbenv()
-	if ok == false { return }
+	if ok == false {
+		t.Log("Could not find all DB env variables. Skipping this test")
+		return
+	}
 
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.Nil(t, err)

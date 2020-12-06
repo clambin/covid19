@@ -34,10 +34,10 @@ jobs:
       run: |
         export pg_host=postgres
         export pg_port=5432
-        export pg_db=postgres
+        export pg_database=postgres
         export pg_user=postgres
         export pg_password=postgres
-        go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+        go test ./... -v -race -coverprofile=coverage.txt -covermode=atomic
     - uses: codecov/codecov-action@v1
       with:
         file: coverage.txt
