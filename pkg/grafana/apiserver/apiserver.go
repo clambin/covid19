@@ -32,7 +32,7 @@ func Create(apihandler APIHandler, port int) (*APIServer) {
 // APIServer can be limited to providing the generic search/query framework
 type APIHandler interface{
 	Search()                ([]string)
-	Query(*APIQueryRequest) (*APIQueryResponse, error)
+	Query(*APIQueryRequest) ([]APIQueryResponse, error)
 }
 
 // APIQueryRequest contains the request parameters to the API's 'query' method
@@ -47,8 +47,8 @@ type APIQueryRequest struct {
 
 // APIQueryResponse contains the response of the API's 'query' method
 type APIQueryResponse struct {
-    Target string           `json:"target"`
-    Datapoints [][]int64    `json:"datapoints"`
+    Target string            `json:"target"`
+    Datapoints [][2]int64    `json:"datapoints"`
 }
 // Run the API Server
 func (apiserver *APIServer) Run() {
