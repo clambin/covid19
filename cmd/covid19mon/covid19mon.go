@@ -76,7 +76,7 @@ func main() {
 	// Add the population probe
 	populationProbe := population.Create(
 		population.NewAPIClient(&http.Client{}, cfg.apiKey),
-		population.NewPostgresPopulationDB(
+		population.NewPGPopulationDB(
 			cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword))
 	scheduler.Register(populationProbe, time.Duration(cfg.interval) * time.Second)
 

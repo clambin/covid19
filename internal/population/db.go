@@ -18,21 +18,21 @@ type PopulationDB interface {
 }
 
 // PostgresDB implements DB in Postgres
-type PostgresPopulationDB struct {
+type PGPopulationDB struct {
 	psqlInfo    string
 	initialized bool
 }
 
 // NewPostgresDB creates a new PostgresDB object
-func NewPostgresPopulationDB(host string, port int, database string, user string, password string) (*PostgresPopulationDB) {
+func NewPGPopulationDB(host string, port int, database string, user string, password string) (*PGPopulationDB) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
 
-	return &PostgresPopulationDB{psqlInfo: psqlInfo, initialized: false}
+	return &PGPopulationDB{psqlInfo: psqlInfo, initialized: false}
 }
 
 // List all records from the population table
-func (db *PostgresPopulationDB) List() (map[string]int64, error) {
+func (db *PGPopulationDB) List() (map[string]int64, error) {
 	entries := make(map[string]int64, 0)
 
 	if err := db.initializeDB(); err != nil {
@@ -72,7 +72,7 @@ func ReplaceSQL(old, searchPattern string) string {
 }
 
 // Add all specified records in the population database table
-func (db *PostgresPopulationDB) Add(entries map[string]int64) (error) {
+func (db *PGPopulationDB) Add(entries map[string]int64) (error) {
 	if err := db.initializeDB(); err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (db *PostgresPopulationDB) Add(entries map[string]int64) (error) {
 }
 
 // initializeDB creates the required tables
-func (db *PostgresPopulationDB) initializeDB() (error) {
+func (db *PGPopulationDB) initializeDB() (error) {
 	if db.initialized {
 		return nil
 	}

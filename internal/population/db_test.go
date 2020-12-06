@@ -35,7 +35,7 @@ func TestDB(t *testing.T) {
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.Nil(t, err)
 
-	db := NewPostgresPopulationDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	db := NewPGPopulationDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
 	assert.NotNil(t, db)
 
 	_, err = db.List()
