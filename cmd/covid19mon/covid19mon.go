@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"net/http"
 
+	"runtime/pprof"
+
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	log     "github.com/sirupsen/logrus"
 
@@ -13,6 +15,7 @@ import (
 	"covid19/internal/scheduler"
 	"covid19/internal/covidprobe"
 	"covid19/internal/pushgateway"
+	"covid19/internal/population"
 )
 
 func main() {
@@ -27,6 +30,7 @@ func main() {
 		postgresPassword string
 		apiKey           string
 		pushGateway      string
+		profileName      string
 	}{}
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 monitor")
@@ -42,6 +46,7 @@ func main() {
 	a.Flag("postgres-password", "Postgres DB Password").StringVar(&cfg.postgresPassword)
 	a.Flag("api-key", "API Key for RapidAPI Covid19 API").StringVar(&cfg.apiKey)
 	a.Flag("pushgateway", "URL of Prometheus pushgateway").StringVar(&cfg.pushGateway)
+	a.Flag("profile", "Filename for go profiler").StringVar(&cfg.profileName)
 
 	if _, err := a.Parse(os.Args[1:]); err != nil {
 		a.Usage(os.Args[1:])
@@ -52,12 +57,29 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	db := coviddb.Create(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
-	apiClient := covidprobe.NewCovidAPIClient(&http.Client{}, cfg.apiKey)
-	pushGateway := pushgateway.NewPushGateway(cfg.pushGateway)
+	if cfg.profileName != "" {
+		f, ferr := os.Create(cfg.profileName)
+		if ferr != nil { log.Fatal(ferr) }
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
-	probe := covidprobe.NewCovidProbe(apiClient, db, pushGateway)
 	scheduler := scheduler.NewScheduler()
-	scheduler.Register(probe, time.Duration(cfg.interval) * time.Second)
+
+	// Add the covid probe
+	covidProbe := covidprobe.NewCovidProbe(
+		covidprobe.NewCovidAPIClient(&http.Client{}, cfg.apiKey),
+		coviddb.Create(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
+		pushgateway.NewPushGateway(cfg.pushGateway))
+	scheduler.Register(covidProbe, time.Duration(cfg.interval) * time.Second)
+
+	// Add the population probe
+	populationProbe := population.Create(
+		population.NewAPIClient(&http.Client{}, cfg.apiKey),
+		population.NewPostgresPopulationDB(
+			cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword))
+	scheduler.Register(populationProbe, time.Duration(cfg.interval) * time.Second)
+
+	// Go time
 	scheduler.Run(cfg.once)
 }

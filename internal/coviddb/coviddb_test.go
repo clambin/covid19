@@ -1,48 +1,10 @@
 package coviddb
 
 import(
-	"fmt"
 	"time"
 	"testing"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestDBConnection (t *testing.T) {
-	db := Create("192.168.0.11", 31000, "cicd", "cicd", "its4cicd")
-
-	entries, err := db.List(time.Now())
-
-	if err != nil {
-		t.Error(err)
-	} else if len(entries) == 0 {
-		t.Error("No entries found")
-	}
-
-	lastEntries, err := db.ListLatestByCountry()
-
-	if err != nil {
-		t.Error(err)
-	} else if len(entries) == 0 {
-		t.Error("No entries found")
-	}
-	if beEntry, ok := lastEntries["Belgium"]; ok == false {
-		t.Error("No data for Belgium?")
-	} else {
-		fmt.Println(beEntry)
-	}
-
-	err = db.Add([]CountryEntry{
-			CountryEntry{
-				Timestamp: time.Now(),
-				Name: "A",
-				Code: "AA",
-				Confirmed: 0,
-				Deaths: 0,
-				Recovered: 0}})
-	if err != nil {
-		t.Error(err)
-	}
-}
 
 func parseDate(dateString string) (time.Time) {
 	date, _ := time.Parse("2006-01-02", dateString)
