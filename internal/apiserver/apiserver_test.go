@@ -47,11 +47,20 @@ func TestHandlerSearch(t *testing.T) {
 }
 
 func TestParseRequest(t *testing.T) {
-	// validTargets := []string{"confirmed", "confirmed-delta"}
-	body := []byte(`{
+	body := []byte(`
+		{
+			"app": "dashboard",
+			"requestId": "Q111",
+			"timezone": "browser",
+			"panelId": 23763571993,
+			"dashboardId": 160,
 	 		"range": { 
-	 			"from": "2020-01-01T00:00:00.000Z", 
-				"to": "2020-12-31T23:59:59.000Z"
+	 			"from": "2019-12-31T23:59:59.000Z", 
+				"to": "2020-12-31T23:59:59.000Z",
+				"raw": {
+					"from": "now-1y",
+					"to": "now"
+				}
 			},
 			"targets": [
 				{ "target": "confirmed" },
@@ -63,16 +72,40 @@ func TestParseRequest(t *testing.T) {
 				{ "target": "active" },
 				{ "target": "active-delta" },
 				{ "target": "invalid" }
-			]}`)
+			],
+			"maxDataPoints":991,
+			"scopedVars":{
+				"__interval":   { "text":"6h",       "value":"6h" },
+				"__interval_ms":{ "text":"21600000", "value":21600000 }
+			},
+			"startTime":1607274352883,
+			"rangeRaw":{
+				"from":"now-1y",
+				"to":"now"
+			},
+			"adhocFilters":[]
+		}
+	`)
 	reader := bytes.NewReader(body)
 	params, err := parseRequest(reader, targets)
 
-	assert.Equal(t, nil,                        err)
-	assert.Equal(t, time.Date(2020, time.January,   1,  0,  0,  0, 0, time.UTC), params.Range["from"])
-	assert.Equal(t, time.Date(2020, time.December, 31, 23, 59, 59, 0, time.UTC), params.Range["to"])
+	assert.Nil(t, err)
+	assert.True(t, time.Date(2019, time.December,  31, 23, 59, 59, 0, time.UTC).Equal(params.Range.From))
+	assert.True(t, time.Date(2020, time.December,  31, 23, 59, 59, 0, time.UTC).Equal(params.Range.To))
 	if err == nil {
 		log.Printf("%v", params.Targets)
 	}
+	for _, target := range targets {
+		found := false
+		for _, parsedTarget := range params.Targets {
+			if parsedTarget.Target == target {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, target)
+	}
+
 }
 
 func TestHandlerQuery(t *testing.T) {

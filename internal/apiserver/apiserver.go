@@ -1,6 +1,9 @@
 package apiserver
 
 import (
+	"io/ioutil"
+	"bytes"
+
 	"time"
 	"io"
 	"fmt"
@@ -87,15 +90,29 @@ func (apiserver *GrafanaAPIServer) search(w http.ResponseWriter, req *http.Reque
 
 // RequestParameters contains the (needed) parameters supplied to /query
 type RequestParameters struct {
-	Range map[string]time.Time
+	Range struct {
+		From time.Time
+		To   time.Time
+		// Raw  map[string]string
+	}
 	Targets []struct{Target string}
 }
 
 func parseRequest(body io.Reader, validTargets []string) (*RequestParameters, error) {
-		var params RequestParameters
-		decoder := json.NewDecoder(body)
-		err := decoder.Decode(&params)
-		return &params, err
+	buf, bodyErr := ioutil.ReadAll(body)
+	if bodyErr != nil {
+		log.Warningf("bodyErr %s", bodyErr.Error())
+		return nil, bodyErr
+	}
+	rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
+	rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
+	log.Debugf("BODY: %q", rdr1)
+	body = rdr2
+
+	var params RequestParameters
+	decoder := json.NewDecoder(body)
+	err := decoder.Decode(&params)
+	return &params, err
 }
 
 func (apiserver *GrafanaAPIServer) query(w http.ResponseWriter, req *http.Request) {

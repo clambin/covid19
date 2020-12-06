@@ -46,7 +46,7 @@ func (apihandler *CovidAPIHandler) query(params RequestParameters) ([]series, er
 		return make([]series, 0), errors.New("no database configured")
 	}
 
-	entries, err := apihandler.db.List(params.Range["to"]) 
+	entries, err := apihandler.db.List(params.Range.To)
 
 	if err != nil {
 		return make([]series, 0), err
