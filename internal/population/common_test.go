@@ -10,36 +10,10 @@ import (
 )
 
 var (
-//	testDBData = []coviddb.CountryEntry{
-//	coviddb.CountryEntry{
-//		Timestamp: parseDate("2020-11-01"),
-//		Code: "A",
-//		Name: "A",
-//		Confirmed: 1,
-//		Recovered: 0,
-//		Deaths: 0},
-//	coviddb.CountryEntry{
-//		Timestamp: parseDate("2020-11-02"),
-//		Code: "B",
-//		Name: "B",
-//		Confirmed: 3,
-//		Recovered: 0,
-//		Deaths: 0},
-//	coviddb.CountryEntry{
-//		Timestamp: parseDate("2020-11-02"),
-//		Code: "A",
-//		Name: "A",
-//		Confirmed: 3,
-//		Recovered: 1,
-//		Deaths: 0},
-//	coviddb.CountryEntry{
-//		Timestamp: parseDate("2020-11-04"),
-//		Code: "B",
-//		Name: "B",
-//		Confirmed: 10,
-//		Recovered: 5,
-//		Deaths: 1}}
-//
+	testDBData = map[string]int64{
+		"BE": 1,
+	}
+
 	goodResponse = string(`
 	{
 		"data": {

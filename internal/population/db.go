@@ -33,9 +33,6 @@ func NewPostgresPopulationDB(host string, port int, database string, user string
 
 // List all records from the population table
 func (db *PostgresPopulationDB) List() (map[string]int64, error) {
-	log.Debug("List starts")
-	defer log.Debug("List ends")
-
 	entries := make(map[string]int64, 0)
 
 	if err := db.initializeDB(); err != nil {
@@ -76,9 +73,6 @@ func ReplaceSQL(old, searchPattern string) string {
 
 // Add all specified records in the population database table
 func (db *PostgresPopulationDB) Add(entries map[string]int64) (error) {
-	log.Debug("Add starts")
-	defer log.Debug("Add ends")
-
 	if err := db.initializeDB(); err != nil {
 		return err
 	}
@@ -112,8 +106,6 @@ func (db *PostgresPopulationDB) initializeDB() (error) {
 	if db.initialized {
 		return nil
 	}
-	log.Debug("initializeDB starts")
-	defer log.Debug("initializeDB ends")
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 

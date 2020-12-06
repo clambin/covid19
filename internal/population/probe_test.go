@@ -7,12 +7,6 @@ import (
 	"covid19/internal/population/mock"
 )
 
-var (
-	testDBData = map[string]int64{
-		"BE": 1,
-	}
-)
-
 func TestPopulationProbe(t *testing.T) {
 	db        := mock.Create(testDBData)
 	probe     := Create(makeClient(), db)
