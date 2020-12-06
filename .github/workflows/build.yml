@@ -14,7 +14,7 @@ jobs:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-       options: >-
+        options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
@@ -43,6 +43,7 @@ jobs:
         file: coverage.txt
         token: ${{ secrets.CODECOV_TOKEN }}
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
