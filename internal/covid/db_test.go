@@ -44,7 +44,7 @@ func TestDB(t *testing.T) {
 	db := covid.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
 	assert.NotNil(t, db)
 
-	now := time.Now().UTC()
+	now := time.Now().UTC().Truncate(time.Second)
 	newEntries := []covid.CountryEntry{
 		covid.CountryEntry{
 			Timestamp: now,
@@ -59,6 +59,7 @@ func TestDB(t *testing.T) {
 
 	latest, err := db.ListLatestByCountry()
 	assert.Nil(t, err)
+	t.Log(latest)
 	latestTime, found := latest["???"]
 	assert.True(t, found)
 	assert.True(t, latestTime.Equal(now))
