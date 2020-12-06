@@ -7,19 +7,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// PopulationProbe handle
-type PopulationProbe struct {
+// Probe handle
+type Probe struct {
 	apiClient      *APIClient
-	db              PopulationDB
+	db              DB
 }
 
-// Create a new PopulationProbe handle
-func Create(apiClient *APIClient, db PopulationDB) (*PopulationProbe) {
-	return &PopulationProbe{apiClient: apiClient, db: db}
+// Create a new Probe handle
+func Create(apiClient *APIClient, db DB) (*Probe) {
+	return &Probe{apiClient: apiClient, db: db}
 }
 
 // Run gets latest data and updates the database
-func (probe *PopulationProbe) Run() (error) {
+func (probe *Probe) Run() (error) {
 	// Call the API
 	population, err := probe.apiClient.GetPopulation()
 

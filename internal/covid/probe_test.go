@@ -8,10 +8,10 @@ import (
 	"covid19/internal/covid/mock"
 )
 
-func TestCovidProbeBlack(t *testing.T) {
+func TestProbe(t *testing.T) {
 	apiClient := makeClient()
 	db        := mock.Create(testDBData)
-	probe     := covid.NewCovidProbe(apiClient, db, nil)
+	probe     := covid.NewProbe(apiClient, db, nil)
 
 	err := probe.Run()
 

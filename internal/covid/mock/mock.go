@@ -8,18 +8,18 @@ import (
 	"covid19/internal/covid"
 )
 
-// CovidDB mock database used for unittesting 
-type CovidDB struct {
+// DB mock database used for unittesting 
+type DB struct {
 	data []covid.CountryEntry
 }
 
-// Create a mock CovidDB
-func Create(data []covid.CountryEntry) (*CovidDB) {
-	return &CovidDB{data: data}
+// Create a mock DB
+func Create(data []covid.CountryEntry) (*DB) {
+	return &DB{data: data}
 }
 
 // List the records in the DB up to enddate
-func (db *CovidDB) List(endDate time.Time) ([]covid.CountryEntry, error) {
+func (db *DB) List(endDate time.Time) ([]covid.CountryEntry, error) {
 	entries := make([]covid.CountryEntry, 0)
 
 	for _, entry := range db.data {
@@ -34,7 +34,7 @@ func (db *CovidDB) List(endDate time.Time) ([]covid.CountryEntry, error) {
 }
 
 // ListLatestByCountry lists the last date per country
-func (db *CovidDB) ListLatestByCountry()  (map[string]time.Time, error) {
+func (db *DB) ListLatestByCountry()  (map[string]time.Time, error) {
 	entries := make(map[string]time.Time, 0)
 
 	for _, entry := range db.data {
@@ -48,7 +48,7 @@ func (db *CovidDB) ListLatestByCountry()  (map[string]time.Time, error) {
 }
 
 // Add inserts all specified records in the covid19 database table
-func (db *CovidDB) Add(entries []covid.CountryEntry)  (error) {
+func (db *DB) Add(entries []covid.CountryEntry)  (error) {
 	for _, entry := range entries {
 		db.data = append(db.data, entry)
 	}

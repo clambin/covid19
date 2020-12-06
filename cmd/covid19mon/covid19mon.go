@@ -65,16 +65,16 @@ func main() {
 	scheduler := scheduler.NewScheduler()
 
 	// Add the covid probe
-	covidProbe := covid.NewCovidProbe(
+	covidProbe := covid.NewProbe(
 		covid.NewAPIClient(&http.Client{}, cfg.apiKey),
-		covid.NewPGCovidDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
+		covid.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
 		covid.NewPushGateway(cfg.pushGateway))
 	scheduler.Register(covidProbe, time.Duration(cfg.interval) * time.Second)
 
 	// Add the population probe
 	populationProbe := population.Create(
 		population.NewAPIClient(&http.Client{}, cfg.apiKey),
-		population.NewPGPopulationDB(
+		population.NewPostgresDB(
 			cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword))
 	scheduler.Register(populationProbe, time.Duration(cfg.interval) * time.Second)
 

@@ -4,20 +4,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// CovidProbe handle
-type CovidProbe struct {
+// Probe handle
+type Probe struct {
 	apiClient      *APIClient
-	db              CovidDB
+	db              DB
 	pushGateway    *PushGateway
 }
 
-// NewCovidProbe creates a new CovidProbe handle
-func NewCovidProbe(apiClient *APIClient, db CovidDB, pushGateway *PushGateway) (*CovidProbe) {
-	return &CovidProbe{apiClient: apiClient, db: db, pushGateway: pushGateway}
+// NewProbe creates a new Probe handle
+func NewProbe(apiClient *APIClient, db DB, pushGateway *PushGateway) (*Probe) {
+	return &Probe{apiClient: apiClient, db: db, pushGateway: pushGateway}
 }
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
-func (probe *CovidProbe) Run() (error) {
+func (probe *Probe) Run() (error) {
 	countryStats, err := probe.apiClient.GetCountryStats()
 
 	if err == nil && len(countryStats) > 0 {
@@ -48,7 +48,7 @@ func (probe *CovidProbe) Run() (error) {
 }
 
 // findNewCountryStats returns any new stats (ie either more recent or the country has no entries yet)
-func (probe *CovidProbe) findNewCountryStats(newCountryStats map[string]CountryStats) ([]CountryEntry, error) {
+func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats) ([]CountryEntry, error) {
 	result := make([]CountryEntry, 0)
 
 	lastDBEntries, err := probe.db.ListLatestByCountry()

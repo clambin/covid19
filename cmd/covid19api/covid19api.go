@@ -52,7 +52,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	db := covid.NewPGCovidDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
+	db := covid.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
 	handler := apiserver.CreateCovidAPIHandler(db)
 	server := apiserver.CreateGrafanaAPIServer(handler, cfg.port)
 	server.Run()

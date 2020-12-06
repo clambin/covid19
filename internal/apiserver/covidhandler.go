@@ -10,11 +10,11 @@ import (
 
 // CovidAPIHandler implements by business logic for GrafanaAPIHandler
 type CovidAPIHandler struct {
-	db covid.CovidDB
+	db covid.DB
 }
 
 // CreateCovidAPIHandler creates a CovidAPIHandler object
-func CreateCovidAPIHandler(db covid.CovidDB) (*CovidAPIHandler) {
+func CreateCovidAPIHandler(db covid.DB) (*CovidAPIHandler) {
 	return &CovidAPIHandler{db: db}
 }
 

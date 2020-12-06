@@ -4,31 +4,30 @@ import (
 	"fmt"
 	"time"
 	"database/sql"
-
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 
 )
 
-// CovidDB interface representing a Covid batabase
-type CovidDB interface {
+// DB interface representing a Covid batabase
+type DB interface {
 	List(time.Time) ([]CountryEntry, error)
 	ListLatestByCountry() (map[string]time.Time, error)
 	Add([]CountryEntry) (error)
 }
 
-// PGCovidDB implementation of CovidDB
-type PGCovidDB struct {
+// PostgresDB implementation of DB
+type PostgresDB struct {
 	psqlInfo    string
 	initialized bool
 }
 
-// Create a PGCovidDB object
-func NewPGCovidDB(host string, port int, database string, user string, password string) (*PGCovidDB) {
+// NewPostgresDB create a new PostgresDB object
+func NewPostgresDB(host string, port int, database string, user string, password string) (*PostgresDB) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
 
-	return &PGCovidDB{psqlInfo: psqlInfo, initialized: false}
+	return &PostgresDB{psqlInfo: psqlInfo, initialized: false}
 }
 
 // CountryEntry represents one row in the Covid DB
@@ -42,7 +41,7 @@ type CountryEntry struct {
 }
 
 // List retrieved all records from the database up to endDate
-func (db *PGCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
+func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
 	if err := db.initializeDB(); err != nil {
@@ -74,7 +73,7 @@ func (db *PGCovidDB) List(endDate time.Time) ([]CountryEntry, error) {
 }
 
 // ListLatestByCountry returns the timestamp of each country's last update
-func (db *PGCovidDB) ListLatestByCountry() (map[string]time.Time, error) {
+func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 	entries := make(map[string]time.Time, 0)
 
 	if err := db.initializeDB(); err != nil {
@@ -107,7 +106,7 @@ func (db *PGCovidDB) ListLatestByCountry() (map[string]time.Time, error) {
 }
 
 // Add inserts all specified records in the covid19 database table
-func (db *PGCovidDB) Add(entries []CountryEntry) (error) {
+func (db *PostgresDB) Add(entries []CountryEntry) (error) {
 	if err := db.initializeDB(); err != nil {
 		return err
 	}
@@ -141,7 +140,7 @@ func (db *PGCovidDB) Add(entries []CountryEntry) (error) {
 }
 
 // initializeDB created the required tables
-func (db *PGCovidDB) initializeDB() (error) {
+func (db *PostgresDB) initializeDB() (error) {
 	if db.initialized {
 		return nil
 	}

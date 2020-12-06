@@ -5,6 +5,7 @@ import (
 	"strings"
 	"strconv"
 	"database/sql"
+	// postgres driver
 	_ "github.com/lib/pq"
 
 	log "github.com/sirupsen/logrus"
@@ -12,27 +13,27 @@ import (
 )
 
 // DB interface representing a Population database table
-type PopulationDB interface {
+type DB interface {
 	List() (map[string]int64, error)
 	Add(map[string]int64) (error)
 }
 
 // PostgresDB implements DB in Postgres
-type PGPopulationDB struct {
+type PostgresDB struct {
 	psqlInfo    string
 	initialized bool
 }
 
 // NewPostgresDB creates a new PostgresDB object
-func NewPGPopulationDB(host string, port int, database string, user string, password string) (*PGPopulationDB) {
+func NewPostgresDB(host string, port int, database string, user string, password string) (*PostgresDB) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
 
-	return &PGPopulationDB{psqlInfo: psqlInfo, initialized: false}
+	return &PostgresDB{psqlInfo: psqlInfo, initialized: false}
 }
 
 // List all records from the population table
-func (db *PGPopulationDB) List() (map[string]int64, error) {
+func (db *PostgresDB) List() (map[string]int64, error) {
 	entries := make(map[string]int64, 0)
 
 	if err := db.initializeDB(); err != nil {
@@ -62,8 +63,7 @@ func (db *PGPopulationDB) List() (map[string]int64, error) {
 	return entries, err
 }
 
-// Replace replaces searchpattern instances by $<n> in a SQL statement
-func ReplaceSQL(old, searchPattern string) string {
+func replaceSQL(old, searchPattern string) string {
 	tmpCount := strings.Count(old, searchPattern)
 	for m := 1; m <= tmpCount; m++ {
 		old = strings.Replace(old, searchPattern, "$"+strconv.Itoa(m), 1)
@@ -72,7 +72,7 @@ func ReplaceSQL(old, searchPattern string) string {
 }
 
 // Add all specified records in the population database table
-func (db *PGPopulationDB) Add(entries map[string]int64) (error) {
+func (db *PostgresDB) Add(entries map[string]int64) (error) {
 	if err := db.initializeDB(); err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (db *PGPopulationDB) Add(entries map[string]int64) (error) {
 		vals = append(vals, code, population)
 	}
 	sqlStr = strings.TrimSuffix(sqlStr, ",")
-	sqlStr = ReplaceSQL(sqlStr, "?")
+	sqlStr = replaceSQL(sqlStr, "?")
 	sqlStr += "ON CONFLICT (country_code) DO UPDATE SET population = EXCLUDED.population"
 
 	stmt, _ := dbh.Prepare(sqlStr)
@@ -102,7 +102,7 @@ func (db *PGPopulationDB) Add(entries map[string]int64) (error) {
 }
 
 // initializeDB creates the required tables
-func (db *PGPopulationDB) initializeDB() (error) {
+func (db *PostgresDB) initializeDB() (error) {
 	if db.initialized {
 		return nil
 	}
