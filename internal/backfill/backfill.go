@@ -44,22 +44,23 @@ func (backfiller *Backfiller) Run() (error) {
 	for slug, details := range countries {
 		realName := lookupCountryName(details.Name)
 
-		log.Info("Getting data for " + realName)
+		log.Debugf("Getting data for %s (slug: %s)", realName, slug)
 
 		records := make([]covid.CountryEntry, 0)
 		entries, err := backfiller.getHistoricalData(slug)
 		if err != nil { return err }
 
 		for _, entry := range entries {
-			if entry.Date.Before(first) { continue }
-
-			records = append(records, covid.CountryEntry{
-				Timestamp: entry.Date,
-				Code: details.Code,
-				Name: realName,
-				Confirmed: entry.Confirmed,
-				Deaths: entry.Deaths,
-				Recovered: entry.Recovered})
+			log.Debugf("Entry date: %s", entry.Date.String())
+			if entry.Date.Before(first) {
+				records = append(records, covid.CountryEntry{
+					Timestamp: entry.Date,
+					Code:      details.Code,
+					Name:      realName,
+					Confirmed: entry.Confirmed,
+					Deaths:    entry.Deaths,
+					Recovered: entry.Recovered})
+			}
 		}
 		err = backfiller.db.Add(records)
 		if err != nil { return err}
