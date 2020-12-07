@@ -65,6 +65,7 @@ func TestHandlerHandler(t *testing.T) {
 				struct{Target string}{ Target: "recovered-delta" },
 				struct{Target string}{ Target: "active" },
 				struct{Target string}{ Target: "active-delta" },
+				struct{Target string}{ Target: "invalid" },
 		}}
 
 	testCases := map[string][][2]int64{
