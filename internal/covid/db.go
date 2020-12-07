@@ -13,6 +13,7 @@ import (
 type DB interface {
 	List(time.Time) ([]CountryEntry, error)
 	ListLatestByCountry() (map[string]time.Time, error)
+	GetFirstEntry() (time.Time, error) 
 	Add([]CountryEntry) (error)
 }
 
@@ -103,6 +104,37 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 	}
 
 	return entries, err
+}
+
+// GetFirstEntry returns the timestamp of the first entry
+func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
+	first := time.Time{}
+
+	if err := db.initializeDB(); err != nil {
+		return first, err
+	}
+
+	dbh, err := sql.Open("postgres", db.psqlInfo)
+
+	if err == nil {
+		defer dbh.Close()
+
+		rows, err := dbh.Query(fmt.Sprintf("SELECT MIN(time) FROM covid19"))
+
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				err = rows.Scan(&first)
+				if err != nil { 
+					log.Debug(err)
+					break
+				}
+			}
+			log.Debugf("First record: %s", first.String())
+		}
+	}
+
+	return first, err
 }
 
 // Add inserts all specified records in the covid19 database table

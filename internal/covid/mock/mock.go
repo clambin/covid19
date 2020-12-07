@@ -47,6 +47,17 @@ func (db *DB) ListLatestByCountry()  (map[string]time.Time, error) {
 	return entries, nil
 }
 
+// GetFirstEntry returns the timestamp of the first entry
+func (db *DB) GetFirstEntry() (time.Time, error) {
+	first := time.Time{}
+	for index, entry := range db.data {
+		if index == 0 || entry.Timestamp.Before(first) {
+			first = entry.Timestamp
+		}
+	}
+	return first, nil
+}
+
 // Add inserts all specified records in the covid19 database table
 func (db *DB) Add(entries []covid.CountryEntry)  (error) {
 	for _, entry := range entries {
