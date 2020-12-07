@@ -46,7 +46,17 @@ func TestBackfiller(t *testing.T) {
 
 	records, err := db.List(time.Now())
 	assert.Nil(t, err)
-	assert.Equal(t, 3, len(records))
+	assert.Equal(t, 4, len(records))
+
+	latest, err := db.ListLatestByCountry()
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(latest))
+	timestamp, ok := latest["Belgium"]
+	assert.True(t, ok)
+	assert.Equal(t, time.Date(2019, time.December, 31, 23, 59, 59, 0, time.UTC), timestamp)
+	timestamp, ok = latest["Burma"]
+	assert.True(t, ok)
+	assert.Equal(t, time.Date(2020, time.March,    27,  0,  0,  0, 0, time.UTC), timestamp)
 }
 
 // Stubbing the API Call
@@ -54,7 +64,7 @@ func TestBackfiller(t *testing.T) {
 var goodResponse = string(`[
   {
     "Country": "Belgium",
-    "CountryCode": "",
+    "CountryCode": "BE",
     "Province": "",
     "City": "",
     "CityCode": "",
@@ -68,7 +78,7 @@ var goodResponse = string(`[
   },
   {
     "Country": "Belgium",
-    "CountryCode": "",
+    "CountryCode": "BE",
     "Province": "",
     "City": "",
     "CityCode": "",
@@ -79,6 +89,20 @@ var goodResponse = string(`[
     "Recovered": 0,
     "Active": 1,
     "Date": "2020-02-04T00:00:00Z"
+  },
+  {
+    "Country": "Myanmar",
+    "CountryCode": "",
+    "Province": "",
+    "City": "",
+    "CityCode": "",
+    "Lat": "0",
+    "Lon": "0",
+    "Confirmed": 8,
+    "Deaths": 0,
+    "Recovered": 0,
+    "Active": 8,
+    "Date": "2020-03-27T00:00:00Z"
   }
 ]`)
 
