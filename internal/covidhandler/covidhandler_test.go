@@ -12,7 +12,7 @@ import(
 	"covid19/internal/covid/mock"
 )
 
-func TestHandlerQuery(t *testing.T) {
+func TestHandlerHandler(t *testing.T) {
 	entries := []covid.CountryEntry{
 		covid.CountryEntry{
 			Timestamp: parseDate("2020-11-01T00:00:00.000Z"),
@@ -47,36 +47,68 @@ func TestHandlerQuery(t *testing.T) {
 
 	handler := Create(db)
 
+	// Test Search
+	targets := handler.Search()
+	assert.Equal(t, []string([]string{"active", "active-delta", "confirmed", "confirmed-delta", "death", "death-delta", "recovered", "recovered-delta"}), targets)
+
+	// Test Query
 	request := apiserver.APIQueryRequest{
 			Range: struct{From time.Time; To time.Time}{
 				From: time.Now(),
 				To: time.Now()},
 			Targets: []struct{Target string}{
 				struct{Target string}{ Target: "confirmed" },
-				struct{Target string}{ Target: "confirmed-delta" }}}
+				struct{Target string}{ Target: "confirmed-delta" },
+				struct{Target string}{ Target: "death" },
+				struct{Target string}{ Target: "death-delta" },
+				struct{Target string}{ Target: "recovered" },
+				struct{Target string}{ Target: "recovered-delta" },
+				struct{Target string}{ Target: "active" },
+				struct{Target string}{ Target: "active-delta" },
+		}}
 
+	testCases := map[string][][2]int64{
+		"confirmed":       [][2]int64{[2]int64{1, 1604188800000}, [2]int64{6, 1604275200000}, [2]int64{13, 1604448000000}},
+		"confirmed-delta": [][2]int64{[2]int64{1, 1604188800000}, [2]int64{5, 1604275200000}, [2]int64{7, 1604448000000}},
+		"death":           [][2]int64{[2]int64{0, 1604188800000}, [2]int64{0, 1604275200000}, [2]int64{1, 1604448000000}},
+		"death-delta":     [][2]int64{[2]int64{0, 1604188800000}, [2]int64{0, 1604275200000}, [2]int64{1, 1604448000000}},
+		"recovered":       [][2]int64{[2]int64{0, 1604188800000}, [2]int64{1, 1604275200000}, [2]int64{6, 1604448000000}},
+		"recovered-delta": [][2]int64{[2]int64{0, 1604188800000}, [2]int64{1, 1604275200000}, [2]int64{5, 1604448000000}},
+		"active":          [][2]int64{[2]int64{1, 1604188800000}, [2]int64{5, 1604275200000}, [2]int64{6, 1604448000000}},
+		"active-delta":    [][2]int64{[2]int64{1, 1604188800000}, [2]int64{4, 1604275200000}, [2]int64{1, 1604448000000}},
+
+	}
 
 	responses, err := handler.Query(&request)
 	assert.Nil(t, err)
-	assert.Equal(t, 2, len(responses))
+	assert.Equal(t, len(testCases), len(responses))
 
 	incides := make(map[string]int, 0)
 	for index, response := range responses{
 		incides[response.Target] = index
 	}
-	assert.Equal(t, 2, len(incides))
+	assert.Equal(t, len(responses), len(incides))
 
-	// Test "confirmed"
-	index, ok := incides["confirmed"]
-	assert.True(t, ok)
-	assert.Equal(t, "confirmed", responses[index].Target)
-	assert.Equal(t, [][2]int64([][2]int64{[2]int64{1, 1604188800000}, [2]int64{6, 1604275200000}, [2]int64{13, 1604448000000}}), responses[index].Datapoints)
-	// Test "confirmed-delta"
-	index, ok = incides["confirmed-delta"]
-	assert.True(t, ok)
-	assert.Equal(t, "confirmed-delta", responses[index].Target)
-	assert.Equal(t, [][2]int64([][2]int64{[2]int64{1, 1604188800000}, [2]int64{5, 1604275200000}, [2]int64{7, 1604448000000}}), responses[index].Datapoints)
+	for target, expected := range testCases {
+		index, ok := incides[target]
+		assert.True(t, ok)
+		assert.Equal(t, target,   responses[index].Target)
+		assert.Equal(t, expected, responses[index].Datapoints, target)
+	}
+}
 
+func TestNoDB(t *testing.T) {
+	handler := Create(nil)
+
+	request := apiserver.APIQueryRequest{
+			Range: struct{From time.Time; To time.Time}{
+				From: time.Now(),
+				To: time.Now()},
+			Targets: []struct{Target string}{
+				struct{Target string}{ Target: "confirmed" }}}
+
+	_, err := handler.Query(&request)
+	assert.NotNil(t, err)
 }
 
 func parseDate(dateString string) (time.Time) {
