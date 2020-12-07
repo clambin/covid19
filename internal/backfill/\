@@ -22,8 +22,7 @@ func Create(db covid.DB) (*Backfiller) {
 	return CreateWithClient(db, &http.Client{})
 }
 
-// CreateWithClient creates  a new Backfiller object w/ a supplier http.Client. 
-// Used for unit testing
+// Create a new Backfiller object w/ a supplier http.Client. Used for unit testing
 func CreateWithClient(db covid.DB, client *http.Client) (*Backfiller) {
 	return &Backfiller{client: client, db: db}
 }

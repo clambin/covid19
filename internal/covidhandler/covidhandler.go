@@ -32,6 +32,7 @@ var (
 	}
 )
 
+// Search returns all supported targets
 func (apihandler *APIHandler) Search() ([]string) {
 	return targets
 }
