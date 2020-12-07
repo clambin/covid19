@@ -11,8 +11,8 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	log     "github.com/sirupsen/logrus"
 
+	"covid19/pkg/scheduler"
 	"covid19/internal/covid"
-	"covid19/internal/scheduler"
 	"covid19/internal/population"
 )
 

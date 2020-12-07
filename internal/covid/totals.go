@@ -19,7 +19,7 @@ const (
 
 // GetTotalCases calculates the total cases cross all countries over time
 // Output is structured for easy export to HTTP Response (JSON)
-func GetTotalCases (rows []CountryEntry) ([][][]int64) {
+func GetTotalCases (rows []CountryEntry) ([][][2]int64) {
 	var confirmed, recovered, deaths int64
 
 	// Helper datastructure to keep running count
@@ -44,7 +44,7 @@ func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 
 	// Go through each timestamp, record running total for each country & compute total cases
 	countryMap := make(map[string]covidData)
-	consolidated := make([][][]int64, 4)
+	consolidated := make([][][2]int64, 4)
 	for _, timestamp := range timestamps {
 		for _, row := range timeMap[timestamp] {
 			countryMap[row.Code] = covidData{Confirmed: row.Confirmed, Recovered: row.Recovered, Deaths: row.Deaths}
@@ -56,10 +56,10 @@ func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 			deaths    += data.Deaths
 		}
 		epoch := timestamp.UnixNano() / 1000000
-		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], []int64{confirmed,                      epoch})
-		consolidated[RECOVERED] = append(consolidated[RECOVERED], []int64{recovered,                      epoch})
-		consolidated[DEATHS]    = append(consolidated[DEATHS],    []int64{deaths,                         epoch})
-		consolidated[ACTIVE]    = append(consolidated[ACTIVE],    []int64{confirmed - recovered - deaths, epoch})
+		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], [2]int64{confirmed,                      epoch})
+		consolidated[RECOVERED] = append(consolidated[RECOVERED], [2]int64{recovered,                      epoch})
+		consolidated[DEATHS]    = append(consolidated[DEATHS],    [2]int64{deaths,                         epoch})
+		consolidated[ACTIVE]    = append(consolidated[ACTIVE],    [2]int64{confirmed - recovered - deaths, epoch})
 	}
 
 	return consolidated
@@ -67,13 +67,13 @@ func GetTotalCases (rows []CountryEntry) ([][][]int64) {
 
 // GetTotalDeltas calculates deltas of cases returned by GetTotalCases
 // Output is structured for easy export to HTTP Response (JSON)
-func GetTotalDeltas (rows [][]int64) ([][]int64) {
-	deltas := make([][]int64, 0)
+func GetTotalDeltas (rows [][2]int64) ([][2]int64) {
+	deltas := make([][2]int64, 0)
 
 	var value int64
 	value = 0
 	for _, row := range rows {
-		deltas = append(deltas, []int64{row[0] - value, row[1]})
+		deltas = append(deltas, [2]int64{row[0] - value, row[1]})
 		value = row[0]
 	}
 

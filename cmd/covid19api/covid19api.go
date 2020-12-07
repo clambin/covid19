@@ -8,7 +8,8 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	log     "github.com/sirupsen/logrus"
 
-	"covid19/internal/apiserver"
+	"covid19/pkg/grafana/apiserver"
+	"covid19/internal/covidhandler"
 	"covid19/internal/covid"
 )
 
@@ -53,7 +54,7 @@ func main() {
 	}
 
 	db := covid.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
-	handler := apiserver.CreateCovidAPIHandler(db)
-	server := apiserver.CreateGrafanaAPIServer(handler, cfg.port)
+	handler := covidhandler.Create(db)
+	server := apiserver.Create(handler, cfg.port)
 	server.Run()
 }
