@@ -49,7 +49,7 @@ var (
 		"Congo (Brazzaville)": "CD",
 		"Congo (Kinshasa)": "CD",
 		"Switzerland": "CH",
-		"Cote d\"Ivoire": "CI",
+		"Cote d'Ivoire": "CI",
 		"Cook Islands": "CK",
 		"Chile": "CL",
 		"Cameroon": "CM",
