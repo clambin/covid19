@@ -76,4 +76,8 @@ func TestDB(t *testing.T) {
 		}
 	}
 	assert.True(t, found)
+
+	first, err := db.GetFirstEntry()
+	assert.Nil(t, err)
+	assert.True(t, first.Equal(now))
 }
