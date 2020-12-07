@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"bytes"
+	"math/rand"
 
 	log "github.com/sirupsen/logrus"
 
@@ -138,7 +139,13 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 
 // makeClient returns a stubbed httpClient
 func makeHTTPClient() (*http.Client) {
+	rand.Seed(time.Now().UnixNano())
 	return NewTestClient(func(req *http.Request) *http.Response {
+		if rand.Intn(10) < 3 {
+			return &http.Response{
+				StatusCode: 429,
+			}
+		}
 		response, ok := goodResponse[req.URL.Path]
 		if ok == true {
 			return &http.Response{
