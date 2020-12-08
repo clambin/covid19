@@ -141,7 +141,7 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 func makeHTTPClient() (*http.Client) {
 	rand.Seed(time.Now().UnixNano())
 	return NewTestClient(func(req *http.Request) *http.Response {
-		if rand.Intn(10) < 3 {
+		if rand.Intn(10) < 2 {
 			return &http.Response{
 				StatusCode: 429,
 			}
@@ -153,10 +153,9 @@ func makeHTTPClient() (*http.Client) {
 				Header:     make(http.Header),
 				Body:       ioutil.NopCloser(bytes.NewBufferString(response)),
 			}
-		} else {
-			return &http.Response{
-				StatusCode: 404,
-			}
+		}
+		return &http.Response{
+			StatusCode: 404,
 		}
     })
 }

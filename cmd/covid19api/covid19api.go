@@ -11,6 +11,7 @@ import (
 	"covid19/pkg/grafana/apiserver"
 	"covid19/internal/covidhandler"
 	"covid19/internal/covid"
+	"covid19/internal/version"
 )
 
 func main() {
@@ -52,6 +53,8 @@ func main() {
 	if cfg.debug {
 		log.SetLevel(log.DebugLevel)
 	}
+
+	log.Info("covid19api v" + version.BuildVersion)
 
 	db := covid.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
 	handler := covidhandler.Create(db)

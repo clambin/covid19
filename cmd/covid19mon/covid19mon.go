@@ -14,6 +14,7 @@ import (
 	"covid19/pkg/scheduler"
 	"covid19/internal/covid"
 	"covid19/internal/population"
+	"covid19/internal/version"
 )
 
 func main() {
@@ -54,6 +55,8 @@ func main() {
 	if cfg.debug {
 		log.SetLevel(log.DebugLevel)
 	}
+
+	log.Info("covid19mon v" + version.BuildVersion)
 
 	if cfg.profileName != "" {
 		f, ferr := os.Create(cfg.profileName)

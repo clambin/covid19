@@ -9,6 +9,7 @@ import (
 
 	"covid19/internal/backfill"
 	"covid19/internal/covid"
+	"covid19/internal/version"
 )
 
 func main() {
@@ -39,6 +40,8 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	log.Info("backfill v" + version.BuildVersion)
+
 	app := backfill.Create(covid.NewPostgresDB(
 		cfg.postgresHost,
 		cfg.postgresPort,
@@ -46,5 +49,10 @@ func main() {
 		cfg.postgresUser,
 		cfg.postgresPassword))
 
-	app.Run()
+	err := app.Run()
+
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
 }
