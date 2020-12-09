@@ -1,17 +1,16 @@
-package covid_test
+package testdb
 
 import (
+	"covid19/internal/coviddb"
 	"os"
 	"strconv"
 	"time"
 
-	"testing"
 	"github.com/stretchr/testify/assert"
-
-	"covid19/internal/covid"
+	"testing"
 )
 
-func getdbenv() (map[string]string, bool) {
+func getDBEnv() (map[string]string, bool) {
 	values := make(map[string]string, 0)
 	envVars := []string{"pg_host", "pg_port", "pg_database", "pg_user", "pg_password"}
 
@@ -30,7 +29,7 @@ func getdbenv() (map[string]string, bool) {
 }
 
 func TestDB(t *testing.T) {
-	values, ok := getdbenv()
+	values, ok := getDBEnv()
 	if ok == false {
 		t.Log("Could not find all DB env variables. Skipping this test")
 		return
@@ -39,18 +38,19 @@ func TestDB(t *testing.T) {
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.Nil(t, err)
 
-	db := covid.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	db := coviddb.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
 	assert.NotNil(t, db)
 
 	now := time.Now().UTC().Truncate(time.Second)
-	newEntries := []covid.CountryEntry{
-		covid.CountryEntry{
+	newEntries := []coviddb.CountryEntry{
+		{
 			Timestamp: now,
-			Code: "??",
-			Name: "???",
+			Code:      "??",
+			Name:      "???",
 			Confirmed: 3,
-			Deaths: 2,
-			Recovered: 1}}
+			Deaths:    2,
+			Recovered: 1,
+		}}
 
 	err = db.Add(newEntries)
 	assert.Nil(t, err)
@@ -60,7 +60,6 @@ func TestDB(t *testing.T) {
 	latestTime, found := latest["???"]
 	assert.True(t, found)
 	assert.True(t, latestTime.Equal(now))
-
 
 	allEntries, err := db.List(time.Now())
 	assert.Nil(t, err)

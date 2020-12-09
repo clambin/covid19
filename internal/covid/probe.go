@@ -1,23 +1,24 @@
 package covid
 
 import (
+	"covid19/internal/coviddb"
 	log "github.com/sirupsen/logrus"
 )
 
 // Probe handle
 type Probe struct {
-	apiClient      *APIClient
-	db              DB
-	pushGateway    *PushGateway
+	apiClient   *APIClient
+	db          coviddb.DB
+	pushGateway *PushGateway
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(apiClient *APIClient, db DB, pushGateway *PushGateway) (*Probe) {
+func NewProbe(apiClient *APIClient, db coviddb.DB, pushGateway *PushGateway) *Probe {
 	return &Probe{apiClient: apiClient, db: db, pushGateway: pushGateway}
 }
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
-func (probe *Probe) Run() (error) {
+func (probe *Probe) Run() error {
 	countryStats, err := probe.apiClient.GetCountryStats()
 
 	if err == nil && len(countryStats) > 0 {
@@ -33,7 +34,7 @@ func (probe *Probe) Run() (error) {
 
 		if err == nil && probe.pushGateway != nil {
 			countries := make([]string, 0, len(dbRecords))
-			for _,entry := range dbRecords {
+			for _, entry := range dbRecords {
 				countries = append(countries, entry.Name)
 			}
 
@@ -48,11 +49,13 @@ func (probe *Probe) Run() (error) {
 }
 
 // findNewCountryStats returns any new stats (ie either more recent or the country has no entries yet)
-func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats) ([]CountryEntry, error) {
-	result := make([]CountryEntry, 0)
+func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats) ([]coviddb.CountryEntry, error) {
+	result := make([]coviddb.CountryEntry, 0)
 
 	lastDBEntries, err := probe.db.ListLatestByCountry()
-	if err != nil { return result, err }
+	if err != nil {
+		return result, err
+	}
 
 	for country, stats := range newCountryStats {
 		lastUpdate, ok := lastDBEntries[country]
@@ -61,13 +64,13 @@ func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats)
 			if ok == false {
 				log.Warningf("unknown country '%s'. Skipping", country)
 			} else {
-				result = append(result, CountryEntry{
-						Timestamp: stats.LastUpdate,
-						Code: code,
-						Name: country,
-						Confirmed: stats.Confirmed,
-						Recovered: stats.Recovered,
-						Deaths: stats.Deaths})
+				result = append(result, coviddb.CountryEntry{
+					Timestamp: stats.LastUpdate,
+					Code:      code,
+					Name:      country,
+					Confirmed: stats.Confirmed,
+					Recovered: stats.Recovered,
+					Deaths:    stats.Deaths})
 			}
 		}
 	}
