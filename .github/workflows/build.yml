@@ -62,7 +62,7 @@ jobs:
         tag-sha: True
         tag-semver: |
           {{version}}
-          {{major}}.{{minor}}
+          {{major}}.{{minor}}.{{patch}}
     - name: docker image for covid19mon
       uses: docker/build-push-action@v2
       with:
@@ -72,6 +72,8 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.covid19mon_meta.outputs.tags }}
         labels: ${{ steps.covid19mon_meta.outputs.labels }}
+        build-args: |
+          BUILD_VERSION=$ {{ steps.covid19mon_meta.outputs.version }}
     - name: metadata for covid19api
       id: covid19api_meta
       uses: crazy-max/ghaction-docker-meta@v1
@@ -80,7 +82,7 @@ jobs:
         tag-sha: True
         tag-semver: |
           {{version}}
-          {{major}}.{{minor}}
+          {{major}}.{{minor}}.{{patch}}
     - name: docker image for covid19api
       uses: docker/build-push-action@v2
       with:
@@ -90,3 +92,5 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.covid19api_meta.outputs.tags }}
         labels: ${{ steps.covid19api_meta.outputs.labels }}
+        build-args: |
+          BUILD_VERSION=$ {{ steps.covid19api_meta.outputs.version }}

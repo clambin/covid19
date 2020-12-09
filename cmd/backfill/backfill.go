@@ -24,6 +24,9 @@ func main() {
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 backfill tool")
 
+	a.Version(version.BuildVersion)
+	a.HelpFlag.Short('h')
+	a.VersionFlag.Short('v')
 	a.Flag("debug", "Log debug messages").BoolVar(&cfg.debug)
 	a.Flag("postgres-host", "Postgres DB Host").Default("postgres").StringVar(&cfg.postgresHost)
 	a.Flag("postgres-port", "Postgres DB Port").Default("5432").IntVar(&cfg.postgresPort)

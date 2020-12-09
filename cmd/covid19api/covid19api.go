@@ -27,8 +27,9 @@ func main() {
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 grafana API server")
 
+	a.Version(version.BuildVersion)
 	a.HelpFlag.Short('h')
-
+	a.VersionFlag.Short('v')
 	a.Flag("port", "API listener port").Default("5000").IntVar(&cfg.port)
 	a.Flag("debug", "Log debug messages").BoolVar(&cfg.debug)
 	a.Flag("postgres-host", "Postgres DB Host").Default("postgres").StringVar(&cfg.postgresHost)

@@ -3,7 +3,9 @@ FROM golang:1.15 AS builder
 WORKDIR /build
 
 COPY . ./
-RUN CGO_ENABLED=0 go build cmd/covid19mon/covid19mon.go
+
+ARG BUILD_VERSION=develop
+RUN CGO_ENABLED=0 go -ldflags "-X covid19/internal/version.BuildVersion=$BUILD_VERSION" build cmd/covid19mon/covid19mon.go
 
 FROM alpine
 
