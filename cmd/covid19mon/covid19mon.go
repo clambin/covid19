@@ -1,20 +1,21 @@
 package main
 
 import (
-	"os"
-	"time"
-	"path/filepath"
+	"covid19/internal/coviddb"
 	"net/http"
+	"os"
+	"path/filepath"
+	"time"
 
 	"runtime/pprof"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	log     "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
 
-	"covid19/pkg/scheduler"
 	"covid19/internal/covid"
 	"covid19/internal/population"
 	"covid19/internal/version"
+	"covid19/pkg/scheduler"
 )
 
 func main() {
@@ -60,27 +61,29 @@ func main() {
 
 	if cfg.profileName != "" {
 		f, ferr := os.Create(cfg.profileName)
-		if ferr != nil { log.Fatal(ferr) }
-		pprof.StartCPUProfile(f)
+		if ferr != nil {
+			log.Fatal(ferr)
+		}
+		_ = pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
 
-	scheduler := scheduler.NewScheduler()
+	newScheduler := scheduler.NewScheduler()
 
 	// Add the covid probe
 	covidProbe := covid.NewProbe(
 		covid.NewAPIClient(&http.Client{}, cfg.apiKey),
-		covid.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
+		coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
 		covid.NewPushGateway(cfg.pushGateway))
-	scheduler.Register(covidProbe, time.Duration(cfg.interval) * time.Second)
+	newScheduler.Register(covidProbe, time.Duration(cfg.interval)*time.Second)
 
 	// Add the population probe
 	populationProbe := population.Create(
 		population.NewAPIClient(&http.Client{}, cfg.apiKey),
 		population.NewPostgresDB(
 			cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword))
-	scheduler.Register(populationProbe, time.Duration(cfg.interval) * time.Second)
+	newScheduler.Register(populationProbe, time.Duration(cfg.interval)*time.Second)
 
 	// Go time
-	scheduler.Run(cfg.once)
+	newScheduler.Run(cfg.once)
 }

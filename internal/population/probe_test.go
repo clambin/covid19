@@ -1,17 +1,17 @@
 package population
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 
 	"covid19/internal/population/mock"
 )
 
 func TestPopulationProbe(t *testing.T) {
-	db        := mock.Create(testDBData)
-	probe     := Create(makeClient(), db)
+	db := mock.Create(testDBData)
+	probe := Create(makeClient(), db)
 
-	// Basic mock db testing
+	// Basic mock db testtools
 	entries, err := db.List()
 	assert.Nil(t, err)
 	assert.Len(t, entries, 1)
@@ -36,5 +36,3 @@ func TestPopulationProbe(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, int64(321645000), val)
 }
-
-

@@ -1,50 +1,35 @@
 package backfill
 
 import (
-	"time"
-	"net/http"
-	"io/ioutil"
 	"bytes"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
-
-	"testing"
 	"github.com/stretchr/testify/assert"
 
-	"covid19/internal/covid"
-	"covid19/internal/covid/mock"
+	"covid19/internal/coviddb"
+	"covid19/internal/coviddb/test"
+
+	"testing"
 )
 
-func DontTestAPICall(t *testing.T) {
-	backfiller := Create(nil)
-
-	result, err := backfiller.getCountries()
-	assert.Nil(t, err)
-	assert.Equal(t, "BE", result["belgium"].Code)
-	assert.Equal(t, "Belgium", result["belgium"].Name)
-
-	entries, err := backfiller.getHistoricalData("belgium")
-	assert.Nil(t, err)
-	assert.Less(t, 0, len(entries))
-	assert.Zero(t, entries[0].Confirmed)
-	assert.Zero(t, entries[0].Deaths)
-	assert.Zero(t, entries[0].Recovered)
-}
-
-func TestBackfiller(t *testing.T) {
-	db := mock.Create([]covid.CountryEntry{
-		covid.CountryEntry{
+func TestBackFiller(t *testing.T) {
+	db := test.Create([]coviddb.CountryEntry{
+		{
 			Timestamp: time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",
 			Name:      "Belgium",
 			Confirmed: 0,
 			Deaths:    0,
-			Recovered: 0}})
+			Recovered: 0,
+		}})
 
-	backfiller := CreateWithClient(db, makeHTTPClient())
+	backFiller := CreateWithClient(db, makeHTTPClient())
 
-	err := backfiller.Run()
+	err := backFiller.Run()
 	assert.Nil(t, err)
 
 	records, err := db.List(time.Now())
@@ -60,13 +45,13 @@ func TestBackfiller(t *testing.T) {
 	assert.Equal(t, time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC), timestamp)
 	timestamp, ok = latest["Burma"]
 	assert.True(t, ok)
-	assert.Equal(t, time.Date(2020, time.January, 31,  0,  0,  0, 0, time.UTC), timestamp)
+	assert.Equal(t, time.Date(2020, time.January, 31, 0, 0, 0, 0, time.UTC), timestamp)
 }
 
 // Stubbing the API Call
 
 var goodResponse = map[string]string{
-	"/countries" : `[
+	"/countries": `[
 		 {
 			"Country": "Belgium",
 			"Slug": "belgium",
@@ -127,18 +112,18 @@ type RoundTripFunc func(req *http.Request) *http.Response
 
 // RoundTrip .
 func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-    return f(req), nil
+	return f(req), nil
 }
 
 //NewTestClient returns *http.Client with Transport replaced to avoid making real calls
 func NewTestClient(fn RoundTripFunc) *http.Client {
-    return &http.Client{
-        Transport: RoundTripFunc(fn),
-    }
+	return &http.Client{
+		Transport: fn,
+	}
 }
 
 // makeClient returns a stubbed httpClient
-func makeHTTPClient() (*http.Client) {
+func makeHTTPClient() *http.Client {
 	rand.Seed(time.Now().UnixNano())
 	return NewTestClient(func(req *http.Request) *http.Response {
 		if rand.Intn(10) < 2 {
@@ -157,5 +142,5 @@ func makeHTTPClient() (*http.Client) {
 		return &http.Response{
 			StatusCode: 404,
 		}
-    })
+	})
 }

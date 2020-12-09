@@ -1,27 +1,22 @@
 package main
 
 import (
-	"path/filepath"
+	"covid19/internal/coviddb"
 	"os"
+	"path/filepath"
+	"time"
+
 	// "runtime/pprof"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	log     "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
 
-	"covid19/pkg/grafana/apiserver"
 	"covid19/internal/covidhandler"
-	"covid19/internal/covid"
 	"covid19/internal/version"
+	"covid19/pkg/grafana/apiserver"
 )
 
 func main() {
-	// f, ferr := os.Create("covid19api.prof")
-	// if ferr != nil {
-	// 	log.Fatal(ferr)
-	// }
-	// pprof.StartCPUProfile(f)
-	// defer pprof.StopCPUProfile()
-
 	cfg := struct {
 		port             int
 		debug            bool
@@ -56,8 +51,9 @@ func main() {
 
 	log.Info("covid19api v" + version.BuildVersion)
 
-	db := covid.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
-	handler := covidhandler.Create(db)
+	db := coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
+	dbc := coviddb.CreateWithDB(db, 60*time.Second)
+	handler := covidhandler.Create(dbc)
 	server := apiserver.Create(handler, cfg.port)
 	server.Run()
 }

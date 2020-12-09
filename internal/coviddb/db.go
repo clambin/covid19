@@ -1,20 +1,19 @@
-package covid
+package coviddb
 
 import (
-	"fmt"
-	"time"
 	"database/sql"
+	"fmt"
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
-
+	"time"
 )
 
-// DB interface representing a Covid batabase
+// DB interface representing a Covid Database
 type DB interface {
 	List(time.Time) ([]CountryEntry, error)
 	ListLatestByCountry() (map[string]time.Time, error)
-	GetFirstEntry() (time.Time, error) 
-	Add([]CountryEntry) (error)
+	GetFirstEntry() (time.Time, error)
+	Add([]CountryEntry) error
 }
 
 // PostgresDB implementation of DB
@@ -24,7 +23,7 @@ type PostgresDB struct {
 }
 
 // NewPostgresDB create a new PostgresDB object
-func NewPostgresDB(host string, port int, database string, user string, password string) (*PostgresDB) {
+func NewPostgresDB(host string, port int, database string, user string, password string) *PostgresDB {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
 
@@ -34,11 +33,11 @@ func NewPostgresDB(host string, port int, database string, user string, password
 // CountryEntry represents one row in the Covid DB
 type CountryEntry struct {
 	Timestamp time.Time
-	Code string
-	Name string
+	Code      string
+	Name      string
 	Confirmed int64
 	Recovered int64
-	Deaths int64
+	Deaths    int64
 }
 
 // List retrieved all records from the database up to endDate
@@ -63,7 +62,9 @@ func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 			for rows.Next() {
 				var entry CountryEntry
 				err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
-				if err != nil { break }
+				if err != nil {
+					break
+				}
 				entries = append(entries, entry)
 			}
 			log.Debugf("Found %d records", len(entries))
@@ -92,11 +93,13 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 			defer rows.Close()
 			for rows.Next() {
 				var (
-					country string
+					country   string
 					timestamp time.Time
 				)
 				err = rows.Scan(&country, &timestamp)
-				if err != nil { break }
+				if err != nil {
+					break
+				}
 				entries[country] = timestamp
 			}
 			log.Debugf("Found %d records", len(entries))
@@ -125,7 +128,7 @@ func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
 			defer rows.Close()
 			for rows.Next() {
 				err = rows.Scan(&first)
-				if err != nil { 
+				if err != nil {
 					log.Debug(err)
 					break
 				}
@@ -138,48 +141,64 @@ func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
 }
 
 // Add inserts all specified records in the covid19 database table
-func (db *PostgresDB) Add(entries []CountryEntry) (error) {
+func (db *PostgresDB) Add(entries []CountryEntry) error {
 	if err := db.initializeDB(); err != nil {
 		return err
 	}
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer dbh.Close()
 
 	txn, err := dbh.Begin()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	stmt, err := txn.Prepare(pq.CopyIn("covid19", "time", "country_code", "country_name", "confirmed", "death", "recovered"))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	for _, entry := range entries {
 		_, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 
 	_, err = stmt.Exec()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	err = stmt.Close()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	err = txn.Commit()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 // initializeDB created the required tables
-func (db *PostgresDB) initializeDB() (error) {
+func (db *PostgresDB) initializeDB() error {
 	if db.initialized {
 		return nil
 	}
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer dbh.Close()
 
 	_, err = dbh.Exec(`
@@ -202,4 +221,3 @@ func (db *PostgresDB) initializeDB() (error) {
 
 	return err
 }
-

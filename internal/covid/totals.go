@@ -1,6 +1,7 @@
 package covid
 
 import (
+	"covid19/internal/coviddb"
 	"time"
 
 	"github.com/mpvl/unique"
@@ -19,23 +20,23 @@ const (
 
 // GetTotalCases calculates the total cases cross all countries over time
 // Output is structured for easy export to HTTP Response (JSON)
-func GetTotalCases (rows []CountryEntry) ([][][2]int64) {
+func GetTotalCases(rows []coviddb.CountryEntry) [][][2]int64 {
 	var confirmed, recovered, deaths int64
 
 	// Helper datastructure to keep running count
 	type covidData struct {
 		Confirmed int64
 		Recovered int64
-		Deaths int64
-		Active int64
+		Deaths    int64
+		Active    int64
 	}
 
 	// Group data by timestamp
-	timeMap := make(map[time.Time][]CountryEntry)
+	timeMap := make(map[time.Time][]coviddb.CountryEntry)
 	timestamps := make([]time.Time, 0)
 	for _, row := range rows {
 		if timeMap[row.Timestamp] == nil {
-			timeMap[row.Timestamp] = make([]CountryEntry, 0)
+			timeMap[row.Timestamp] = make([]coviddb.CountryEntry, 0)
 		}
 		timeMap[row.Timestamp] = append(timeMap[row.Timestamp], row)
 		timestamps = append(timestamps, row.Timestamp)
@@ -53,13 +54,13 @@ func GetTotalCases (rows []CountryEntry) ([][][2]int64) {
 		for _, data := range countryMap {
 			confirmed += data.Confirmed
 			recovered += data.Recovered
-			deaths    += data.Deaths
+			deaths += data.Deaths
 		}
 		epoch := timestamp.UnixNano() / 1000000
-		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], [2]int64{confirmed,                      epoch})
-		consolidated[RECOVERED] = append(consolidated[RECOVERED], [2]int64{recovered,                      epoch})
-		consolidated[DEATHS]    = append(consolidated[DEATHS],    [2]int64{deaths,                         epoch})
-		consolidated[ACTIVE]    = append(consolidated[ACTIVE],    [2]int64{confirmed - recovered - deaths, epoch})
+		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], [2]int64{confirmed, epoch})
+		consolidated[RECOVERED] = append(consolidated[RECOVERED], [2]int64{recovered, epoch})
+		consolidated[DEATHS] = append(consolidated[DEATHS], [2]int64{deaths, epoch})
+		consolidated[ACTIVE] = append(consolidated[ACTIVE], [2]int64{confirmed - recovered - deaths, epoch})
 	}
 
 	return consolidated
@@ -67,7 +68,7 @@ func GetTotalCases (rows []CountryEntry) ([][][2]int64) {
 
 // GetTotalDeltas calculates deltas of cases returned by GetTotalCases
 // Output is structured for easy export to HTTP Response (JSON)
-func GetTotalDeltas (rows [][2]int64) ([][2]int64) {
+func GetTotalDeltas(rows [][2]int64) [][2]int64 {
 	deltas := make([][2]int64, 0)
 
 	var value int64
@@ -81,7 +82,7 @@ func GetTotalDeltas (rows [][2]int64) ([][2]int64) {
 }
 
 // Helper code for unique.Sort()
-type timestampSlice struct { P *[]time.Time }
+type timestampSlice struct{ P *[]time.Time }
 
 func (p timestampSlice) Len() int {
 	return len(*p.P)
@@ -96,6 +97,5 @@ func (p timestampSlice) Swap(i, j int) {
 }
 
 func (p timestampSlice) Truncate(n int) {
-		(*p.P) = (*p.P)[:n]
+	(*p.P) = (*p.P)[:n]
 }
-
