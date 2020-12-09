@@ -2,6 +2,7 @@ package covidhandler
 
 import (
 	"errors"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -16,8 +17,11 @@ type APIHandler struct {
 }
 
 // Create a CovidAPIHandler object
-func Create(dbc *coviddb.DBCache) *APIHandler {
-	return &APIHandler{dbc: dbc}
+func Create(db coviddb.DB) (*APIHandler, error) {
+	if db == nil {
+		return nil, errors.New("no database specified")
+	}
+	return &APIHandler{dbc: coviddb.NewCache(db, 60*time.Second)}, nil
 }
 
 var (

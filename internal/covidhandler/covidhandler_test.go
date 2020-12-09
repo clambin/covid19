@@ -14,9 +14,7 @@ import (
 
 func TestHandlerHandler(t *testing.T) {
 	db := test.CreateWithData()
-	dbc := coviddb.CreateWithDB(db, 60*time.Second)
-
-	handler := Create(dbc)
+	handler, _ := Create(db)
 
 	// Test Search
 	targets := handler.Search()
@@ -72,19 +70,8 @@ func TestHandlerHandler(t *testing.T) {
 }
 
 func TestNoDB(t *testing.T) {
-	handler := Create(nil)
+	_, err := Create(nil)
 
-	request := apiserver.APIQueryRequest{
-		Range: struct {
-			From time.Time
-			To   time.Time
-		}{
-			From: time.Now(),
-			To:   time.Now()},
-		Targets: []struct{ Target string }{
-			{Target: "confirmed"}}}
-
-	_, err := handler.Query(&request)
 	assert.NotNil(t, err)
 }
 
@@ -106,9 +93,7 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 	db := test.Create(entries)
-	dbc := coviddb.CreateWithDB(db, 60*time.Second)
-
-	handler := Create(dbc)
+	handler, _ := Create(db)
 
 	request := apiserver.APIQueryRequest{
 		Range: struct {

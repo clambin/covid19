@@ -4,8 +4,6 @@ import (
 	"covid19/internal/coviddb"
 	"os"
 	"path/filepath"
-	"time"
-
 	// "runtime/pprof"
 
 	log "github.com/sirupsen/logrus"
@@ -52,8 +50,7 @@ func main() {
 	log.Info("covid19api v" + version.BuildVersion)
 
 	db := coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
-	dbc := coviddb.CreateWithDB(db, 60*time.Second)
-	handler := covidhandler.Create(dbc)
+	handler, _ := covidhandler.Create(db)
 	server := apiserver.Create(handler, cfg.port)
 	server.Run()
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func TestDBCache_List(t *testing.T) {
-	dbc := coviddb.CreateWithDB(CreateWithData(), 5*time.Minute)
+	dbc := coviddb.NewCache(CreateWithData(), 5*time.Minute)
 
 	assert.NotNil(t, dbc)
 

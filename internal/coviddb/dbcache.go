@@ -1,6 +1,7 @@
 package coviddb
 
 import (
+	"sync"
 	"time"
 )
 
@@ -10,15 +11,19 @@ type DBCache struct {
 	retention time.Duration
 	expired   time.Time
 	content   []CountryEntry
+	lock      sync.Mutex
 }
 
-// CreateWithDB creates a DB Cache object for a defined DB object
-func CreateWithDB(db DB, retention time.Duration) *DBCache {
+// NewCacheWithDB creates a DB Cache object for a defined DB object
+func NewCache(db DB, retention time.Duration) *DBCache {
 	return &DBCache{db: db, retention: retention, content: make([]CountryEntry, 0)}
 }
 
 // List: get the data from the goroutine
 func (dbc *DBCache) List(endTime time.Time) ([]CountryEntry, error) {
+	dbc.lock.Lock()
+	defer dbc.lock.Unlock()
+
 	// FIXME: if endTime is different, we can't use the cache
 	if dbc.expired.After(time.Now()) {
 		return dbc.content, nil
