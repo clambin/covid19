@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"covid19/internal/covid"
-	"covid19/internal/coviddb/test"
+	"covid19/internal/coviddb/testdb"
 )
 
 func TestProbe(t *testing.T) {
 	apiClient := makeClient()
-	db := test.Create(testDBData)
+	db := testdb.Create(testDBData)
 	probe := covid.NewProbe(apiClient, db, nil)
 
 	err := probe.Run()

@@ -35,7 +35,9 @@ func main() {
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 monitor")
 
+	a.Version(version.BuildVersion)
 	a.HelpFlag.Short('h')
+	a.VersionFlag.Short('v')
 	a.Flag("debug", "Log debug messages").BoolVar(&cfg.debug)
 	a.Flag("once", "Run once and then exit").BoolVar(&cfg.once)
 	a.Flag("interval", "Time between measurements").Default("1200").IntVar(&cfg.interval)

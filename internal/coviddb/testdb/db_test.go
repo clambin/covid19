@@ -1,4 +1,4 @@
-package test
+package testdb
 
 import (
 	"covid19/internal/coviddb"

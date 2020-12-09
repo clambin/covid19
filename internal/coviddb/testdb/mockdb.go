@@ -1,4 +1,4 @@
-package test
+package testdb
 
 import (
 	"time"
@@ -13,11 +13,12 @@ type DB struct {
 	data []coviddb.CountryEntry
 }
 
-// Create a mock DB
+// Create a mock database
 func Create(data []coviddb.CountryEntry) *DB {
 	return &DB{data: data}
 }
 
+// CreateWithData creates a pre-populated database
 func CreateWithData() *DB {
 	return &DB{data: []coviddb.CountryEntry{
 		{

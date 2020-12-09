@@ -8,12 +8,12 @@ import (
 	// log     "github.com/sirupsen/logrus"
 
 	"covid19/internal/coviddb"
-	"covid19/internal/coviddb/test"
+	"covid19/internal/coviddb/testdb"
 	"covid19/pkg/grafana/apiserver"
 )
 
 func TestHandlerHandler(t *testing.T) {
-	db := test.CreateWithData()
+	db := testdb.CreateWithData()
 	handler, _ := Create(db)
 
 	// Test Search
@@ -92,7 +92,7 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		}
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
-	db := test.Create(entries)
+	db := testdb.Create(entries)
 	handler, _ := Create(db)
 
 	request := apiserver.APIQueryRequest{

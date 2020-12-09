@@ -11,13 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"covid19/internal/coviddb"
-	"covid19/internal/coviddb/test"
+	"covid19/internal/coviddb/testdb"
 
 	"testing"
 )
 
 func TestBackFiller(t *testing.T) {
-	db := test.Create([]coviddb.CountryEntry{
+	db := testdb.Create([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",
