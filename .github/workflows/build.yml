@@ -73,7 +73,7 @@ jobs:
         tags: ${{ steps.covid19mon_meta.outputs.tags }}
         labels: ${{ steps.covid19mon_meta.outputs.labels }}
         build-args: |
-          BUILD_VERSION=$ {{ steps.covid19mon_meta.outputs.version }}
+          BUILD_VERSION=${{ steps.covid19mon_meta.outputs.version }}
     - name: metadata for covid19api
       id: covid19api_meta
       uses: crazy-max/ghaction-docker-meta@v1
@@ -93,4 +93,4 @@ jobs:
         tags: ${{ steps.covid19api_meta.outputs.tags }}
         labels: ${{ steps.covid19api_meta.outputs.labels }}
         build-args: |
-          BUILD_VERSION=$ {{ steps.covid19api_meta.outputs.version }}
+          BUILD_VERSION=${{ steps.covid19api_meta.outputs.version }}

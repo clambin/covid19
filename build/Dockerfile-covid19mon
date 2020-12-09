@@ -5,7 +5,7 @@ WORKDIR /build
 COPY . ./
 
 ARG BUILD_VERSION=develop
-RUN CGO_ENABLED=0 go -ldflags "-X covid19/internal/version.BuildVersion=$BUILD_VERSION" build cmd/covid19mon/covid19mon.go
+RUN CGO_ENABLED=0 go build -ldflags "-X covid19/internal/version.BuildVersion=$BUILD_VERSION" cmd/covid19mon/covid19mon.go
 
 FROM alpine
 
