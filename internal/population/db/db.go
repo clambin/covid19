@@ -51,11 +51,9 @@ func (db *PostgresDB) List() (map[string]int64, error) {
 			for rows.Next() {
 				var code string
 				var population int64
-				err = rows.Scan(&code, &population)
-				if err != nil {
-					break
+				if rows.Scan(&code, &population) == nil {
+					entries[code] = population
 				}
-				entries[code] = population
 			}
 			log.Debugf("Found %d records", len(entries))
 		}

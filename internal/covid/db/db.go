@@ -61,11 +61,9 @@ func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 			defer rows.Close()
 			for rows.Next() {
 				var entry CountryEntry
-				err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
-				if err != nil {
-					break
+				if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
+					entries = append(entries, entry)
 				}
-				entries = append(entries, entry)
 			}
 			log.Debugf("Found %d records", len(entries))
 		}
@@ -95,11 +93,9 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 					country   string
 					timestamp time.Time
 				)
-				err = rows.Scan(&country, &timestamp)
-				if err != nil {
-					break
+				if rows.Scan(&country, &timestamp) == nil {
+					entries[country] = timestamp
 				}
-				entries[country] = timestamp
 			}
 			log.Debugf("Found %d records", len(entries))
 		}
@@ -125,11 +121,7 @@ func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
 		if err == nil {
 			defer rows.Close()
 			for rows.Next() {
-				err = rows.Scan(&first)
-				if err != nil {
-					log.Debug(err)
-					break
-				}
+				_ = rows.Scan(&first)
 			}
 			log.Debugf("First record: %s", first.String())
 		}
