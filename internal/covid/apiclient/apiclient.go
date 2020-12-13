@@ -96,18 +96,17 @@ func (client *APIClient) getStats() (*statsResponse, error) {
 	req.Header.Add("x-rapidapi-key", client.apiKey)
 	req.Header.Add("x-rapidapi-host", rapidAPIHost)
 
-	resp, err := client.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, errors.New(resp.Status)
-	}
-
 	var stats statsResponse
-	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(&stats)
+
+	resp, err := client.client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == 200 {
+			decoder := json.NewDecoder(resp.Body)
+			err = decoder.Decode(&stats)
+		} else {
+			err = errors.New(resp.Status)
+		}
+	}
 	return &stats, err
 }
