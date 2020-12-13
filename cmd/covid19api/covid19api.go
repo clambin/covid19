@@ -1,7 +1,6 @@
 package main
 
 import (
-	"covid19/internal/coviddb"
 	"os"
 	"path/filepath"
 	// "runtime/pprof"
@@ -9,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	"covid19/internal/covid/db"
 	"covid19/internal/covidhandler"
 	"covid19/internal/version"
 	"covid19/pkg/grafana/apiserver"
@@ -50,8 +50,8 @@ func main() {
 
 	log.Info("covid19api v" + version.BuildVersion)
 
-	db := coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
-	handler, _ := covidhandler.Create(db)
+	covidDB := db.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
+	handler, _ := covidhandler.Create(covidDB)
 	server := apiserver.Create(handler, cfg.port)
 	server.Run()
 }

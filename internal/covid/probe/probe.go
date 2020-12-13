@@ -1,19 +1,22 @@
-package covid
+package probe
 
 import (
-	"covid19/internal/coviddb"
+	"covid19/internal/covid/pushgateway"
 	log "github.com/sirupsen/logrus"
+
+	"covid19/internal/covid/apiclient"
+	"covid19/internal/covid/db"
 )
 
 // Probe handle
 type Probe struct {
-	apiClient   *APIClient
-	db          coviddb.DB
-	pushGateway *PushGateway
+	apiClient   apiclient.API
+	db          db.DB
+	pushGateway *pushgateway.PushGateway
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(apiClient *APIClient, db coviddb.DB, pushGateway *PushGateway) *Probe {
+func NewProbe(apiClient apiclient.API, db db.DB, pushGateway *pushgateway.PushGateway) *Probe {
 	return &Probe{apiClient: apiClient, db: db, pushGateway: pushGateway}
 }
 
@@ -24,17 +27,17 @@ func (probe *Probe) Run() error {
 	if err == nil && len(countryStats) > 0 {
 		log.Debugf("Got %d new entries", len(countryStats))
 
-		dbRecords, err := probe.findNewCountryStats(countryStats)
+		newRecords, err := probe.findNewCountryStats(countryStats)
 
-		if err == nil && len(dbRecords) > 0 {
-			log.Infof("Adding %d new entries", len(dbRecords))
+		if err == nil && len(newRecords) > 0 {
+			log.Infof("Adding %d new entries", len(newRecords))
 
-			err = probe.db.Add(dbRecords)
+			err = probe.db.Add(newRecords)
 		}
 
 		if err == nil && probe.pushGateway != nil {
-			countries := make([]string, 0, len(dbRecords))
-			for _, entry := range dbRecords {
+			countries := make([]string, 0, len(newRecords))
+			for _, entry := range newRecords {
 				countries = append(countries, entry.Name)
 			}
 
@@ -49,8 +52,8 @@ func (probe *Probe) Run() error {
 }
 
 // findNewCountryStats returns any new stats (ie either more recent or the country has no entries yet)
-func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats) ([]coviddb.CountryEntry, error) {
-	result := make([]coviddb.CountryEntry, 0)
+func (probe *Probe) findNewCountryStats(newCountryStats map[string]apiclient.CountryStats) ([]db.CountryEntry, error) {
+	result := make([]db.CountryEntry, 0)
 
 	lastDBEntries, err := probe.db.ListLatestByCountry()
 	if err != nil {
@@ -64,7 +67,7 @@ func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats)
 			if ok == false {
 				log.Warningf("unknown country '%s'. Skipping", country)
 			} else {
-				result = append(result, coviddb.CountryEntry{
+				result = append(result, db.CountryEntry{
 					Timestamp: stats.LastUpdate,
 					Code:      code,
 					Name:      country,

@@ -10,14 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"covid19/internal/coviddb"
-	"covid19/internal/coviddb/testdb"
-
+	"covid19/internal/covid/db"
+	"covid19/internal/covid/db/mock"
 	"testing"
 )
 
 func TestBackFiller(t *testing.T) {
-	db := testdb.Create([]coviddb.CountryEntry{
+	covidDB := mock.Create([]db.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",
@@ -27,19 +26,19 @@ func TestBackFiller(t *testing.T) {
 			Recovered: 0,
 		}})
 
-	backFiller := CreateWithClient(db, makeHTTPClient())
+	backFiller := CreateWithClient(covidDB, makeHTTPClient())
 
 	err := backFiller.Run()
 	assert.Nil(t, err)
 
-	records, err := db.List(time.Now())
+	records, err := covidDB.List(time.Now())
 	assert.Nil(t, err)
 	log.Debug(records)
-	assert.Equal(t, 3, len(records))
+	assert.Len(t, records, 3)
 
-	latest, err := db.ListLatestByCountry()
+	latest, err := covidDB.ListLatestByCountry()
 	assert.Nil(t, err)
-	assert.Equal(t, 2, len(latest))
+	assert.Len(t, latest, 2)
 	timestamp, ok := latest["Belgium"]
 	assert.True(t, ok)
 	assert.Equal(t, time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC), timestamp)

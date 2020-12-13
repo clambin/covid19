@@ -1,47 +1,37 @@
-package covid_test
+package apiclient_test
 
 import (
 	"bytes"
-	"covid19/internal/coviddb"
 	"io/ioutil"
 	"net/http"
-	"time"
+	"testing"
 
-	"covid19/internal/covid"
+	"github.com/stretchr/testify/assert"
+
+	"covid19/internal/covid/apiclient"
 )
 
-var (
-	testDBData = []coviddb.CountryEntry{
-		{
-			Timestamp: parseDate("2020-11-01"),
-			Code:      "A",
-			Name:      "A",
-			Confirmed: 1,
-			Recovered: 0,
-			Deaths:    0},
-		{
-			Timestamp: parseDate("2020-11-02"),
-			Code:      "B",
-			Name:      "B",
-			Confirmed: 3,
-			Recovered: 0,
-			Deaths:    0},
-		{
-			Timestamp: parseDate("2020-11-02"),
-			Code:      "A",
-			Name:      "A",
-			Confirmed: 3,
-			Recovered: 1,
-			Deaths:    0},
-		{
-			Timestamp: parseDate("2020-11-04"),
-			Code:      "B",
-			Name:      "B",
-			Confirmed: 10,
-			Recovered: 5,
-			Deaths:    1}}
+func TestGetCountryStats(t *testing.T) {
+	apiClient := makeClient()
 
-	goodResponse = `
+	response, err := apiClient.GetCountryStats()
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, 2, len(response))
+	stats, ok := response["A"]
+	assert.Equal(t, true, ok)
+	assert.Equal(t, int64(3), stats.Confirmed)
+	assert.Equal(t, int64(2), stats.Deaths)
+	assert.Equal(t, int64(1), stats.Recovered)
+	stats, ok = response["B"]
+	assert.Equal(t, true, ok)
+	assert.Equal(t, int64(6), stats.Confirmed)
+	assert.Equal(t, int64(5), stats.Deaths)
+	assert.Equal(t, int64(4), stats.Recovered)
+}
+
+// Stubbing the API Call
+const goodResponse = `
 	{
 		"error": false,
 		"statusCode": 200,
@@ -83,18 +73,6 @@ var (
 		}
 	}`
 
-	// lastChecked = time.Date(2020, time.December, 3, 11, 23, 52, 193000000, time.UTC)
-	lastUpdate = time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC)
-)
-
-// parseDate helper function
-func parseDate(dateString string) time.Time {
-	date, _ := time.Parse("2006-01-02", dateString)
-	return date
-}
-
-// Stubbing the API Call
-
 // RoundTripFunc .
 type RoundTripFunc func(req *http.Request) *http.Response
 
@@ -111,7 +89,7 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 }
 
 // makeClient returns a stubbed covid.APIClient
-func makeClient() *covid.APIClient {
+func makeClient() *apiclient.APIClient {
 	client := NewTestClient(func(req *http.Request) *http.Response {
 		return &http.Response{
 			StatusCode: 200,
@@ -120,5 +98,5 @@ func makeClient() *covid.APIClient {
 		}
 	})
 
-	return covid.NewAPIClient(client, "")
+	return apiclient.NewWithHTTPClient(client, "")
 }

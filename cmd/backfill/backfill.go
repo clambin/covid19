@@ -1,14 +1,14 @@
 package main
 
 import (
-	"covid19/internal/coviddb"
 	"os"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v2"
 
 	"covid19/internal/backfill"
+	"covid19/internal/covid/db"
 	"covid19/internal/version"
 )
 
@@ -45,7 +45,7 @@ func main() {
 
 	log.Info("backfill v" + version.BuildVersion)
 
-	app := backfill.Create(coviddb.NewPostgresDB(
+	app := backfill.Create(db.NewPostgresDB(
 		cfg.postgresHost,
 		cfg.postgresPort,
 		cfg.postgresDatabase,

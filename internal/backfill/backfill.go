@@ -1,7 +1,7 @@
 package backfill
 
 import (
-	"covid19/internal/coviddb"
+	"covid19/internal/covid/db"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -13,79 +13,69 @@ import (
 // Backfiller retrieves historic COVID19 data and adds it to the database
 type Backfiller struct {
 	client *http.Client
-	db     coviddb.DB
+	db     db.DB
 }
 
 // Create a new Backfiller object
-func Create(db coviddb.DB) *Backfiller {
+func Create(db db.DB) *Backfiller {
 	return CreateWithClient(db, &http.Client{})
 }
 
 // CreateWithClient creates  a new Backfiller object w/ a supplier http.Client.
-// Used for unit testtools
-func CreateWithClient(db coviddb.DB, client *http.Client) *Backfiller {
+// Used for unit tests
+func CreateWithClient(db db.DB, client *http.Client) *Backfiller {
 	return &Backfiller{client: client, db: db}
 }
 
 // Run the backfiller.  Get all supported countries from the API
 // Then add any historical record that is older than the first
 // record in the DB
-func (backfiller *Backfiller) Run() error {
-	countries, err := backfiller.getCountries()
-	if err != nil {
-		return err
-	}
+func (backFiller *Backfiller) Run() error {
+	countries, err := backFiller.getCountries()
+	if err == nil {
+		first, err := backFiller.db.GetFirstEntry()
+		if err == nil {
+			log.Debugf("First entry in DB: %s", first.String())
 
-	first, err := backfiller.db.GetFirstEntry()
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("First entry in DB: %s", first.String())
-
-	for slug, details := range countries {
-		realName := lookupCountryName(details.Name)
-
-		log.Debugf("Getting data for %s (slug: %s)", realName, slug)
-
-		records := make([]coviddb.CountryEntry, 0)
-		entries, err := backfiller.getHistoricalData(slug)
-		if err != nil {
-			return err
-		}
-
-		for _, entry := range entries {
-			log.Debugf("Entry date: %s", entry.Date.String())
-			if entry.Date.Before(first) {
-				records = append(records, coviddb.CountryEntry{
-					Timestamp: entry.Date,
-					Code:      details.Code,
-					Name:      realName,
-					Confirmed: entry.Confirmed,
-					Deaths:    entry.Deaths,
-					Recovered: entry.Recovered})
+			for slug, details := range countries {
+				realName := lookupCountryName(details.Name)
+				log.Debugf("Getting data for %s (slug: %s)", realName, slug)
+				records := make([]db.CountryEntry, 0)
+				entries, err := backFiller.getHistoricalData(slug)
+				if err == nil {
+					for _, entry := range entries {
+						log.Debugf("Entry date: %s", entry.Date.String())
+						if entry.Date.Before(first) {
+							records = append(records, db.CountryEntry{
+								Timestamp: entry.Date,
+								Code:      details.Code,
+								Name:      realName,
+								Confirmed: entry.Confirmed,
+								Deaths:    entry.Deaths,
+								Recovered: entry.Recovered})
+						}
+					}
+					err = backFiller.db.Add(records)
+					if err == nil {
+						log.Infof("Received data for %s. %d entries added", realName, len(records))
+					}
+				}
 			}
 		}
-		err = backfiller.db.Add(records)
-		if err != nil {
-			return err
-		}
-		log.Infof("Received data for %s. %d entries added", realName, len(records))
 	}
-
 	return err
 }
 
 const url = "https://api.covid19api.com"
 
-func (backfiller *Backfiller) getCountries() (map[string]struct {
+func (backFiller *Backfiller) getCountries() (map[string]struct {
 	Name string
 	Code string
 }, error) {
 	req, _ := http.NewRequest("GET", url+"/countries", nil)
 
 	for {
-		resp, err := backfiller.client.Do(req)
+		resp, err := backFiller.client.Do(req)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +119,7 @@ func (backfiller *Backfiller) getCountries() (map[string]struct {
 	}
 }
 
-func (backfiller *Backfiller) getHistoricalData(slug string) ([]struct {
+func (backFiller *Backfiller) getHistoricalData(slug string) ([]struct {
 	Confirmed int64
 	Recovered int64
 	Deaths    int64
@@ -138,7 +128,7 @@ func (backfiller *Backfiller) getHistoricalData(slug string) ([]struct {
 	req, _ := http.NewRequest("GET", url+"/total/country/"+slug, nil)
 
 	for {
-		resp, err := backfiller.client.Do(req)
+		resp, err := backFiller.client.Do(req)
 		if err != nil {
 			return nil, err
 		}

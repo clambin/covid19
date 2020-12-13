@@ -1,16 +1,16 @@
-package population
+package db_test
 
 import (
 	"os"
 	"strconv"
-
-	//"fmt"
-
 	"testing"
+
 	"github.com/stretchr/testify/assert"
+
+	"covid19/internal/population/db"
 )
 
-func getdbenv() (map[string]string, bool) {
+func getDBEnv() (map[string]string, bool) {
 	values := make(map[string]string, 0)
 	envVars := []string{"pg_host", "pg_port", "pg_database", "pg_user", "pg_password"}
 
@@ -29,22 +29,24 @@ func getdbenv() (map[string]string, bool) {
 }
 
 func TestDB(t *testing.T) {
-	values, ok := getdbenv()
-	if ok == false { return }
+	values, ok := getDBEnv()
+	if ok == false {
+		return
+	}
 
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.Nil(t, err)
 
-	db := NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
-	assert.NotNil(t, db)
+	covidDB := db.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	assert.NotNil(t, covidDB)
 
-	_, err = db.List()
+	_, err = covidDB.List()
 	assert.Nil(t, err)
 
-	err = db.Add(map[string]int64{"???": 242})
+	err = covidDB.Add(map[string]int64{"???": 242})
 	assert.Nil(t, err)
 
-	newContent, err := db.List()
+	newContent, err := covidDB.List()
 	assert.Nil(t, err)
 
 	entry, ok := newContent["???"]

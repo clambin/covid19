@@ -1,8 +1,6 @@
 package main
 
 import (
-	"covid19/internal/coviddb"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -12,8 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"covid19/internal/covid"
-	"covid19/internal/population"
+	covidapi "covid19/internal/covid/apiclient"
+	coviddb "covid19/internal/covid/db"
+	covidprobe "covid19/internal/covid/probe"
+	"covid19/internal/covid/pushgateway"
+	popapi "covid19/internal/population/apiclient"
+	popdb "covid19/internal/population/db"
+	popprobe "covid19/internal/population/probe"
 	"covid19/internal/version"
 	"covid19/pkg/scheduler"
 )
@@ -73,16 +76,16 @@ func main() {
 	newScheduler := scheduler.NewScheduler()
 
 	// Add the covid probe
-	covidProbe := covid.NewProbe(
-		covid.NewAPIClient(&http.Client{}, cfg.apiKey),
+	covidProbe := covidprobe.NewProbe(
+		covidapi.New(cfg.apiKey),
 		coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
-		covid.NewPushGateway(cfg.pushGateway))
+		pushgateway.NewPushGateway(cfg.pushGateway))
 	newScheduler.Register(covidProbe, time.Duration(cfg.interval)*time.Second)
 
 	// Add the population probe
-	populationProbe := population.Create(
-		population.NewAPIClient(&http.Client{}, cfg.apiKey),
-		population.NewPostgresDB(
+	populationProbe := popprobe.Create(
+		popapi.New(cfg.apiKey),
+		popdb.NewPostgresDB(
 			cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword))
 	newScheduler.Register(populationProbe, time.Duration(cfg.interval)*time.Second)
 

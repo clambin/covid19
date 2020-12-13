@@ -1,12 +1,12 @@
 package apiserver
 
-import(
-	"time"
-	"net/http"
-	"net/http/httptest"
+import (
 	"bytes"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -16,8 +16,8 @@ func TestHello(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server   := Create(newAPIHandler(), -1)
-	handler  := http.HandlerFunc(server.hello)
+	server := Create(newAPIHandler(), -1)
+	handler := http.HandlerFunc(server.hello)
 	recorder := httptest.NewRecorder()
 
 	handler.ServeHTTP(recorder, req)
@@ -32,8 +32,8 @@ func TestSearch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server   := Create(newAPIHandler(), -1)
-	handler  := http.HandlerFunc(server.search)
+	server := Create(newAPIHandler(), -1)
+	handler := http.HandlerFunc(server.search)
 	recorder := httptest.NewRecorder()
 
 	handler.ServeHTTP(recorder, req)
@@ -59,8 +59,8 @@ func TestQuery(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	server   := Create(newAPIHandler(), -1)
-	handler  := http.HandlerFunc(server.query)
+	server := Create(newAPIHandler(), -1)
+	handler := http.HandlerFunc(server.query)
 	recorder := httptest.NewRecorder()
 
 	handler.ServeHTTP(recorder, req)
@@ -81,14 +81,14 @@ func TestQueryBadRequest(t *testing.T) {
 	}
 
 	recorder := httptest.NewRecorder()
-	server   := Create(newAPIHandler(), -1)
-	handler  := http.HandlerFunc(server.query)
+	server := Create(newAPIHandler(), -1)
+	handler := http.HandlerFunc(server.query)
 
 	handler.ServeHTTP(recorder, req)
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }
 
-func TestQueryServerError (t *testing.T) {
+func TestQueryServerError(t *testing.T) {
 	body := []byte(`{
 			"range": { 
 				"from": "2020-01-01T00:00:00.000Z", 
@@ -103,8 +103,8 @@ func TestQueryServerError (t *testing.T) {
 	}
 
 	recorder := httptest.NewRecorder()
-	server   := Create(newAPIHandler(), -1)
-	handler  := http.HandlerFunc(server.query)
+	server := Create(newAPIHandler(), -1)
+	handler := http.HandlerFunc(server.query)
 
 	handler.ServeHTTP(recorder, req)
 	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -152,11 +152,11 @@ func TestParseRequest(t *testing.T) {
 	`)
 	targets := []string{"confirmed", "recovered", "death", "active"}
 	reader := bytes.NewReader(body)
-	params, err := parseRequest(reader, targets)
+	params, err := parseRequest(reader)
 
 	assert.Nil(t, err)
-	assert.True(t, time.Date(2019, time.December,  31, 23, 59, 59, 0, time.UTC).Equal(params.Range.From))
-	assert.True(t, time.Date(2020, time.December,  31, 23, 59, 59, 0, time.UTC).Equal(params.Range.To))
+	assert.True(t, time.Date(2019, time.December, 31, 23, 59, 59, 0, time.UTC).Equal(params.Range.From))
+	assert.True(t, time.Date(2020, time.December, 31, 23, 59, 59, 0, time.UTC).Equal(params.Range.To))
 	for _, target := range targets {
 		found := false
 		for _, parsedTarget := range params.Targets {
@@ -167,7 +167,6 @@ func TestParseRequest(t *testing.T) {
 		}
 		assert.True(t, found, target)
 	}
-
 }
 
 //
@@ -177,7 +176,7 @@ func TestParseRequest(t *testing.T) {
 type testAPIHandler struct {
 }
 
-func newAPIHandler() (*testAPIHandler) {
+func newAPIHandler() *testAPIHandler {
 	return &testAPIHandler{}
 }
 
@@ -185,28 +184,27 @@ var (
 	targets = []string{"A", "B", "Crash"}
 )
 
-func (apihandler *testAPIHandler) Search() ([]string) {
+func (apiHandler *testAPIHandler) Search() []string {
 	return targets
 }
 
-func (apihandler *testAPIHandler) Query(request *APIQueryRequest) ([]APIQueryResponse, error) {
+func (apiHandler *testAPIHandler) Query(request *APIQueryRequest) ([]APIQueryResponse, error) {
 	var response = make([]APIQueryResponse, 0)
 
 	for _, target := range request.Targets {
 		switch target.Target {
 		case "A":
 			response = append(response, APIQueryResponse{
-				Target: "A",
-				Datapoints: [][2]int64{ [2]int64{int64(1), int64(2)}, [2]int64{int64(3), int64(4)} }})
+				Target:     "A",
+				DataPoints: [][2]int64{{int64(1), int64(2)}, {int64(3), int64(4)}}})
 		case "B":
 			response = append(response, APIQueryResponse{
-				Target: "B",
-				Datapoints: [][2]int64{ [2]int64{int64(5), int64(6)}, [2]int64{int64(7), int64(8)} }})
+				Target:     "B",
+				DataPoints: [][2]int64{{int64(5), int64(6)}, {int64(7), int64(8)}}})
 		case "Crash":
-			return response, errors.New("Server crash")
+			return response, errors.New("server crash")
 		}
 	}
 
 	return response, nil
 }
-

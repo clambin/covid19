@@ -1,11 +1,12 @@
-package coviddb
+package db
 
 import (
 	"database/sql"
 	"fmt"
+	"time"
+
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 // DB interface representing a Covid Database
@@ -44,15 +45,14 @@ type CountryEntry struct {
 func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 	entries := make([]CountryEntry, 0)
 
-	if err := db.initializeDB(); err != nil {
-		return entries, err
-	}
-
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
 	if err == nil {
 		defer dbh.Close()
+		err = db.initializeDB(dbh)
+	}
 
+	if err == nil {
 		rows, err := dbh.Query(fmt.Sprintf(
 			"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
 			endDate.Format("2006-01-02 15:04:05")))
@@ -61,11 +61,9 @@ func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 			defer rows.Close()
 			for rows.Next() {
 				var entry CountryEntry
-				err = rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths)
-				if err != nil {
-					break
+				if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
+					entries = append(entries, entry)
 				}
-				entries = append(entries, entry)
 			}
 			log.Debugf("Found %d records", len(entries))
 		}
@@ -78,16 +76,15 @@ func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 	entries := make(map[string]time.Time, 0)
 
-	if err := db.initializeDB(); err != nil {
-		return entries, err
-	}
-
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
 	if err == nil {
 		defer dbh.Close()
+		err = db.initializeDB(dbh)
+	}
 
-		rows, err := dbh.Query(fmt.Sprintf("SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name"))
+	if err == nil {
+		rows, err := dbh.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`)
 
 		if err == nil {
 			defer rows.Close()
@@ -96,11 +93,9 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 					country   string
 					timestamp time.Time
 				)
-				err = rows.Scan(&country, &timestamp)
-				if err != nil {
-					break
+				if rows.Scan(&country, &timestamp) == nil {
+					entries[country] = timestamp
 				}
-				entries[country] = timestamp
 			}
 			log.Debugf("Found %d records", len(entries))
 		}
@@ -113,25 +108,20 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
 	first := time.Time{}
 
-	if err := db.initializeDB(); err != nil {
-		return first, err
-	}
-
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
 	if err == nil {
 		defer dbh.Close()
+		err = db.initializeDB(dbh)
+	}
 
-		rows, err := dbh.Query(fmt.Sprintf("SELECT MIN(time) FROM covid19"))
+	if err == nil {
+		rows, err := dbh.Query(`SELECT MIN(time) FROM covid19`)
 
 		if err == nil {
 			defer rows.Close()
 			for rows.Next() {
-				err = rows.Scan(&first)
-				if err != nil {
-					log.Debug(err)
-					break
-				}
+				_ = rows.Scan(&first)
 			}
 			log.Debugf("First record: %s", first.String())
 		}
@@ -142,66 +132,54 @@ func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
 
 // Add inserts all specified records in the covid19 database table
 func (db *PostgresDB) Add(entries []CountryEntry) error {
-	if err := db.initializeDB(); err != nil {
-		return err
-	}
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil {
-		return err
-	}
-	defer dbh.Close()
-
-	txn, err := dbh.Begin()
-	if err != nil {
-		return err
+	if err == nil {
+		defer dbh.Close()
+		err = db.initializeDB(dbh)
 	}
 
-	stmt, err := txn.Prepare(pq.CopyIn("covid19", "time", "country_code", "country_name", "confirmed", "death", "recovered"))
-	if err != nil {
-		return err
-	}
-
-	for _, entry := range entries {
-		_, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered)
+	if err == nil {
+		txn, err := dbh.Begin()
 		if err != nil {
 			return err
 		}
-	}
 
-	_, err = stmt.Exec()
-	if err != nil {
-		return err
-	}
+		stmt, err := txn.Prepare(pq.CopyIn("covid19", "time", "country_code", "country_name", "confirmed", "death", "recovered"))
+		if err != nil {
+			return err
+		}
 
-	err = stmt.Close()
-	if err != nil {
-		return err
-	}
+		for _, entry := range entries {
+			_, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered)
+			if err != nil {
+				return err
+			}
+		}
 
-	err = txn.Commit()
-	if err != nil {
-		return err
-	}
+		_, err = stmt.Exec()
+		if err != nil {
+			return err
+		}
 
+		err = stmt.Close()
+		if err != nil {
+			return err
+		}
+
+		err = txn.Commit()
+	}
 	return nil
 }
 
 // initializeDB created the required tables
-func (db *PostgresDB) initializeDB() error {
+func (db *PostgresDB) initializeDB(dbh *sql.DB) error {
 	if db.initialized {
 		return nil
 	}
 
-	dbh, err := sql.Open("postgres", db.psqlInfo)
-
-	if err != nil {
-		return err
-	}
-	defer dbh.Close()
-
-	_, err = dbh.Exec(`
+	_, err := dbh.Exec(`
 		CREATE TABLE IF NOT EXISTS covid19 (
 			time TIMESTAMP WITHOUT TIME ZONE,
 			country_code TEXT,
@@ -217,6 +195,24 @@ func (db *PostgresDB) initializeDB() error {
 
 	if err == nil {
 		db.initialized = true
+	}
+
+	return err
+}
+
+// RemoveDB removes all tables & indexes
+func (db *PostgresDB) RemoveDB() error {
+
+	dbh, err := sql.Open("postgres", db.psqlInfo)
+
+	if err == nil {
+		defer dbh.Close()
+
+		_, err = dbh.Exec(`DROP TABLE IF EXISTS covid19 CASCADE`)
+
+		if err == nil {
+			db.initialized = false
+		}
 	}
 
 	return err
