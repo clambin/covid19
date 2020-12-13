@@ -43,17 +43,9 @@ func (apiHandler *APIHandler) Search() []string {
 
 // Query the DB and return the requested targets
 func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) ([]apiserver.APIQueryResponse, error) {
-	if apiHandler.cache == nil {
-		return make([]apiserver.APIQueryResponse, 0), errors.New("no database configured")
-	}
-
 	entries, err := apiHandler.cache.List(request.Range.To)
 
-	if err != nil {
-		return make([]apiserver.APIQueryResponse, 0), err
-	}
-
-	return buildTargets(entries, request.Targets), nil
+	return buildTargets(entries, request.Targets), err
 }
 
 // build the requested targets
