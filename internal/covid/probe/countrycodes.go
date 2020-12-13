@@ -1,7 +1,7 @@
-package covid
+package probe
 
 var (
-	CountryCodes = map[string]string{
+	countryCodes = map[string]string{
 		"Andorra":                           "AD",
 		"United Arab Emirates":              "AE",
 		"Afghanistan":                       "AF",

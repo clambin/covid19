@@ -10,10 +10,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"covid19/internal/covid"
 	covidapi "covid19/internal/covid/apiclient"
 	coviddb "covid19/internal/covid/db"
 	covidprobe "covid19/internal/covid/probe"
+	"covid19/internal/covid/pushgateway"
 	popapi "covid19/internal/population/apiclient"
 	popdb "covid19/internal/population/db"
 	popprobe "covid19/internal/population/probe"
@@ -79,7 +79,7 @@ func main() {
 	covidProbe := covidprobe.NewProbe(
 		covidapi.New(cfg.apiKey),
 		coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
-		covid.NewPushGateway(cfg.pushGateway))
+		pushgateway.NewPushGateway(cfg.pushGateway))
 	newScheduler.Register(covidProbe, time.Duration(cfg.interval)*time.Second)
 
 	// Add the population probe

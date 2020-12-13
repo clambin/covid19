@@ -64,21 +64,21 @@ func buildTargets(entries []db.CountryEntry, targets []struct{ Target string }) 
 	for _, target := range targets {
 		switch target.Target {
 		case "confirmed":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, Datapoints: totalCases[CONFIRMED]})
+			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: totalCases[CONFIRMED]})
 		case "confirmed-delta":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, Datapoints: GetTotalDeltas(totalCases[CONFIRMED])})
+			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: GetTotalDeltas(totalCases[CONFIRMED])})
 		case "recovered":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, Datapoints: totalCases[RECOVERED]})
+			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: totalCases[RECOVERED]})
 		case "recovered-delta":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, Datapoints: GetTotalDeltas(totalCases[RECOVERED])})
+			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: GetTotalDeltas(totalCases[RECOVERED])})
 		case "death":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, Datapoints: totalCases[DEATHS]})
+			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: totalCases[DEATHS]})
 		case "death-delta":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, Datapoints: GetTotalDeltas(totalCases[DEATHS])})
+			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: GetTotalDeltas(totalCases[DEATHS])})
 		case "active":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, Datapoints: totalCases[ACTIVE]})
+			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: totalCases[ACTIVE]})
 		case "active-delta":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, Datapoints: GetTotalDeltas(totalCases[ACTIVE])})
+			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: GetTotalDeltas(totalCases[ACTIVE])})
 		default:
 			log.Warningf("dropping unsupported target: %s", target.Target)
 		}

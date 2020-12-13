@@ -1,9 +1,8 @@
 package probe
 
 import (
+	"covid19/internal/covid/pushgateway"
 	log "github.com/sirupsen/logrus"
-
-	"covid19/internal/covid"
 
 	"covid19/internal/covid/apiclient"
 	"covid19/internal/covid/db"
@@ -13,11 +12,11 @@ import (
 type Probe struct {
 	apiClient   apiclient.API
 	db          db.DB
-	pushGateway *covid.PushGateway
+	pushGateway *pushgateway.PushGateway
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(apiClient apiclient.API, db db.DB, pushGateway *covid.PushGateway) *Probe {
+func NewProbe(apiClient apiclient.API, db db.DB, pushGateway *pushgateway.PushGateway) *Probe {
 	return &Probe{apiClient: apiClient, db: db, pushGateway: pushGateway}
 }
 
@@ -64,7 +63,7 @@ func (probe *Probe) findNewCountryStats(newCountryStats map[string]apiclient.Cou
 	for country, stats := range newCountryStats {
 		lastUpdate, ok := lastDBEntries[country]
 		if ok == false || stats.LastUpdate.After(lastUpdate) {
-			code, ok := covid.CountryCodes[country]
+			code, ok := countryCodes[country]
 			if ok == false {
 				log.Warningf("unknown country '%s'. Skipping", country)
 			} else {

@@ -95,7 +95,7 @@ func TestHandlerHandler(t *testing.T) {
 		index, ok := indexes[target]
 		assert.True(t, ok)
 		assert.Equal(t, target, responses[index].Target)
-		assert.Equal(t, expected, responses[index].Datapoints, target)
+		assert.Equal(t, expected, responses[index].DataPoints, target)
 	}
 }
 

@@ -1,4 +1,4 @@
-package covid
+package pushgateway
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
@@ -9,11 +9,11 @@ import (
 
 // PushGateway handle
 type PushGateway struct {
-	pusher   *push.Pusher
+	pusher *push.Pusher
 }
 
 // NewPushGateway creates a new PushGateway handle
-func NewPushGateway(url string) (*PushGateway) {
+func NewPushGateway(url string) *PushGateway {
 	if url == "" {
 		return nil
 	}
@@ -26,12 +26,12 @@ func NewPushGateway(url string) (*PushGateway) {
 }
 
 // Push reports the number of new records
-func (pushgateway *PushGateway) Push(countries []string) {
+func (pushGateway *PushGateway) Push(countries []string) {
 	log.Debugf("Sending metrics for %d countries", len(countries))
 	for _, country := range countries {
 		reportedCount.WithLabelValues(country).Set(float64(1))
 	}
-	err := pushgateway.pusher.Push()
+	err := pushGateway.pusher.Push()
 	if err != nil {
 		log.Warningf("Could not push metrics: %v", err)
 	}
@@ -49,4 +49,3 @@ var (
 		},
 	)
 )
-

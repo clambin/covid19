@@ -2,7 +2,8 @@ package scheduler
 
 import (
 	"time"
-	log     "github.com/sirupsen/logrus"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Scheduler maintains a list of scheduledItems to be run at configured intervals
@@ -11,7 +12,7 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a scheduler
-func NewScheduler () *Scheduler {
+func NewScheduler() *Scheduler {
 	return &Scheduler{scheduledItems: make([]*scheduled, 0)}
 }
 
@@ -29,7 +30,7 @@ func (scheduler *Scheduler) Run(once bool) {
 			shouldRun, waitTime := scheduledItem.shouldRun()
 			log.Debugf("scheduledItem %d: shouldRun: %v, waitTime: %f", i, shouldRun, waitTime.Seconds())
 			if shouldRun {
-				scheduledItem.Run()
+				_ = scheduledItem.Run()
 			}
 			if waitTime < sleepTime {
 				sleepTime = waitTime
@@ -38,7 +39,6 @@ func (scheduler *Scheduler) Run(once bool) {
 		if once {
 			break
 		}
-		time.Sleep (sleepTime)
+		time.Sleep(sleepTime)
 	}
 }
-
