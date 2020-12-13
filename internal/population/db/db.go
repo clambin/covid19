@@ -78,27 +78,25 @@ func (db *PostgresDB) Add(entries map[string]int64) error {
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil {
-		return err
+	if err == nil {
+		defer dbh.Close()
+
+		// Prepare the SQL statement
+		sqlStr := "INSERT INTO population(country_code, population) VALUES "
+		var values []interface{}
+
+		for code, population := range entries {
+			sqlStr += "(?, ?),"
+			values = append(values, code, population)
+		}
+		sqlStr = strings.TrimSuffix(sqlStr, ",")
+		sqlStr = replaceSQL(sqlStr, "?")
+		sqlStr += "ON CONFLICT (country_code) DO UPDATE SET population = EXCLUDED.population"
+
+		stmt, _ := dbh.Prepare(sqlStr)
+
+		_, err = stmt.Exec(values...)
 	}
-	defer dbh.Close()
-
-	// Prepare the SQL statement
-	sqlStr := "INSERT INTO population(country_code, population) VALUES "
-	var values []interface{}
-
-	for code, population := range entries {
-		sqlStr += "(?, ?),"
-		values = append(values, code, population)
-	}
-	sqlStr = strings.TrimSuffix(sqlStr, ",")
-	sqlStr = replaceSQL(sqlStr, "?")
-	sqlStr += "ON CONFLICT (country_code) DO UPDATE SET population = EXCLUDED.population"
-
-	stmt, _ := dbh.Prepare(sqlStr)
-
-	_, err = stmt.Exec(values...)
-
 	return err
 }
 
@@ -110,20 +108,18 @@ func (db *PostgresDB) initializeDB() error {
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil {
-		return err
-	}
-	defer dbh.Close()
-
-	_, err = dbh.Exec(`
-		CREATE TABLE IF NOT EXISTS population (
-			country_code TEXT PRIMARY KEY,
-			population NUMERIC
-		)
-	`)
-
 	if err == nil {
-		db.initialized = true
+		defer dbh.Close()
+		_, err = dbh.Exec(`
+			CREATE TABLE IF NOT EXISTS population (
+				country_code TEXT PRIMARY KEY,
+				population NUMERIC
+			)
+		`)
+
+		if err == nil {
+			db.initialized = true
+		}
 	}
 
 	return err
