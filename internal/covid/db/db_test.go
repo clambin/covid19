@@ -1,13 +1,14 @@
-package testdb
+package db_test
 
 import (
-	"covid19/internal/coviddb"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"covid19/internal/covid/db"
 )
 
 func getDBEnv() (map[string]string, bool) {
@@ -38,11 +39,12 @@ func TestDB(t *testing.T) {
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.Nil(t, err)
 
-	db := coviddb.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
-	assert.NotNil(t, db)
+	covidDB := db.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	assert.NotNil(t, covidDB)
 
 	now := time.Now().UTC().Truncate(time.Second)
-	newEntries := []coviddb.CountryEntry{
+
+	newEntries := []db.CountryEntry{
 		{
 			Timestamp: now,
 			Code:      "??",
@@ -50,18 +52,19 @@ func TestDB(t *testing.T) {
 			Confirmed: 3,
 			Deaths:    2,
 			Recovered: 1,
-		}}
+		},
+	}
 
-	err = db.Add(newEntries)
+	err = covidDB.Add(newEntries)
 	assert.Nil(t, err)
 
-	latest, err := db.ListLatestByCountry()
+	latest, err := covidDB.ListLatestByCountry()
 	assert.Nil(t, err)
 	latestTime, found := latest["???"]
 	assert.True(t, found)
 	assert.True(t, latestTime.Equal(now))
 
-	allEntries, err := db.List(time.Now())
+	allEntries, err := covidDB.List(time.Now())
 	assert.Nil(t, err)
 
 	found = false

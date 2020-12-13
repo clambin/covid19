@@ -1,20 +1,50 @@
-package covidhandler
+package covidhandler_test
 
 import (
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	// log     "github.com/sirupsen/logrus"
 
-	"covid19/internal/coviddb"
-	"covid19/internal/coviddb/testdb"
+	"covid19/internal/covid/db"
+	mockdb "covid19/internal/covid/db/mock"
+	"covid19/internal/covidhandler"
 	"covid19/pkg/grafana/apiserver"
 )
 
 func TestHandlerHandler(t *testing.T) {
-	db := testdb.CreateWithData()
-	handler, _ := Create(db)
+	dbh := mockdb.Create([]db.CountryEntry{
+		{
+			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
+			Code:      "A",
+			Name:      "A",
+			Confirmed: 1,
+			Recovered: 0,
+			Deaths:    0},
+		{
+			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
+			Code:      "B",
+			Name:      "B",
+			Confirmed: 3,
+			Recovered: 0,
+			Deaths:    0},
+		{
+			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
+			Code:      "A",
+			Name:      "A",
+			Confirmed: 3,
+			Recovered: 1,
+			Deaths:    0},
+		{
+			Timestamp: time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
+			Code:      "B",
+			Name:      "B",
+			Confirmed: 10,
+			Recovered: 5,
+			Deaths:    1,
+		},
+	})
+	handler, _ := covidhandler.Create(dbh)
 
 	// Test Search
 	targets := handler.Search()
@@ -55,14 +85,14 @@ func TestHandlerHandler(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, len(testCases), len(responses))
 
-	incides := make(map[string]int, 0)
+	indexes := make(map[string]int, 0)
 	for index, response := range responses {
-		incides[response.Target] = index
+		indexes[response.Target] = index
 	}
-	assert.Equal(t, len(responses), len(incides))
+	assert.Equal(t, len(responses), len(indexes))
 
 	for target, expected := range testCases {
-		index, ok := incides[target]
+		index, ok := indexes[target]
 		assert.True(t, ok)
 		assert.Equal(t, target, responses[index].Target)
 		assert.Equal(t, expected, responses[index].Datapoints, target)
@@ -70,30 +100,36 @@ func TestHandlerHandler(t *testing.T) {
 }
 
 func TestNoDB(t *testing.T) {
-	_, err := Create(nil)
+	_, err := covidhandler.Create(nil)
 
 	assert.NotNil(t, err)
 }
 
 func BenchmarkHandlerQuery(b *testing.B) {
 	// Build a large DB
-	type country struct{ code, name string }
-	countries := []country{
+	countries := []struct{ code, name string }{
 		{code: "BE", name: "Belgium"},
 		{code: "US", name: "USA"},
 		{code: "FR", name: "France"},
 		{code: "NL", name: "Netherlands"},
 		{code: "UK", name: "United Kingdom"}}
 	timestamp := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
-	entries := make([]coviddb.CountryEntry, 0)
+	entries := make([]db.CountryEntry, 0)
 	for i := 0; i < 365; i++ {
 		for _, country := range countries {
-			entries = append(entries, coviddb.CountryEntry{Timestamp: timestamp, Code: country.code, Name: country.name, Confirmed: int64(i), Recovered: 0, Deaths: 0})
+			entries = append(entries, db.CountryEntry{
+				Timestamp: timestamp,
+				Code:      country.code,
+				Name:      country.name,
+				Confirmed: int64(i),
+				Recovered: 0,
+				Deaths:    0,
+			})
 		}
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
-	db := testdb.Create(entries)
-	handler, _ := Create(db)
+	dbh := mockdb.Create(entries)
+	handler, _ := covidhandler.Create(dbh)
 
 	request := apiserver.APIQueryRequest{
 		Range: struct {

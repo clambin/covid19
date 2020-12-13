@@ -1,25 +1,25 @@
-package population
+package probe
 
 import (
-	//"time"
-	//"net/http"
-
 	log "github.com/sirupsen/logrus"
+
+	"covid19/internal/population/apiclient"
+	"covid19/internal/population/db"
 )
 
 // Probe handle
 type Probe struct {
-	apiClient      *APIClient
-	db              DB
+	apiClient apiclient.API
+	db        db.DB
 }
 
 // Create a new Probe handle
-func Create(apiClient *APIClient, db DB) (*Probe) {
+func Create(apiClient apiclient.API, db db.DB) *Probe {
 	return &Probe{apiClient: apiClient, db: db}
 }
 
 // Run gets latest data and updates the database
-func (probe *Probe) Run() (error) {
+func (probe *Probe) Run() error {
 	// Call the API
 	population, err := probe.apiClient.GetPopulation()
 

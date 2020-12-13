@@ -1,11 +1,12 @@
-package coviddb
+package db
 
 import (
 	"database/sql"
 	"fmt"
+	"time"
+
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 // DB interface representing a Covid Database

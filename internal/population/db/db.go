@@ -1,21 +1,20 @@
-package population
+package db
 
 import (
-	"fmt"
-	"strings"
-	"strconv"
 	"database/sql"
+	"fmt"
+	"strconv"
+	"strings"
 	// postgres driver
 	_ "github.com/lib/pq"
 
 	log "github.com/sirupsen/logrus"
-
 )
 
 // DB interface representing a Population database table
 type DB interface {
 	List() (map[string]int64, error)
-	Add(map[string]int64) (error)
+	Add(map[string]int64) error
 }
 
 // PostgresDB implements DB in Postgres
@@ -25,7 +24,7 @@ type PostgresDB struct {
 }
 
 // NewPostgresDB creates a new PostgresDB object
-func NewPostgresDB(host string, port int, database string, user string, password string) (*PostgresDB) {
+func NewPostgresDB(host string, port int, database string, user string, password string) *PostgresDB {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, database)
 
@@ -45,7 +44,7 @@ func (db *PostgresDB) List() (map[string]int64, error) {
 	if err == nil {
 		defer dbh.Close()
 
-		rows, err := dbh.Query(fmt.Sprintf( "SELECT country_code, population FROM population"))
+		rows, err := dbh.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
 
 		if err == nil {
 			defer rows.Close()
@@ -53,7 +52,9 @@ func (db *PostgresDB) List() (map[string]int64, error) {
 				var code string
 				var population int64
 				err = rows.Scan(&code, &population)
-				if err != nil { break }
+				if err != nil {
+					break
+				}
 				entries[code] = population
 			}
 			log.Debugf("Found %d records", len(entries))
@@ -72,23 +73,25 @@ func replaceSQL(old, searchPattern string) string {
 }
 
 // Add all specified records in the population database table
-func (db *PostgresDB) Add(entries map[string]int64) (error) {
+func (db *PostgresDB) Add(entries map[string]int64) error {
 	if err := db.initializeDB(); err != nil {
 		return err
 	}
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer dbh.Close()
 
 	// Prepare the SQL statement
 	sqlStr := "INSERT INTO population(country_code, population) VALUES "
-	vals := []interface{}{}
+	var values []interface{}
 
 	for code, population := range entries {
 		sqlStr += "(?, ?),"
-		vals = append(vals, code, population)
+		values = append(values, code, population)
 	}
 	sqlStr = strings.TrimSuffix(sqlStr, ",")
 	sqlStr = replaceSQL(sqlStr, "?")
@@ -96,20 +99,22 @@ func (db *PostgresDB) Add(entries map[string]int64) (error) {
 
 	stmt, _ := dbh.Prepare(sqlStr)
 
-	_, err = stmt.Exec(vals...)
+	_, err = stmt.Exec(values...)
 
 	return err
 }
 
 // initializeDB creates the required tables
-func (db *PostgresDB) initializeDB() (error) {
+func (db *PostgresDB) initializeDB() error {
 	if db.initialized {
 		return nil
 	}
 
 	dbh, err := sql.Open("postgres", db.psqlInfo)
 
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer dbh.Close()
 
 	_, err = dbh.Exec(`

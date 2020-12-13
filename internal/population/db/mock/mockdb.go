@@ -6,7 +6,7 @@ type DB struct {
 }
 
 // Create a mock population db
-func Create(data map[string]int64) (*DB) {
+func Create(data map[string]int64) *DB {
 	return &DB{data: data}
 }
 
@@ -16,7 +16,7 @@ func (db *DB) List() (map[string]int64, error) {
 }
 
 // Add adds or updates new population figures
-func (db *DB) Add(entries map[string]int64) (error) {
+func (db *DB) Add(entries map[string]int64) error {
 	for key, value := range entries {
 		db.data[key] = value
 	}
