@@ -42,6 +42,9 @@ func TestDB(t *testing.T) {
 	covidDB := db.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
 	assert.NotNil(t, covidDB)
 
+	err = covidDB.RemoveDB()
+	assert.Nil(t, err)
+
 	now := time.Now().UTC().Truncate(time.Second)
 
 	newEntries := []db.CountryEntry{
@@ -78,4 +81,9 @@ func TestDB(t *testing.T) {
 		}
 	}
 	assert.True(t, found)
+
+	first, err := covidDB.GetFirstEntry()
+
+	assert.Nil(t, err)
+	assert.True(t, first.Equal(now))
 }

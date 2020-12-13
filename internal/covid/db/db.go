@@ -86,7 +86,7 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 	}
 
 	if err == nil {
-		rows, err := dbh.Query(fmt.Sprintf("SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name"))
+		rows, err := dbh.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`)
 
 		if err == nil {
 			defer rows.Close()
@@ -120,7 +120,7 @@ func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
 	}
 
 	if err == nil {
-		rows, err := dbh.Query(fmt.Sprintf("SELECT MIN(time) FROM covid19"))
+		rows, err := dbh.Query(`SELECT MIN(time) FROM covid19`)
 
 		if err == nil {
 			defer rows.Close()
@@ -203,6 +203,24 @@ func (db *PostgresDB) initializeDB(dbh *sql.DB) error {
 
 	if err == nil {
 		db.initialized = true
+	}
+
+	return err
+}
+
+// RemoveDB removes all tables & indexes
+func (db *PostgresDB) RemoveDB() error {
+
+	dbh, err := sql.Open("postgres", db.psqlInfo)
+
+	if err == nil {
+		defer dbh.Close()
+
+		_, err = dbh.Exec(`DROP TABLE IF EXISTS covid19 CASCADE`)
+
+		if err == nil {
+			db.initialized = false
+		}
 	}
 
 	return err
