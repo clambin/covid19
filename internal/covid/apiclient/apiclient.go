@@ -2,10 +2,11 @@ package apiclient
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 	// log "github.com/sirupsen/logrus"
+
+	"covid19/pkg/rapidapi"
 )
 
 // API interface representing a Population API Client
@@ -15,8 +16,7 @@ type API interface {
 
 // APIClient API Client handle
 type APIClient struct {
-	client *http.Client
-	apiKey string
+	rapidapi.Client
 }
 
 // New creates a new Population API Client
@@ -27,7 +27,7 @@ func New(apiKey string) API {
 // NewWithHTTPClient creates a new Covid API Client with a specified http.Client
 // Used to stub the HTTP Server
 func NewWithHTTPClient(client *http.Client, apiKey string) *APIClient {
-	return &APIClient{client: client, apiKey: apiKey}
+	return &APIClient{rapidapi.Client{Client: client, HostName: rapidAPIHost, ApiKey: apiKey}}
 }
 
 // CountryStats contains total figures for one country
@@ -67,8 +67,7 @@ func (client *APIClient) GetCountryStats() (map[string]CountryStats, error) {
 //
 
 const (
-	rapidAPIHost = string("covid-19-coronavirus-statistics.p.rapidapi.com")
-	url          = string("https://") + rapidAPIHost
+	rapidAPIHost = "covid-19-coronavirus-statistics.p.rapidapi.com"
 )
 
 // statsResponse matches the layout of the API's response object
@@ -92,21 +91,13 @@ type statsResponse struct {
 
 // getStats retrieves today's covid19 country stats from rapidapi.com
 func (client *APIClient) getStats() (*statsResponse, error) {
-	req, _ := http.NewRequest("GET", url+"/v1/stats", nil)
-	req.Header.Add("x-rapidapi-key", client.apiKey)
-	req.Header.Add("x-rapidapi-host", rapidAPIHost)
-
 	var stats statsResponse
 
-	resp, err := client.client.Do(req)
+	resp, err := client.Client.CallAsReader("/v1/stats")
 	if err == nil {
-		defer resp.Body.Close()
-		if resp.StatusCode == 200 {
-			decoder := json.NewDecoder(resp.Body)
-			err = decoder.Decode(&stats)
-		} else {
-			err = errors.New(resp.Status)
-		}
+		decoder := json.NewDecoder(resp)
+		err = decoder.Decode(&stats)
 	}
+
 	return &stats, err
 }

@@ -1,4 +1,4 @@
-package client
+package rapidapi
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ func TestClient_Call(t *testing.T) {
 
 	response, err := client.Call("/")
 	assert.Nil(t, err)
-	assert.Equal(t, "OK", response)
+	assert.Equal(t, "OK", string(response))
 
 	// Invalid endpoint
 	_, err = client.Call("/invalid")
@@ -30,7 +30,30 @@ func TestClient_Call(t *testing.T) {
 	response, err = client.Call("/")
 	assert.NotNil(t, err)
 	assert.Equal(t, "Forbidden", err.Error())
+}
 
+func TestClient_CallAsReader(t *testing.T) {
+	// Happy flow
+	client := makeClient("example.com", "1234")
+	assert.NotNil(t, client)
+
+	response, err := client.CallAsReader("/")
+	assert.Nil(t, err)
+	buf, err := ioutil.ReadAll(response)
+	assert.Equal(t, "OK", string(buf))
+
+	// Invalid endpoint
+	_, err = client.Call("/invalid")
+	assert.NotNil(t, err)
+	assert.Equal(t, "Page not found", err.Error())
+
+	// Missing API key
+	client = makeClient("example.com", "")
+	assert.NotNil(t, client)
+
+	response, err = client.CallAsReader("/")
+	assert.NotNil(t, err)
+	assert.Equal(t, "Forbidden", err.Error())
 }
 
 // Stubbing the API Call
