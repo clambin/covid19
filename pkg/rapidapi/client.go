@@ -39,12 +39,7 @@ func (client *Client) Call(endpoint string) ([]byte, error) {
 	if err == nil {
 		defer resp.Body.Close()
 		if resp.StatusCode == 200 {
-			body, err := ioutil.ReadAll(resp.Body)
-			if err == nil {
-				return body, nil
-			} else {
-				return []byte{}, err
-			}
+			return ioutil.ReadAll(resp.Body)
 		} else {
 			err = errors.New(resp.Status)
 		}
