@@ -10,6 +10,7 @@ import (
 	"covid19/internal/covid/db"
 	mockdb "covid19/internal/covid/db/mock"
 	"covid19/internal/covid/probe"
+	"covid19/internal/covid/pushgateway"
 )
 
 var lastUpdate = time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC)
@@ -18,40 +19,41 @@ func TestProbe(t *testing.T) {
 	dbh := mockdb.Create([]db.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
-			Code:      "A",
-			Name:      "A",
+			Code:      "BE",
+			Name:      "Belgium",
 			Confirmed: 1,
 			Recovered: 0,
 			Deaths:    0},
 		{
 			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
-			Code:      "B",
-			Name:      "B",
+			Code:      "BE",
+			Name:      "Belgium",
 			Confirmed: 3,
 			Recovered: 0,
 			Deaths:    0},
 		{
 			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
-			Code:      "A",
-			Name:      "A",
+			Code:      "US",
+			Name:      "US",
 			Confirmed: 3,
 			Recovered: 1,
 			Deaths:    0},
 		{
 			Timestamp: time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
-			Code:      "B",
-			Name:      "B",
+			Code:      "BE",
+			Name:      "Belgium",
 			Confirmed: 10,
 			Recovered: 5,
 			Deaths:    1,
 		},
 	})
 	apiClient := mockapi.New(map[string]apiclient.CountryStats{
-		"A": {LastUpdate: lastUpdate, Confirmed: 4, Recovered: 2, Deaths: 1},
-		"B": {LastUpdate: lastUpdate, Confirmed: 20, Recovered: 15, Deaths: 5},
+		"Belgium":     {LastUpdate: lastUpdate, Confirmed: 4, Recovered: 2, Deaths: 1},
+		"US":          {LastUpdate: lastUpdate, Confirmed: 20, Recovered: 15, Deaths: 5},
+		"NotACountry": {LastUpdate: lastUpdate, Confirmed: 0, Recovered: 0, Deaths: 0},
 	})
 
-	p := probe.NewProbe(apiClient, dbh, nil)
+	p := probe.NewProbe(apiClient, dbh, pushgateway.NewPushGateway("localhost:8080"))
 
 	err := p.Run()
 
@@ -61,6 +63,6 @@ func TestProbe(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Len(t, latest, 2)
-	assert.True(t, latest["A"].Equal(lastUpdate))
-	assert.True(t, latest["B"].Equal(lastUpdate))
+	assert.True(t, latest["Belgium"].Equal(lastUpdate))
+	assert.True(t, latest["US"].Equal(lastUpdate))
 }

@@ -265,7 +265,5 @@ var (
 		"South Africa":                      "ZA",
 		"Zambia":                            "ZM",
 		"Zimbabwe":                          "ZW",
-		"A":                                 "AA",
-		"B":                                 "BB",
 	}
 )

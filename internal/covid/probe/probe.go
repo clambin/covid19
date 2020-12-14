@@ -24,7 +24,9 @@ func NewProbe(apiClient apiclient.API, db db.DB, pushGateway *pushgateway.PushGa
 func (probe *Probe) Run() error {
 	countryStats, err := probe.apiClient.GetCountryStats()
 
-	if err == nil && len(countryStats) > 0 {
+	if err != nil {
+		log.Warning(err)
+	} else if len(countryStats) > 0 {
 		log.Debugf("Got %d new entries", len(countryStats))
 
 		newRecords, err := probe.findNewCountryStats(countryStats)
@@ -45,9 +47,6 @@ func (probe *Probe) Run() error {
 		}
 	}
 
-	if err != nil {
-		log.Warning(err)
-	}
 	return err
 }
 
@@ -55,25 +54,24 @@ func (probe *Probe) Run() error {
 func (probe *Probe) findNewCountryStats(newCountryStats map[string]apiclient.CountryStats) ([]db.CountryEntry, error) {
 	result := make([]db.CountryEntry, 0)
 
-	lastDBEntries, err := probe.db.ListLatestByCountry()
-	if err != nil {
-		return result, err
-	}
+	latestDBEntries, err := probe.db.ListLatestByCountry()
 
-	for country, stats := range newCountryStats {
-		lastUpdate, ok := lastDBEntries[country]
-		if ok == false || stats.LastUpdate.After(lastUpdate) {
-			code, ok := countryCodes[country]
-			if ok == false {
-				log.Warningf("unknown country '%s'. Skipping", country)
-			} else {
-				result = append(result, db.CountryEntry{
-					Timestamp: stats.LastUpdate,
-					Code:      code,
-					Name:      country,
-					Confirmed: stats.Confirmed,
-					Recovered: stats.Recovered,
-					Deaths:    stats.Deaths})
+	if err == nil {
+		for country, stats := range newCountryStats {
+			latestUpdate, ok := latestDBEntries[country]
+			if ok == false || stats.LastUpdate.After(latestUpdate) {
+				code, ok := countryCodes[country]
+				if ok == false {
+					log.Warningf("unknown country '%s'. Skipping", country)
+				} else {
+					result = append(result, db.CountryEntry{
+						Timestamp: stats.LastUpdate,
+						Code:      code,
+						Name:      country,
+						Confirmed: stats.Confirmed,
+						Recovered: stats.Recovered,
+						Deaths:    stats.Deaths})
+				}
 			}
 		}
 	}
