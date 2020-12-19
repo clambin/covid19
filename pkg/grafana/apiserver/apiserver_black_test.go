@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"covid19/pkg/grafana/apiserver"
 )
@@ -20,7 +21,7 @@ func TestAPIServer_Full(t *testing.T) {
 		assert.Nil(t, err)
 	}()
 
-	// time.Sleep(1 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	body, err := call("http://localhost:8080/", "GET", "")
 	if assert.Nil(t, err) {
