@@ -34,31 +34,27 @@ func NewPostgresDB(host string, port int, database string, user string, password
 // List all records from the population table
 func (db *PostgresDB) List() (map[string]int64, error) {
 	entries := make(map[string]int64, 0)
-
-	if err := db.initializeDB(); err != nil {
-		return entries, err
-	}
-
-	dbh, err := sql.Open("postgres", db.psqlInfo)
+	err := db.initializeDB()
 
 	if err == nil {
-		defer dbh.Close()
+		if dbh, err := sql.Open("postgres", db.psqlInfo); err == nil {
+			defer dbh.Close()
 
-		rows, err := dbh.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
+			rows, err := dbh.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
 
-		if err == nil {
-			defer rows.Close()
-			for rows.Next() {
-				var code string
-				var population int64
-				if rows.Scan(&code, &population) == nil {
-					entries[code] = population
+			if err == nil {
+				defer rows.Close()
+				for rows.Next() {
+					var code string
+					var population int64
+					if rows.Scan(&code, &population) == nil {
+						entries[code] = population
+					}
 				}
+				log.Debugf("Found %d records", len(entries))
 			}
-			log.Debugf("Found %d records", len(entries))
 		}
 	}
-
 	return entries, err
 }
 
@@ -72,30 +68,29 @@ func replaceSQL(old, searchPattern string) string {
 
 // Add all specified records in the population database table
 func (db *PostgresDB) Add(entries map[string]int64) error {
-	if err := db.initializeDB(); err != nil {
-		return err
-	}
-
-	dbh, err := sql.Open("postgres", db.psqlInfo)
+	err := db.initializeDB()
 
 	if err == nil {
-		defer dbh.Close()
+		if dbh, err := sql.Open("postgres", db.psqlInfo); err == nil {
+			defer dbh.Close()
 
-		// Prepare the SQL statement
-		sqlStr := "INSERT INTO population(country_code, population) VALUES "
-		var values []interface{}
+			// Prepare the SQL statement
+			var values []interface{}
+			valueStr := ""
+			for code, population := range entries {
+				valueStr += "(?, ?),"
+				values = append(values, code, population)
+			}
+			valueStr = strings.TrimSuffix(valueStr, ",")
+			valueStr = replaceSQL(valueStr, "?")
 
-		for code, population := range entries {
-			sqlStr += "(?, ?),"
-			values = append(values, code, population)
+			sqlStr := "INSERT INTO population(country_code, population) VALUES " +
+				valueStr +
+				"ON CONFLICT (country_code) DO UPDATE SET population = EXCLUDED.population"
+
+			stmt, _ := dbh.Prepare(sqlStr)
+			_, err = stmt.Exec(values...)
 		}
-		sqlStr = strings.TrimSuffix(sqlStr, ",")
-		sqlStr = replaceSQL(sqlStr, "?")
-		sqlStr += "ON CONFLICT (country_code) DO UPDATE SET population = EXCLUDED.population"
-
-		stmt, _ := dbh.Prepare(sqlStr)
-
-		_, err = stmt.Exec(values...)
 	}
 	return err
 }
