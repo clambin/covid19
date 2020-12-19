@@ -25,7 +25,7 @@ func main() {
 	cfg := struct {
 		debug            bool
 		once             bool
-		interval         int
+		interval         time.Duration
 		postgresHost     string
 		postgresPort     int
 		postgresDatabase string
@@ -43,7 +43,7 @@ func main() {
 	a.VersionFlag.Short('v')
 	a.Flag("debug", "Log debug messages").BoolVar(&cfg.debug)
 	a.Flag("once", "Run once and then exit").BoolVar(&cfg.once)
-	a.Flag("interval", "Time between measurements").Default("1200").IntVar(&cfg.interval)
+	a.Flag("interval", "Time between measurements").Default("20m").DurationVar(&cfg.interval)
 	a.Flag("postgres-host", "Postgres DB Host").Default("postgres").StringVar(&cfg.postgresHost)
 	a.Flag("postgres-port", "Postgres DB Port").Default("5432").IntVar(&cfg.postgresPort)
 	a.Flag("postgres-database", "Postgres DB Name").Default("covid19").StringVar(&cfg.postgresDatabase)
