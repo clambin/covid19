@@ -3,22 +3,20 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"time"
-
 	"runtime/pprof"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	covidapi "covid19/internal/covid/apiclient"
 	covidprobe "covid19/internal/covid/probe"
-	coviddb "covid19/internal/coviddb"
+	"covid19/internal/coviddb"
 	popapi "covid19/internal/population/apiclient"
 	popdb "covid19/internal/population/db"
 	popprobe "covid19/internal/population/probe"
 	"covid19/internal/pushgateway"
 	"covid19/internal/version"
-	"covid19/pkg/scheduler"
 )
 
 func main() {
@@ -73,22 +71,43 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	newScheduler := scheduler.NewScheduler()
-
-	// Add the covid probe
 	covidProbe := covidprobe.NewProbe(
 		covidapi.New(cfg.apiKey),
 		coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
 		pushgateway.NewPushGateway(cfg.pushGateway))
-	newScheduler.Register(covidProbe, time.Duration(cfg.interval)*time.Second)
 
-	// Add the population probe
 	populationProbe := popprobe.Create(
 		popapi.New(cfg.apiKey),
 		popdb.NewPostgresDB(
 			cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword))
-	newScheduler.Register(populationProbe, time.Duration(cfg.interval)*time.Second)
 
-	// Go time
-	newScheduler.Run(cfg.once)
+	if cfg.once {
+		if err := covidProbe.Run(); err != nil {
+			log.Warningf("covid probe error: %s", err)
+		}
+		if err := populationProbe.Run(); err != nil {
+			log.Warningf("covid probe error: %s", err)
+		}
+	} else {
+		go func() {
+			for {
+				if err := covidProbe.Run(); err != nil {
+					log.Warningf("covid probe error: %s", err)
+				}
+				time.Sleep(cfg.interval)
+			}
+		}()
+		go func() {
+			for {
+				if err := populationProbe.Run(); err != nil {
+					log.Warningf("covid probe error: %s", err)
+				}
+				time.Sleep(cfg.interval)
+			}
+		}()
+
+		for {
+			time.Sleep(cfg.interval)
+		}
+	}
 }
