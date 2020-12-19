@@ -27,7 +27,7 @@ func New(apiKey string) API {
 // NewWithHTTPClient creates a new Covid API Client with a specified http.Client
 // Used to stub the HTTP Server
 func NewWithHTTPClient(client *http.Client, apiKey string) *APIClient {
-	return &APIClient{rapidapi.Client{Client: client, HostName: rapidAPIHost, ApiKey: apiKey}}
+	return &APIClient{rapidapi.Client{Client: client, HostName: rapidAPIHost, APIKey: apiKey}}
 }
 
 // CountryStats contains total figures for one country
