@@ -7,16 +7,16 @@ import (
 
 	"covid19/internal/covid/apiclient"
 	mockapi "covid19/internal/covid/apiclient/mock"
-	"covid19/internal/covid/db"
-	mockdb "covid19/internal/covid/db/mock"
 	"covid19/internal/covid/probe"
-	"covid19/internal/covid/pushgateway"
+	"covid19/internal/coviddb"
+	mockdb "covid19/internal/coviddb/mock"
+	"covid19/internal/pushgateway"
 )
 
 var lastUpdate = time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC)
 
 func TestProbe(t *testing.T) {
-	dbh := mockdb.Create([]db.CountryEntry{
+	dbh := mockdb.Create([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",

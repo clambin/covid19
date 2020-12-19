@@ -1,22 +1,25 @@
-package backfill
+package backfill_test
 
 import (
 	"bytes"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"testing"
 	"time"
 
+	"github.com/clambin/httpstub"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"covid19/internal/covid/db"
-	"covid19/internal/covid/db/mock"
-	"testing"
+	"covid19/internal/backfill"
+	"covid19/internal/coviddb"
+	"covid19/internal/coviddb/mock"
 )
 
 func TestBackFiller(t *testing.T) {
-	covidDB := mock.Create([]db.CountryEntry{
+	log.SetLevel(log.DebugLevel)
+	covidDB := mock.Create([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",
@@ -26,7 +29,7 @@ func TestBackFiller(t *testing.T) {
 			Recovered: 0,
 		}})
 
-	backFiller := CreateWithClient(covidDB, makeHTTPClient())
+	backFiller := backfill.CreateWithClient(covidDB, httpstub.NewTestClient(covidAPI))
 
 	err := backFiller.Run()
 	assert.Nil(t, err)
@@ -45,6 +48,28 @@ func TestBackFiller(t *testing.T) {
 	timestamp, ok = latest["Burma"]
 	assert.True(t, ok)
 	assert.Equal(t, time.Date(2020, time.January, 31, 0, 0, 0, 0, time.UTC), timestamp)
+}
+
+// covidAPI emulates the Covid API Server
+
+func covidAPI(req *http.Request) *http.Response {
+	// rand.Seed(time.Now().UnixNano())
+	if rand.Intn(10) < 2 {
+		return &http.Response{
+			StatusCode: 429,
+		}
+	}
+	response, ok := goodResponse[req.URL.Path]
+	if ok == true {
+		return &http.Response{
+			StatusCode: 200,
+			Header:     make(http.Header),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(response)),
+		}
+	}
+	return &http.Response{
+		StatusCode: 404,
+	}
 }
 
 // Stubbing the API Call
@@ -105,41 +130,3 @@ var goodResponse = map[string]string{
 			"Active": 8,
  			"Date": "2020-01-31T00:00:00Z"
 		}]`}
-
-// RoundTripFunc .
-type RoundTripFunc func(req *http.Request) *http.Response
-
-// RoundTrip .
-func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
-
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
-func NewTestClient(fn RoundTripFunc) *http.Client {
-	return &http.Client{
-		Transport: fn,
-	}
-}
-
-// makeClient returns a stubbed httpClient
-func makeHTTPClient() *http.Client {
-	rand.Seed(time.Now().UnixNano())
-	return NewTestClient(func(req *http.Request) *http.Response {
-		if rand.Intn(10) < 2 {
-			return &http.Response{
-				StatusCode: 429,
-			}
-		}
-		response, ok := goodResponse[req.URL.Path]
-		if ok == true {
-			return &http.Response{
-				StatusCode: 200,
-				Header:     make(http.Header),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(response)),
-			}
-		}
-		return &http.Response{
-			StatusCode: 404,
-		}
-	})
-}

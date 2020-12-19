@@ -1,22 +1,22 @@
 package probe
 
 import (
-	"covid19/internal/covid/pushgateway"
+	"covid19/internal/pushgateway"
 	log "github.com/sirupsen/logrus"
 
 	"covid19/internal/covid/apiclient"
-	"covid19/internal/covid/db"
+	"covid19/internal/coviddb"
 )
 
 // Probe handle
 type Probe struct {
 	apiClient   apiclient.API
-	db          db.DB
+	db          coviddb.DB
 	pushGateway *pushgateway.PushGateway
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(apiClient apiclient.API, db db.DB, pushGateway *pushgateway.PushGateway) *Probe {
+func NewProbe(apiClient apiclient.API, db coviddb.DB, pushGateway *pushgateway.PushGateway) *Probe {
 	return &Probe{apiClient: apiClient, db: db, pushGateway: pushGateway}
 }
 
@@ -51,8 +51,8 @@ func (probe *Probe) Run() error {
 }
 
 // findNewCountryStats returns any new stats (ie either more recent or the country has no entries yet)
-func (probe *Probe) findNewCountryStats(newCountryStats map[string]apiclient.CountryStats) ([]db.CountryEntry, error) {
-	result := make([]db.CountryEntry, 0)
+func (probe *Probe) findNewCountryStats(newCountryStats map[string]apiclient.CountryStats) ([]coviddb.CountryEntry, error) {
+	result := make([]coviddb.CountryEntry, 0)
 
 	latestDBEntries, err := probe.db.ListLatestByCountry()
 
@@ -64,7 +64,7 @@ func (probe *Probe) findNewCountryStats(newCountryStats map[string]apiclient.Cou
 				if ok == false {
 					log.Warningf("unknown country '%s'. Skipping", country)
 				} else {
-					result = append(result, db.CountryEntry{
+					result = append(result, coviddb.CountryEntry{
 						Timestamp: stats.LastUpdate,
 						Code:      code,
 						Name:      country,

@@ -5,7 +5,7 @@ type DB struct {
 	data map[string]int64
 }
 
-// Create a mock population db
+// Create a mock population coviddb
 func Create(data map[string]int64) *DB {
 	return &DB{data: data}
 }

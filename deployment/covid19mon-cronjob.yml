@@ -1,0 +1,35 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: covid19mon
+  labels:
+    app: covid19mon
+spec:
+  schedule: "*/20 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: covid19mon
+            image: clambin/covid19mon:latest
+            imagePullPolicy: Always
+            envFrom:
+            - secretRef:
+                name: covid19mon
+            args:
+              - '--once'
+              - '--api-key=$(apikey)'
+              - '--postgres-host=$(pg_host)'
+              - '--postgres-port=$(pg_port)'
+              - '--postgres-database=$(pg_database)'
+              - '--postgres-user=$(pg_user)'
+              - '--postgres-password=$(pg_password)'
+              - '--pushgateway=http://prometheus-pushgateway.monitoring.svc:9091'
+            resources:
+              requests:
+                cpu: 5m
+                memory: 25Mi
+              limits:
+                memory: 50Mi

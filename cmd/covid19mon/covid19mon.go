@@ -3,29 +3,27 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"time"
-
 	"runtime/pprof"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	covidapi "covid19/internal/covid/apiclient"
-	coviddb "covid19/internal/covid/db"
 	covidprobe "covid19/internal/covid/probe"
-	"covid19/internal/covid/pushgateway"
+	"covid19/internal/coviddb"
 	popapi "covid19/internal/population/apiclient"
 	popdb "covid19/internal/population/db"
 	popprobe "covid19/internal/population/probe"
+	"covid19/internal/pushgateway"
 	"covid19/internal/version"
-	"covid19/pkg/scheduler"
 )
 
 func main() {
 	cfg := struct {
 		debug            bool
 		once             bool
-		interval         int
+		interval         time.Duration
 		postgresHost     string
 		postgresPort     int
 		postgresDatabase string
@@ -43,7 +41,7 @@ func main() {
 	a.VersionFlag.Short('v')
 	a.Flag("debug", "Log debug messages").BoolVar(&cfg.debug)
 	a.Flag("once", "Run once and then exit").BoolVar(&cfg.once)
-	a.Flag("interval", "Time between measurements").Default("1200").IntVar(&cfg.interval)
+	a.Flag("interval", "Time between measurements").Default("20m").DurationVar(&cfg.interval)
 	a.Flag("postgres-host", "Postgres DB Host").Default("postgres").StringVar(&cfg.postgresHost)
 	a.Flag("postgres-port", "Postgres DB Port").Default("5432").IntVar(&cfg.postgresPort)
 	a.Flag("postgres-database", "Postgres DB Name").Default("covid19").StringVar(&cfg.postgresDatabase)
@@ -73,22 +71,43 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	newScheduler := scheduler.NewScheduler()
-
-	// Add the covid probe
 	covidProbe := covidprobe.NewProbe(
 		covidapi.New(cfg.apiKey),
 		coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword),
 		pushgateway.NewPushGateway(cfg.pushGateway))
-	newScheduler.Register(covidProbe, time.Duration(cfg.interval)*time.Second)
 
-	// Add the population probe
 	populationProbe := popprobe.Create(
 		popapi.New(cfg.apiKey),
 		popdb.NewPostgresDB(
 			cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword))
-	newScheduler.Register(populationProbe, time.Duration(cfg.interval)*time.Second)
 
-	// Go time
-	newScheduler.Run(cfg.once)
+	if cfg.once {
+		if err := covidProbe.Run(); err != nil {
+			log.Warningf("covid probe error: %s", err)
+		}
+		if err := populationProbe.Run(); err != nil {
+			log.Warningf("covid probe error: %s", err)
+		}
+	} else {
+		go func() {
+			for {
+				if err := covidProbe.Run(); err != nil {
+					log.Warningf("covid probe error: %s", err)
+				}
+				time.Sleep(cfg.interval)
+			}
+		}()
+		go func() {
+			for {
+				if err := populationProbe.Run(); err != nil {
+					log.Warningf("covid probe error: %s", err)
+				}
+				time.Sleep(cfg.interval)
+			}
+		}()
+
+		for {
+			time.Sleep(cfg.interval)
+		}
+	}
 }

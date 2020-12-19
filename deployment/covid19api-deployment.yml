@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: covid19api
+  labels:
+    app: covid19api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: covid19api
+  template:
+    metadata:
+      labels:
+        app: covid19api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: covid19api
+        image: clambin/covid19api:golang
+        imagePullPolicy: Always
+        args:
+        - --port=5000
+        - --postgres-host=$(pg_host)
+        - --postgres-port=$(pg_port)
+        - --postgres-database=$(pg_database)
+        - --postgres-user=$(pg_user)
+        - --postgres-password=$(pg_password)
+        envFrom:
+        - secretRef:
+            name: covid19mon
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
+          timeoutSeconds: 10
+        ports:
+        - containerPort: 5000
+        resources:
+          requests:
+            cpu: 20m
+            memory: 100Mi
+          limits:
+            memory: 200Mi

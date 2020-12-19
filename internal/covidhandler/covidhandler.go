@@ -6,21 +6,21 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"covid19/internal/covid/db"
+	"covid19/internal/coviddb"
 	"covid19/pkg/grafana/apiserver"
 )
 
 // APIHandler implements business logic for APIServer
 type APIHandler struct {
-	cache *db.Cache
+	cache *coviddb.Cache
 }
 
 // Create a CovidAPIHandler object
-func Create(dbh db.DB) (*APIHandler, error) {
+func Create(dbh coviddb.DB) (*APIHandler, error) {
 	if dbh == nil {
 		return nil, errors.New("no database specified")
 	}
-	return &APIHandler{cache: db.NewCache(dbh, 60*time.Second)}, nil
+	return &APIHandler{cache: coviddb.NewCache(dbh, 60*time.Second)}, nil
 }
 
 var (
@@ -49,7 +49,7 @@ func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) ([]apise
 }
 
 // build the requested targets
-func buildTargets(entries []db.CountryEntry, targets []struct{ Target string }) []apiserver.APIQueryResponse {
+func buildTargets(entries []coviddb.CountryEntry, targets []struct{ Target string }) []apiserver.APIQueryResponse {
 	seriesList := make([]apiserver.APIQueryResponse, 0)
 	totalCases := GetTotalCases(entries)
 

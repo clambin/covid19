@@ -1,29 +1,29 @@
 package backfill
 
 import (
-	"covid19/internal/covid/db"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+
+	"covid19/internal/coviddb"
 )
 
 // Backfiller retrieves historic COVID19 data and adds it to the database
 type Backfiller struct {
 	client *http.Client
-	db     db.DB
+	db     coviddb.DB
 }
 
 // Create a new Backfiller object
-func Create(db db.DB) *Backfiller {
+func Create(db coviddb.DB) *Backfiller {
 	return CreateWithClient(db, &http.Client{})
 }
 
 // CreateWithClient creates  a new Backfiller object w/ a supplier http.Client.
 // Used for unit tests
-func CreateWithClient(db db.DB, client *http.Client) *Backfiller {
+func CreateWithClient(db coviddb.DB, client *http.Client) *Backfiller {
 	return &Backfiller{client: client, db: db}
 }
 
@@ -40,13 +40,13 @@ func (backFiller *Backfiller) Run() error {
 			for slug, details := range countries {
 				realName := lookupCountryName(details.Name)
 				log.Debugf("Getting data for %s (slug: %s)", realName, slug)
-				records := make([]db.CountryEntry, 0)
+				records := make([]coviddb.CountryEntry, 0)
 				entries, err := backFiller.getHistoricalData(slug)
 				if err == nil {
 					for _, entry := range entries {
 						log.Debugf("Entry date: %s", entry.Date.String())
 						if entry.Date.Before(first) {
-							records = append(records, db.CountryEntry{
+							records = append(records, coviddb.CountryEntry{
 								Timestamp: entry.Date,
 								Code:      details.Code,
 								Name:      realName,
@@ -72,51 +72,34 @@ func (backFiller *Backfiller) getCountries() (map[string]struct {
 	Name string
 	Code string
 }, error) {
+	var result = map[string]struct {
+		Name string
+		Code string
+	}{}
+
 	req, _ := http.NewRequest("GET", url+"/countries", nil)
+	resp, err := backFiller.slowCall(req)
 
-	for {
-		resp, err := backFiller.client.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode == 429 {
-			log.Debug("429 recv'd. Slowing down")
-			time.Sleep(time.Second * 2)
-			continue
-		}
-
-		if resp.StatusCode != 200 {
-			return nil, errors.New(resp.Status)
-		}
-
+	if err == nil {
 		var stats []struct {
 			Country string
 			Slug    string
 			ISO2    string
 		}
 
+		defer resp.Body.Close()
 		decoder := json.NewDecoder(resp.Body)
-		err = decoder.Decode(&stats)
-
-		if err != nil {
-			return nil, err
+		if err = decoder.Decode(&stats); err == nil {
+			for _, entry := range stats {
+				result[entry.Slug] = struct {
+					Name string
+					Code string
+				}{Name: entry.Country, Code: entry.ISO2}
+			}
 		}
-
-		result := make(map[string]struct {
-			Name string
-			Code string
-		}, 0)
-		for _, entry := range stats {
-			result[entry.Slug] = struct {
-				Name string
-				Code string
-			}{Name: entry.Country, Code: entry.ISO2}
-		}
-		return result, nil
-
 	}
+
+	return result, err
 }
 
 func (backFiller *Backfiller) getHistoricalData(slug string) ([]struct {
@@ -125,38 +108,42 @@ func (backFiller *Backfiller) getHistoricalData(slug string) ([]struct {
 	Deaths    int64
 	Date      time.Time
 }, error) {
+	var stats []struct {
+		Confirmed int64
+		Recovered int64
+		Deaths    int64
+		Date      time.Time
+	}
+
 	req, _ := http.NewRequest("GET", url+"/total/country/"+slug, nil)
+	resp, err := backFiller.slowCall(req)
 
-	for {
-		resp, err := backFiller.client.Do(req)
-		if err != nil {
-			return nil, err
-		}
+	if err == nil {
 		defer resp.Body.Close()
-
-		if resp.StatusCode == 429 {
-			log.Debug("429 recv'd. Slowing down")
-			time.Sleep(time.Second * 5)
-			continue
-		}
-
-		if resp.StatusCode != 200 {
-			return nil, errors.New(resp.Status)
-		}
-
-		var stats []struct {
-			Confirmed int64
-			Recovered int64
-			Deaths    int64
-			Date      time.Time
-		}
-
 		decoder := json.NewDecoder(resp.Body)
 		err = decoder.Decode(&stats)
-
-		return stats, nil
-
 	}
+
+	return stats, err
+}
+
+// slowCall handles 429 errors, slowing down before trying again
+func (backFiller *Backfiller) slowCall(req *http.Request) (*http.Response, error) {
+	resp, err := backFiller.client.Do(req)
+
+	for err == nil && resp.StatusCode == 429 {
+		resp.Body.Close()
+		log.Debug("429 recv'd. Slowing down")
+		time.Sleep(time.Second * 5)
+		resp, err = backFiller.client.Do(req)
+	}
+
+	if err == nil && resp.StatusCode == 200 {
+		return resp, nil
+	}
+
+	return nil, err
+
 }
 
 // rapidapi's Covid API uses different names than covidapi

@@ -1,4 +1,4 @@
-package db_test
+package coviddb_test
 
 import (
 	"testing"
@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"covid19/internal/covid/db"
-	"covid19/internal/covid/db/mock"
+	"covid19/internal/coviddb"
+	"covid19/internal/coviddb/mock"
 )
 
 func TestDBCache_List(t *testing.T) {
-	covidDB := mock.Create([]db.CountryEntry{
+	covidDB := mock.Create([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",
@@ -42,7 +42,7 @@ func TestDBCache_List(t *testing.T) {
 			Deaths:    1},
 	})
 
-	cache := db.NewCache(covidDB, 5*time.Minute)
+	cache := coviddb.NewCache(covidDB, 5*time.Minute)
 
 	assert.NotNil(t, cache)
 
@@ -61,7 +61,7 @@ func TestDBCache_List(t *testing.T) {
 	// Insert a record before 2020-11-02, list and again and validate that it's returned
 	// (i.e. we're still getting the cached version)
 
-	_ = covidDB.Add([]db.CountryEntry{
+	_ = covidDB.Add([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "US",
