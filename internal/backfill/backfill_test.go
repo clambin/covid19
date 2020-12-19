@@ -10,13 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"covid19/internal/covid/db"
-	"covid19/internal/covid/db/mock"
+	"covid19/internal/coviddb"
+	"covid19/internal/coviddb/mock"
 	"testing"
 )
 
 func TestBackFiller(t *testing.T) {
-	covidDB := mock.Create([]db.CountryEntry{
+	covidDB := mock.Create([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",

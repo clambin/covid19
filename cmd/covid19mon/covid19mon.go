@@ -11,12 +11,12 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	covidapi "covid19/internal/covid/apiclient"
-	coviddb "covid19/internal/covid/db"
 	covidprobe "covid19/internal/covid/probe"
-	"covid19/internal/covid/pushgateway"
+	coviddb "covid19/internal/coviddb"
 	popapi "covid19/internal/population/apiclient"
 	popdb "covid19/internal/population/db"
 	popprobe "covid19/internal/population/probe"
+	"covid19/internal/pushgateway"
 	"covid19/internal/version"
 	"covid19/pkg/scheduler"
 )

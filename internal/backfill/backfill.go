@@ -1,29 +1,30 @@
 package backfill
 
 import (
-	"covid19/internal/covid/db"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+
+	"covid19/internal/coviddb"
 )
 
 // Backfiller retrieves historic COVID19 data and adds it to the database
 type Backfiller struct {
 	client *http.Client
-	db     db.DB
+	db     coviddb.DB
 }
 
 // Create a new Backfiller object
-func Create(db db.DB) *Backfiller {
+func Create(db coviddb.DB) *Backfiller {
 	return CreateWithClient(db, &http.Client{})
 }
 
 // CreateWithClient creates  a new Backfiller object w/ a supplier http.Client.
 // Used for unit tests
-func CreateWithClient(db db.DB, client *http.Client) *Backfiller {
+func CreateWithClient(db coviddb.DB, client *http.Client) *Backfiller {
 	return &Backfiller{client: client, db: db}
 }
 
@@ -40,13 +41,13 @@ func (backFiller *Backfiller) Run() error {
 			for slug, details := range countries {
 				realName := lookupCountryName(details.Name)
 				log.Debugf("Getting data for %s (slug: %s)", realName, slug)
-				records := make([]db.CountryEntry, 0)
+				records := make([]coviddb.CountryEntry, 0)
 				entries, err := backFiller.getHistoricalData(slug)
 				if err == nil {
 					for _, entry := range entries {
 						log.Debugf("Entry date: %s", entry.Date.String())
 						if entry.Date.Before(first) {
-							records = append(records, db.CountryEntry{
+							records = append(records, coviddb.CountryEntry{
 								Timestamp: entry.Date,
 								Code:      details.Code,
 								Name:      realName,

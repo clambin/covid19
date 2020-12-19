@@ -24,7 +24,7 @@ type Client struct {
 // newWithHTTPClient creates a new RapidAPI client with a specified http.Client
 // Used to stub server calls during unit tests
 
-func newWithHTTPClient(hostName, apiKey string, client *http.Client) *Client {
+func NewWithHTTPClient(client *http.Client, hostName, apiKey string) *Client {
 	return &Client{Client: client, HostName: hostName, ApiKey: apiKey}
 }
 

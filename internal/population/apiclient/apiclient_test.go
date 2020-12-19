@@ -6,13 +6,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/clambin/httpstub"
 	"github.com/stretchr/testify/assert"
 
 	"covid19/internal/population/apiclient"
 )
 
 func TestGetPopulation(t *testing.T) {
-	apiClient := makeClient()
+	apiClient := apiclient.NewWithHTTPClient(httpstub.NewTestClient(loopback), "")
 
 	response, err := apiClient.GetPopulation()
 
@@ -28,20 +29,14 @@ func TestGetPopulation(t *testing.T) {
 	assert.Equal(t, false, ok)
 }
 
-// Stubbing the API Call
+// Loopback function
 
-// RoundTripFunc .
-type RoundTripFunc func(req *http.Request) *http.Response
-
-// RoundTrip .
-func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
-
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
-func NewTestClient(fn RoundTripFunc) *http.Client {
-	return &http.Client{
-		Transport: fn,
+// makeClient returns a stubbed CovidAPIClient
+func loopback(_ *http.Request) *http.Response {
+	return &http.Response{
+		StatusCode: 200,
+		Header:     make(http.Header),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(goodResponse)),
 	}
 }
 
@@ -62,16 +57,3 @@ var goodResponse = `
 			]
 		}
 	}`
-
-// makeClient returns a stubbed CovidAPIClient
-func makeClient() *apiclient.APIClient {
-	client := NewTestClient(func(req *http.Request) *http.Response {
-		return &http.Response{
-			StatusCode: 200,
-			Header:     make(http.Header),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(goodResponse)),
-		}
-	})
-
-	return apiclient.NewWithHTTPClient(client, "")
-}

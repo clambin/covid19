@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"covid19/internal/covid/db"
+	"covid19/internal/coviddb"
 	"covid19/internal/covidhandler"
 )
 
 var (
-	testData = []db.CountryEntry{
+	testData = []coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",

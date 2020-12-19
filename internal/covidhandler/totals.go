@@ -5,7 +5,7 @@ import (
 
 	"github.com/mpvl/unique"
 
-	"covid19/internal/covid/db"
+	"covid19/internal/coviddb"
 )
 
 // Indexes for the output arrays of GetTotalCases / GetTotalDeltas
@@ -21,7 +21,7 @@ const (
 
 // GetTotalCases calculates the total cases cross all countries over time
 // Output is structured for easy export to HTTP Response (JSON)
-func GetTotalCases(rows []db.CountryEntry) [][][2]int64 {
+func GetTotalCases(rows []coviddb.CountryEntry) [][][2]int64 {
 	var confirmed, recovered, deaths int64
 
 	// Helper datastructure to keep running count
@@ -33,11 +33,11 @@ func GetTotalCases(rows []db.CountryEntry) [][][2]int64 {
 	}
 
 	// Group data by timestamp
-	timeMap := make(map[time.Time][]db.CountryEntry)
+	timeMap := make(map[time.Time][]coviddb.CountryEntry)
 	timestamps := make([]time.Time, 0)
 	for _, row := range rows {
 		if timeMap[row.Timestamp] == nil {
-			timeMap[row.Timestamp] = make([]db.CountryEntry, 0)
+			timeMap[row.Timestamp] = make([]coviddb.CountryEntry, 0)
 		}
 		timeMap[row.Timestamp] = append(timeMap[row.Timestamp], row)
 		timestamps = append(timestamps, row.Timestamp)

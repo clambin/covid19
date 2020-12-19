@@ -6,14 +6,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"covid19/internal/covid/db"
-	mockdb "covid19/internal/covid/db/mock"
+	"covid19/internal/coviddb"
+	mockdb "covid19/internal/coviddb/mock"
 	"covid19/internal/covidhandler"
 	"covid19/pkg/grafana/apiserver"
 )
 
 func TestHandlerHandler(t *testing.T) {
-	dbh := mockdb.Create([]db.CountryEntry{
+	dbh := mockdb.Create([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "A",
@@ -114,10 +114,10 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		{code: "NL", name: "Netherlands"},
 		{code: "UK", name: "United Kingdom"}}
 	timestamp := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
-	entries := make([]db.CountryEntry, 0)
+	entries := make([]coviddb.CountryEntry, 0)
 	for i := 0; i < 365; i++ {
 		for _, country := range countries {
-			entries = append(entries, db.CountryEntry{
+			entries = append(entries, coviddb.CountryEntry{
 				Timestamp: timestamp,
 				Code:      country.code,
 				Name:      country.name,

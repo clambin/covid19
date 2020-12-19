@@ -1,14 +1,14 @@
-package db_test
+package coviddb_test
 
 import (
 	"os"
 	"strconv"
+	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"testing"
 
-	"covid19/internal/covid/db"
+	"covid19/internal/coviddb"
 )
 
 func getDBEnv() (map[string]string, bool) {
@@ -39,7 +39,7 @@ func TestDB(t *testing.T) {
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.Nil(t, err)
 
-	covidDB := db.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	covidDB := coviddb.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
 	assert.NotNil(t, covidDB)
 
 	err = covidDB.RemoveDB()
@@ -47,7 +47,7 @@ func TestDB(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(time.Second)
 
-	newEntries := []db.CountryEntry{
+	newEntries := []coviddb.CountryEntry{
 		{
 			Timestamp: now,
 			Code:      "??",

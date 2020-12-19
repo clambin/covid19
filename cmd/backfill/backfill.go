@@ -8,7 +8,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"covid19/internal/backfill"
-	"covid19/internal/covid/db"
+	"covid19/internal/coviddb"
 	"covid19/internal/version"
 )
 
@@ -45,7 +45,7 @@ func main() {
 
 	log.Info("backfill v" + version.BuildVersion)
 
-	app := backfill.Create(db.NewPostgresDB(
+	app := backfill.Create(coviddb.NewPostgresDB(
 		cfg.postgresHost,
 		cfg.postgresPort,
 		cfg.postgresDatabase,
