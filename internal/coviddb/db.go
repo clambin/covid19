@@ -141,34 +141,34 @@ func (db *PostgresDB) Add(entries []CountryEntry) error {
 	}
 
 	if err == nil {
-		txn, err := dbh.Begin()
-		if err != nil {
-			return err
-		}
+		if txn, err := dbh.Begin(); err == nil {
+			if stmt, err := txn.Prepare(pq.CopyIn(
+				"covid19",
+				"time", "country_code", "country_name", "confirmed", "death", "recovered",
+			)); err == nil {
 
-		stmt, err := txn.Prepare(pq.CopyIn("covid19", "time", "country_code", "country_name", "confirmed", "death", "recovered"))
-		if err != nil {
-			return err
-		}
+				for _, entry := range entries {
+					_, err = stmt.Exec(
+						entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered,
+					)
+					if err != nil {
+						break
+					}
+				}
 
-		for _, entry := range entries {
-			_, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered)
-			if err != nil {
-				return err
+				if err == nil {
+					_, err = stmt.Exec()
+				}
+
+				if err == nil {
+					err = stmt.Close()
+				}
+
+				if err == nil {
+					err = txn.Commit()
+				}
 			}
 		}
-
-		_, err = stmt.Exec()
-		if err != nil {
-			return err
-		}
-
-		err = stmt.Close()
-		if err != nil {
-			return err
-		}
-
-		err = txn.Commit()
 	}
 	return nil
 }
