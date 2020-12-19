@@ -51,7 +51,7 @@ type APIQueryResponse struct {
 }
 
 // Run the API Server
-func (apiServer *APIServer) Run() {
+func (apiServer *APIServer) Run() error {
 	r := mux.NewRouter()
 	r.Use(prometheusMiddleware)
 	r.Path("/metrics").Handler(promhttp.Handler())
@@ -59,7 +59,7 @@ func (apiServer *APIServer) Run() {
 	r.HandleFunc("/search", apiServer.search).Methods("POST")
 	r.HandleFunc("/query", apiServer.query).Methods("POST")
 
-	_ = http.ListenAndServe(fmt.Sprintf(":%d", apiServer.port), r)
+	return http.ListenAndServe(fmt.Sprintf(":%d", apiServer.port), r)
 }
 
 // Implement three endpoints. /search and /query are used by Grafana's simple json API datasource
