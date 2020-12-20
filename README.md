@@ -6,5 +6,5 @@
 ![GitHub](https://img.shields.io/github/license/clambin/covid19?style=plastic)
 
 
-Golang version of [clambin/covid19mon](https://github.com/clambin/covid19mon)
+Golang implementation of [clambin/covid19mon](https://github.com/clambin/covid19mon)
 
