@@ -170,7 +170,7 @@ func (db *PostgresDB) Add(entries []CountryEntry) error {
 			}
 		}
 	}
-	return nil
+	return err
 }
 
 // initializeDB created the required tables

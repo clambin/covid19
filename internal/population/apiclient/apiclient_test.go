@@ -25,7 +25,7 @@ func TestGetPopulation(t *testing.T) {
 	population, ok = response["US"]
 	assert.Equal(t, true, ok)
 	assert.Equal(t, int64(321645000), population)
-	population, ok = response["??"]
+	_, ok = response["??"]
 	assert.Equal(t, false, ok)
 }
 

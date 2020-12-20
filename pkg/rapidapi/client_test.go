@@ -37,7 +37,7 @@ func TestClient(t *testing.T) {
 
 			responseAsReader, err := client.CallAsReader(testCase.endpoint)
 			assert.Nil(t, err, testCase.endpoint)
-			buf, err := ioutil.ReadAll(responseAsReader)
+			buf, _ := ioutil.ReadAll(responseAsReader)
 			assert.Equal(t, testCase.response, string(buf), testCase.name)
 		} else {
 			assert.NotNil(t, err, testCase.name)
