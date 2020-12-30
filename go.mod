@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/clambin/httpstub v0.0.1
 	github.com/gorilla/mux v1.8.0
-	github.com/lib/pq v1.8.0
+	github.com/lib/pq v1.9.0
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de
 	github.com/prometheus/client_golang v1.8.0
 	github.com/sirupsen/logrus v1.7.0
