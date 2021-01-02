@@ -1,10 +1,11 @@
 package apiclient
 
 import (
-	"covid19/pkg/rapidapi"
 	"encoding/json"
 	"net/http"
 	"strconv"
+
+	"github.com/clambin/gotools/rapidapi"
 )
 
 // API interface representing a Population API Client
@@ -19,13 +20,7 @@ type APIClient struct {
 
 // New creates a new Population API Client
 func New(apiKey string) API {
-	return NewWithHTTPClient(&http.Client{}, apiKey)
-}
-
-// NewWithHTTPClient creates a new Covid API Client with a specified http.Client
-// Used to stub the HTTP Server
-func NewWithHTTPClient(client *http.Client, apiKey string) *APIClient {
-	return &APIClient{rapidapi.Client{Client: client, HostName: rapidAPIHost, APIKey: apiKey}}
+	return &APIClient{rapidapi.Client{Client: &http.Client{}, HostName: rapidAPIHost, APIKey: apiKey}}
 }
 
 // GetPopulation finds the most recent figured for all countries

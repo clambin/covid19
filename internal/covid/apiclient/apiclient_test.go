@@ -2,18 +2,22 @@ package apiclient_test
 
 import (
 	"bytes"
-	"github.com/clambin/httpstub"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
+	"github.com/clambin/gotools/httpstub"
+	"github.com/clambin/gotools/rapidapi"
 	"github.com/stretchr/testify/assert"
 
 	"covid19/internal/covid/apiclient"
 )
 
 func TestGetCountryStats(t *testing.T) {
-	apiClient := apiclient.NewWithHTTPClient(httpstub.NewTestClient(loopback), "")
+	apiClient := &apiclient.APIClient{Client: rapidapi.Client{
+		Client: httpstub.NewTestClient(loopback),
+		APIKey: "1234",
+	}}
 
 	response, err := apiClient.GetCountryStats()
 

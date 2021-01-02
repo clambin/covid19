@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clambin/httpstub"
+	"github.com/clambin/gotools/httpstub"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 

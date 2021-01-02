@@ -6,14 +6,20 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/clambin/httpstub"
+	"github.com/clambin/gotools/httpstub"
+	"github.com/clambin/gotools/rapidapi"
 	"github.com/stretchr/testify/assert"
 
 	"covid19/internal/population/apiclient"
 )
 
 func TestGetPopulation(t *testing.T) {
-	apiClient := apiclient.NewWithHTTPClient(httpstub.NewTestClient(loopback), "")
+	apiClient := &apiclient.APIClient{
+		Client: rapidapi.Client{
+			Client: httpstub.NewTestClient(loopback),
+			APIKey: "1234",
+		},
+	}
 
 	response, err := apiClient.GetPopulation()
 

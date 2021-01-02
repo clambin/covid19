@@ -6,7 +6,7 @@ import (
 	"time"
 	// log "github.com/sirupsen/logrus"
 
-	"covid19/pkg/rapidapi"
+	"github.com/clambin/gotools/rapidapi"
 )
 
 // API interface representing a Population API Client
@@ -19,15 +19,9 @@ type APIClient struct {
 	rapidapi.Client
 }
 
-// New creates a new Population API Client
+// New creates a new Covid API Client
 func New(apiKey string) API {
-	return NewWithHTTPClient(&http.Client{}, apiKey)
-}
-
-// NewWithHTTPClient creates a new Covid API Client with a specified http.Client
-// Used to stub the HTTP Server
-func NewWithHTTPClient(client *http.Client, apiKey string) *APIClient {
-	return &APIClient{rapidapi.Client{Client: client, HostName: rapidAPIHost, APIKey: apiKey}}
+	return &APIClient{rapidapi.Client{Client: &http.Client{}, HostName: rapidAPIHost, APIKey: apiKey}}
 }
 
 // CountryStats contains total figures for one country
