@@ -29,7 +29,8 @@ func TestBackFiller(t *testing.T) {
 			Recovered: 0,
 		}})
 
-	backFiller := backfill.CreateWithClient(covidDB, httpstub.NewTestClient(covidAPI))
+	backFiller := backfill.Create(covidDB)
+	backFiller.Client = httpstub.NewTestClient(covidAPI)
 
 	err := backFiller.Run()
 	assert.Nil(t, err)

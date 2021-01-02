@@ -23,9 +23,9 @@ func New(apiKey string) API {
 	return &APIClient{rapidapi.Client{Client: &http.Client{}, HostName: rapidAPIHost, APIKey: apiKey}}
 }
 
-// GetPopulation finds the most recent figured for all countries
+// GetPopulation finds the most recent data for all countries
 func (client *APIClient) GetPopulation() (map[string]int64, error) {
-	entries := make(map[string]int64, 0)
+	entries := make(map[string]int64)
 	stats, err := client.getStats()
 
 	if err == nil {

@@ -12,19 +12,13 @@ import (
 
 // Backfiller retrieves historic COVID19 data and adds it to the database
 type Backfiller struct {
-	client *http.Client
-	db     coviddb.DB
+	Client *http.Client
+	DB     coviddb.DB
 }
 
 // Create a new Backfiller object
 func Create(db coviddb.DB) *Backfiller {
-	return CreateWithClient(db, &http.Client{})
-}
-
-// CreateWithClient creates  a new Backfiller object w/ a supplier http.Client.
-// Used for unit tests
-func CreateWithClient(db coviddb.DB, client *http.Client) *Backfiller {
-	return &Backfiller{client: client, db: db}
+	return &Backfiller{Client: &http.Client{}, DB: db}
 }
 
 // Run the backfiller.  Get all supported countries from the API
@@ -33,7 +27,7 @@ func CreateWithClient(db coviddb.DB, client *http.Client) *Backfiller {
 func (backFiller *Backfiller) Run() error {
 	countries, err := backFiller.getCountries()
 	if err == nil {
-		first, err := backFiller.db.GetFirstEntry()
+		first, err := backFiller.DB.GetFirstEntry()
 		if err == nil {
 			log.Debugf("First entry in DB: %s", first.String())
 
@@ -55,7 +49,7 @@ func (backFiller *Backfiller) Run() error {
 								Recovered: entry.Recovered})
 						}
 					}
-					err = backFiller.db.Add(records)
+					err = backFiller.DB.Add(records)
 					if err == nil {
 						log.Infof("Received data for %s. %d entries added", realName, len(records))
 					}
@@ -129,13 +123,13 @@ func (backFiller *Backfiller) getHistoricalData(slug string) ([]struct {
 
 // slowCall handles 429 errors, slowing down before trying again
 func (backFiller *Backfiller) slowCall(req *http.Request) (*http.Response, error) {
-	resp, err := backFiller.client.Do(req)
+	resp, err := backFiller.Client.Do(req)
 
 	for err == nil && resp.StatusCode == 429 {
 		resp.Body.Close()
 		log.Debug("429 recv'd. Slowing down")
 		time.Sleep(time.Second * 5)
-		resp, err = backFiller.client.Do(req)
+		resp, err = backFiller.Client.Do(req)
 	}
 
 	if err == nil && resp.StatusCode == 200 {
