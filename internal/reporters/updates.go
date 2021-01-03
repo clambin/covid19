@@ -56,9 +56,8 @@ func (reporter *UpdatesReporter) process(entries []coviddb.CountryEntry) {
 				req := pushover.MessageRequest{
 					Token: reporter.token,
 					User:  reporter.user,
-					Title: "New covid19 data",
-					Message: fmt.Sprintf("New data for %s. New confirmed: %d. New deaths: %d. New recovered: %d",
-						entry.Name,
+					Title: "New covid19 data for " + entry.Name,
+					Message: fmt.Sprintf("New confirmed: %d\nNew deaths: %d\nNew recovered: %d",
 						entry.Confirmed-dbEntry.Confirmed,
 						entry.Deaths-dbEntry.Deaths,
 						entry.Recovered-dbEntry.Recovered,
