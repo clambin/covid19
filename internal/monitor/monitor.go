@@ -36,6 +36,7 @@ func Run(cfg *Configuration, covidProbe *covidprobe.Probe, popProbe *popprobe.Pr
 			}
 			if cfg.Once {
 				covidDone <- true
+				break
 			} else {
 				time.Sleep(cfg.Interval)
 			}
@@ -50,6 +51,7 @@ func Run(cfg *Configuration, covidProbe *covidprobe.Probe, popProbe *popprobe.Pr
 			}
 			if cfg.Once {
 				popDone <- true
+				break
 			} else {
 				time.Sleep(cfg.Interval)
 			}
