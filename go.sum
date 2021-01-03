@@ -35,6 +35,10 @@ github.com/cespare/xxhash/v2 v2.1.1 h1:6MnRN8NT7+YBpUIWxHtefFZOKTAPgGjpQSxqLNn0+
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/clambin/gotools v0.0.0-20210102195414-6e551295eebb h1:AOHfjUg+AJ5C6M/y5jJnZMb0NOmZN1BGDkWHNqzvnSA=
 github.com/clambin/gotools v0.0.0-20210102195414-6e551295eebb/go.mod h1:YMQCihE6wmTL4I6Ges6kU3mW8nyuTQ3UuUa99mg8DDI=
+github.com/clambin/gotools v0.1.0 h1:WUY7zcJ2jIdk7RuXGf+ydLVpcCZWYZ8BLZWhzeEFRvI=
+github.com/clambin/gotools v0.1.0/go.mod h1:YMQCihE6wmTL4I6Ges6kU3mW8nyuTQ3UuUa99mg8DDI=
+github.com/clambin/gotools v0.2.0 h1:qO3ffxXnzq4LHIe2TAqTeNe/scGtzx3mHBeeVFIrSJk=
+github.com/clambin/gotools v0.2.0/go.mod h1:YMQCihE6wmTL4I6Ges6kU3mW8nyuTQ3UuUa99mg8DDI=
 github.com/clambin/httpstub v0.0.1 h1:DJPyvFgEuS91bZJfG/vMRvp+jq8QBnORqt2USOC5a+0=
 github.com/clambin/httpstub v0.0.1/go.mod h1:DHnDuwVguUDgsJSFhPF8e7AQX6XcSoYmFRCeX3m87y0=
 github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4dUb/I5gc9Hdhagfvm9+RyrPryS/auMzxE=
