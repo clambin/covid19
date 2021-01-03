@@ -46,5 +46,5 @@ func TestNewDataReporter(t *testing.T) {
 
 	assert.Len(t, newDataReporter.SentReqs, 1)
 	assert.Equal(t, "New covid19 data", newDataReporter.SentReqs[0].Title)
-	assert.Equal(t, "New data for Belgium. New confirmed: 5. New deaths: 1. New recovered: 0", newDataReporter.SentReqs[0].Message)
+	assert.Equal(t, "New data for Belgium. New confirmed: 5. New deaths: 0. New recovered: 1", newDataReporter.SentReqs[0].Message)
 }
