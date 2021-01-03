@@ -12,15 +12,36 @@ import (
 
 func TestNewDataReporter(t *testing.T) {
 	db := mockdb.Create([]coviddb.CountryEntry{
-		{time.Now().AddDate(0, -1, 0), "BE", "Belgium", 5, 1, 0},
+		{
+			Timestamp: time.Now().AddDate(0, -1, 0),
+			Code:      "BE",
+			Name:      "Belgium",
+			Confirmed: 5,
+			Deaths:    1,
+			Recovered: 0,
+		},
 	})
 	r := reporters.Create()
 	newDataReporter := reporters.NewUpdatesReporter("", "", []string{"Belgium"}, db)
 	r.Add(newDataReporter)
 
 	r.Report([]coviddb.CountryEntry{
-		{time.Now(), "BE", "Belgium", 10, 1, 1},
-		{time.Now(), "US", "US", 10, 1, 1},
+		{
+			Timestamp: time.Now(),
+			Code:      "BE",
+			Name:      "Belgium",
+			Confirmed: 10,
+			Deaths:    1,
+			Recovered: 1,
+		},
+		{
+			Timestamp: time.Now(),
+			Code:      "US",
+			Name:      "US",
+			Confirmed: 10,
+			Deaths:    1,
+			Recovered: 1,
+		},
 	})
 
 	assert.Len(t, newDataReporter.SentReqs, 1)

@@ -89,7 +89,7 @@ func main() {
 	}
 
 	if cfg.Reports.Updates.Token != "" && cfg.Reports.Updates.User != "" {
-		rep.Add(reporters.NewNewDataReporter(
+		rep.Add(reporters.NewUpdatesReporter(
 			cfg.Reports.Updates.Token,
 			cfg.Reports.Updates.User,
 			cfg.Reports.Updates.Countries,

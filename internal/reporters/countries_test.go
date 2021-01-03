@@ -1,13 +1,13 @@
 package reporters_test
 
 import (
-	"covid19/internal/coviddb"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
 	"github.com/clambin/gotools/metrics"
+	"github.com/stretchr/testify/assert"
 
+	"covid19/internal/coviddb"
 	"covid19/internal/reporters"
 )
 
@@ -16,8 +16,22 @@ func TestCountriesReporter(t *testing.T) {
 	r.Add(reporters.NewCountriesReporter("http://localhost:8080"))
 
 	r.Report([]coviddb.CountryEntry{
-		{time.Now(), "BE", "Belgium", 10, 1, 1},
-		{time.Now(), "US", "US", 10, 1, 1},
+		{
+			Timestamp: time.Now(),
+			Code:      "BE",
+			Name:      "Belgium",
+			Confirmed: 10,
+			Deaths:    1,
+			Recovered: 1,
+		},
+		{
+			Timestamp: time.Now(),
+			Code:      "US",
+			Name:      "US",
+			Confirmed: 10,
+			Deaths:    1,
+			Recovered: 1,
+		},
 	})
 
 	var (

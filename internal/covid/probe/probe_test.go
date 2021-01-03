@@ -55,7 +55,7 @@ func TestProbe(t *testing.T) {
 	})
 
 	r := reporters.Create()
-	r.Add(reporters.NewUpdatesReporter("localhost:8080"))
+	r.Add(reporters.NewCountriesReporter("localhost:8080"))
 
 	p := probe.NewProbe(apiClient, dbh, r)
 
