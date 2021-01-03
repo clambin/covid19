@@ -1,6 +1,8 @@
 package probe_test
 
 import (
+	"covid19/internal/reporters"
+	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -10,7 +12,6 @@ import (
 	"covid19/internal/covid/probe"
 	"covid19/internal/coviddb"
 	mockdb "covid19/internal/coviddb/mock"
-	"covid19/internal/pushgateway"
 )
 
 var lastUpdate = time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC)
@@ -53,7 +54,10 @@ func TestProbe(t *testing.T) {
 		"NotACountry": {LastUpdate: lastUpdate, Confirmed: 0, Recovered: 0, Deaths: 0},
 	})
 
-	p := probe.NewProbe(apiClient, dbh, pushgateway.NewPushGateway("localhost:8080"))
+	r := reporters.Create()
+	r.Add(reporters.NewUpdatesReporter("localhost:8080"))
+
+	p := probe.NewProbe(apiClient, dbh, r)
 
 	err := p.Run()
 
@@ -65,4 +69,14 @@ func TestProbe(t *testing.T) {
 	assert.Len(t, latest, 2)
 	assert.True(t, latest["Belgium"].Equal(lastUpdate))
 	assert.True(t, latest["US"].Equal(lastUpdate))
+
+	var (
+		value float64
+	)
+	value, err = metrics.LoadValue("covid_reported_count", "Belgium")
+	assert.Nil(t, err)
+	assert.Equal(t, 1.0, value)
+	value, err = metrics.LoadValue("covid_reported_count", "US")
+	assert.Nil(t, err)
+	assert.Equal(t, 1.0, value)
 }

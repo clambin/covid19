@@ -1,23 +1,23 @@
 package probe
 
 import (
-	"covid19/internal/pushgateway"
 	log "github.com/sirupsen/logrus"
 
 	"covid19/internal/covid/apiclient"
 	"covid19/internal/coviddb"
+	"covid19/internal/reporters"
 )
 
 // Probe handle
 type Probe struct {
-	apiClient   apiclient.API
-	db          coviddb.DB
-	pushGateway *pushgateway.PushGateway
+	apiClient apiclient.API
+	db        coviddb.DB
+	reporters *reporters.Reporters
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(apiClient apiclient.API, db coviddb.DB, pushGateway *pushgateway.PushGateway) *Probe {
-	return &Probe{apiClient: apiClient, db: db, pushGateway: pushGateway}
+func NewProbe(apiClient apiclient.API, db coviddb.DB, reporters *reporters.Reporters) *Probe {
+	return &Probe{apiClient: apiClient, db: db, reporters: reporters}
 }
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
@@ -32,18 +32,12 @@ func (probe *Probe) Run() error {
 		newRecords, err := probe.findNewCountryStats(countryStats)
 
 		if err == nil && len(newRecords) > 0 {
-			log.Infof("Adding %d new entries", len(newRecords))
-
-			err = probe.db.Add(newRecords)
-		}
-
-		if err == nil && probe.pushGateway != nil {
-			countries := make([]string, 0, len(newRecords))
-			for _, entry := range newRecords {
-				countries = append(countries, entry.Name)
+			if probe.reporters != nil {
+				probe.reporters.Report(newRecords)
 			}
 
-			probe.pushGateway.Push(countries)
+			log.Infof("Adding %d new entries", len(newRecords))
+			err = probe.db.Add(newRecords)
 		}
 	}
 

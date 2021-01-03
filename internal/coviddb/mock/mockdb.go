@@ -58,6 +58,25 @@ func (dbh *DB) GetFirstEntry() (time.Time, error) {
 	return first, nil
 }
 
+func (dbh *DB) GetLastBeforeDate(countryName string, before time.Time) (*coviddb.CountryEntry, error) {
+	result := coviddb.CountryEntry{}
+	for _, entry := range dbh.data {
+		if entry.Name == countryName && entry.Timestamp.Before(before) && entry.Timestamp.After(result.Timestamp) {
+			result.Timestamp = entry.Timestamp
+			result.Code = entry.Code
+			result.Name = entry.Name
+			result.Confirmed = entry.Confirmed
+			result.Deaths = entry.Deaths
+			result.Recovered = entry.Recovered
+		}
+	}
+	if result.Name == "" {
+		return nil, nil
+	}
+
+	return &result, nil
+}
+
 // Add inserts all specified records in the covid19 database table
 func (dbh *DB) Add(entries []coviddb.CountryEntry) error {
 	for _, entry := range entries {

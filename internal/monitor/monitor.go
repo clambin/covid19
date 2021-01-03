@@ -19,8 +19,17 @@ type Configuration struct {
 	PostgresUser     string
 	PostgresPassword string
 	APIKey           string
-	PushGateway      string
-	ProfileName      string
+	Reports          struct {
+		Countries struct {
+			PushGateway string
+		}
+		Updates struct {
+			Token     string
+			User      string
+			Countries []string
+		}
+	}
+	ProfileName string
 }
 
 func Run(cfg *Configuration, covidProbe *covidprobe.Probe, popProbe *popprobe.Probe) bool {
@@ -30,8 +39,8 @@ func Run(cfg *Configuration, covidProbe *covidprobe.Probe, popProbe *popprobe.Pr
 
 	covidDone := make(chan bool)
 	go func() {
-		var err error
-		if err = covidProbe.Run(); err != nil {
+		err := covidProbe.Run()
+		if err != nil {
 			log.Warningf("covid probe error: %s", err)
 		}
 		covidDone <- err == nil
@@ -39,8 +48,8 @@ func Run(cfg *Configuration, covidProbe *covidprobe.Probe, popProbe *popprobe.Pr
 
 	popDone := make(chan bool)
 	go func() {
-		var err error
-		if err = popProbe.Run(); err != nil {
+		err := popProbe.Run()
+		if err != nil {
 			log.Warningf("population probe error: %s", err)
 		}
 		popDone <- err == nil

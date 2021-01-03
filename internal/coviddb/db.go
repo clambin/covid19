@@ -14,6 +14,7 @@ type DB interface {
 	List(time.Time) ([]CountryEntry, error)
 	ListLatestByCountry() (map[string]time.Time, error)
 	GetFirstEntry() (time.Time, error)
+	GetLastBeforeDate(string, time.Time) (*CountryEntry, error)
 	Add([]CountryEntry) error
 }
 
@@ -128,6 +129,48 @@ func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
 	}
 
 	return first, err
+}
+
+// GetLastBeforeDate gets the last entry for a country before a specified data.
+// If no data was found, returning *CountryEntry is nil
+func (db *PostgresDB) GetLastBeforeDate(countryName string, before time.Time) (*CountryEntry, error) {
+	var (
+		err    error
+		dbh    *sql.DB
+		rows   *sql.Rows
+		last   time.Time
+		found  bool
+		result *CountryEntry
+	)
+	found = false
+
+	if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
+		defer dbh.Close()
+		err = db.initializeDB(dbh)
+	}
+
+	if err == nil {
+		// FIXME: leaving out sprintf gives errors on processing timestamp???
+		rows, err = dbh.Query(fmt.Sprintf(
+			"SELECT MAX(time) FROM covid19 WHERE country_name = '%s' AND time < '%s'",
+			countryName, before.Format("2006-01-02 15:04:05")))
+		if err == nil && rows.Next() {
+			err = rows.Scan(&last)
+			rows.Close()
+		}
+	}
+
+	if err == nil && found {
+		result = &CountryEntry{Timestamp: before, Name: countryName}
+		err = dbh.QueryRow(fmt.Sprintf(
+			"SELECT country_code, confirmed, death, recovered FROM covid19 where country_name = '%s' and time = '%s'",
+			countryName, last.Format("2006-01-02 15:04:05"))).Scan(
+			&result.Code, &result.Confirmed, &result.Deaths, &result.Recovered)
+
+		return result, err
+	}
+
+	return nil, err
 }
 
 // Add inserts all specified records in the covid19 database table

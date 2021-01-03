@@ -86,4 +86,17 @@ func TestDB(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.True(t, first.Equal(now))
+
+	entry, err := covidDB.GetLastBeforeDate("???", now.Add(1*time.Hour))
+
+	if assert.Nil(t, err) {
+		assert.Equal(t, "???", entry.Name)
+		assert.Equal(t, int64(3), entry.Confirmed)
+		assert.Equal(t, int64(2), entry.Deaths)
+		assert.Equal(t, int64(1), entry.Recovered)
+	}
+
+	entry, err = covidDB.GetLastBeforeDate("???", now.AddDate(0, -1, 0))
+
+	assert.Nil(t, err)
 }

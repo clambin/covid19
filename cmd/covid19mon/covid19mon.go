@@ -8,18 +8,21 @@ import (
 	popapi "covid19/internal/population/apiclient"
 	popdb "covid19/internal/population/db"
 	popprobe "covid19/internal/population/probe"
-	"covid19/internal/pushgateway"
+	"covid19/internal/reporters"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"path/filepath"
 	"runtime/pprof"
+	"strings"
 	"time"
 
 	"covid19/internal/version"
 )
 
 func main() {
+	reportUpdatesCountries := ""
+
 	cfg := monitor.Configuration{}
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 monitor")
@@ -36,7 +39,10 @@ func main() {
 	a.Flag("postgres-user", "Postgres DB User").Default("covid").StringVar(&cfg.PostgresUser)
 	a.Flag("postgres-password", "Postgres DB Password").StringVar(&cfg.PostgresPassword)
 	a.Flag("api-key", "API Key for RapidAPI Covid19 API").StringVar(&cfg.APIKey)
-	a.Flag("pushgateway", "URL of Prometheus pushgateway").StringVar(&cfg.PushGateway)
+	a.Flag("pushgateway", "URL of Prometheus pushgateway").StringVar(&cfg.Reports.Countries.PushGateway)
+	a.Flag("report.updates.token", "pushover API token to report country updates").StringVar(&cfg.Reports.Updates.Token)
+	a.Flag("report.updates.user", "pushover user token to report country updates").StringVar(&cfg.Reports.Updates.User)
+	a.Flag("report.updates.countries", "comma-separated list of countries to report").StringVar(&reportUpdatesCountries)
 	a.Flag("profile", "Filename for go profiler").StringVar(&cfg.ProfileName)
 
 	if _, err := a.Parse(os.Args[1:]); err != nil {
@@ -44,40 +50,56 @@ func main() {
 		os.Exit(1)
 	}
 
+	if reportUpdatesCountries != "" {
+		cfg.Reports.Updates.Countries = strings.Split(reportUpdatesCountries, ",")
+	}
+
 	log.Info("covid19mon v" + version.BuildVersion)
 
 	if cfg.ProfileName != "" {
 		cfg.Once = true
-		f, ferr := os.Create(cfg.ProfileName)
-		if ferr != nil {
-			log.Fatal(ferr)
+		f, err := os.Create(cfg.ProfileName)
+		if err != nil {
+			log.Fatal(err)
 		}
 		_ = pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
 
-	covidProbe := covidprobe.NewProbe(
-		covidapi.New(cfg.APIKey),
-		coviddb.NewPostgresDB(
-			cfg.PostgresHost,
-			cfg.PostgresPort,
-			cfg.PostgresDatabase,
-			cfg.PostgresUser,
-			cfg.PostgresPassword,
-		),
-		pushgateway.NewPushGateway(cfg.PushGateway),
+	covidDB := coviddb.NewPostgresDB(
+		cfg.PostgresHost,
+		cfg.PostgresPort,
+		cfg.PostgresDatabase,
+		cfg.PostgresUser,
+		cfg.PostgresPassword,
 	)
 
-	populationProbe := popprobe.Create(
-		popapi.New(cfg.APIKey),
-		popdb.NewPostgresDB(
-			cfg.PostgresHost,
-			cfg.PostgresPort,
-			cfg.PostgresDatabase,
-			cfg.PostgresUser,
-			cfg.PostgresPassword,
-		),
+	popDB := popdb.NewPostgresDB(
+		cfg.PostgresHost,
+		cfg.PostgresPort,
+		cfg.PostgresDatabase,
+		cfg.PostgresUser,
+		cfg.PostgresPassword,
 	)
+
+	rep := reporters.Create()
+
+	if cfg.Reports.Countries.PushGateway != "" {
+		rep.Add(reporters.NewCountriesReporter(cfg.Reports.Countries.PushGateway))
+	}
+
+	if cfg.Reports.Updates.Token != "" && cfg.Reports.Updates.User != "" {
+		rep.Add(reporters.NewNewDataReporter(
+			cfg.Reports.Updates.Token,
+			cfg.Reports.Updates.User,
+			cfg.Reports.Updates.Countries,
+			covidDB,
+		),
+		)
+	}
+
+	covidProbe := covidprobe.NewProbe(covidapi.New(cfg.APIKey), covidDB, rep)
+	populationProbe := popprobe.Create(popapi.New(cfg.APIKey), popDB)
 
 	for {
 		if ok := monitor.Run(&cfg, covidProbe, populationProbe); !ok || cfg.Once {

@@ -15,7 +15,6 @@ import (
 	mockapi2 "covid19/internal/population/apiclient/mock"
 	mockdb2 "covid19/internal/population/db/mock"
 	popprobe "covid19/internal/population/probe"
-	"covid19/internal/pushgateway"
 )
 
 func TestMonitor(t *testing.T) {
@@ -27,7 +26,7 @@ func TestMonitor(t *testing.T) {
 		"US":          {LastUpdate: time.Now(), Confirmed: 20, Recovered: 15, Deaths: 5},
 		"NotACountry": {LastUpdate: time.Now(), Confirmed: 0, Recovered: 0, Deaths: 0},
 	})
-	covidProbe := probe.NewProbe(api1, db1, pushgateway.NewPushGateway("localhost:8080"))
+	covidProbe := probe.NewProbe(api1, db1, nil)
 
 	db2 := mockdb2.Create(map[string]int64{})
 	api2 := mockapi2.New(map[string]int64{
