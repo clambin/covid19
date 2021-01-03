@@ -36,7 +36,8 @@ func TestMonitor(t *testing.T) {
 	})
 	popProbe := popprobe.Create(api2, db2)
 
-	monitor.Run(&cfg, covidProbe, popProbe)
+	ok := monitor.Run(&cfg, covidProbe, popProbe)
+	assert.True(t, ok)
 
 	covidEntries, err := db1.List(time.Now())
 	assert.Nil(t, err)

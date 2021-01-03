@@ -23,41 +23,31 @@ type Configuration struct {
 	ProfileName      string
 }
 
-func Run(cfg *Configuration, covidProbe *covidprobe.Probe, popProbe *popprobe.Probe) {
+func Run(cfg *Configuration, covidProbe *covidprobe.Probe, popProbe *popprobe.Probe) bool {
 	if cfg.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
 	covidDone := make(chan bool)
 	go func() {
-		for {
-			if err := covidProbe.Run(); err != nil {
-				log.Warningf("covid probe error: %s", err)
-			}
-			if cfg.Once {
-				covidDone <- true
-				break
-			} else {
-				time.Sleep(cfg.Interval)
-			}
+		var err error
+		if err = covidProbe.Run(); err != nil {
+			log.Warningf("covid probe error: %s", err)
 		}
+		covidDone <- err == nil
 	}()
 
 	popDone := make(chan bool)
 	go func() {
-		for {
-			if err := popProbe.Run(); err != nil {
-				log.Warningf("population probe error: %s", err)
-			}
-			if cfg.Once {
-				popDone <- true
-				break
-			} else {
-				time.Sleep(cfg.Interval)
-			}
+		var err error
+		if err = popProbe.Run(); err != nil {
+			log.Warningf("population probe error: %s", err)
 		}
+		popDone <- err == nil
 	}()
 
-	<-popDone
-	<-covidDone
+	popOK := <-popDone
+	covidOK := <-covidDone
+
+	return popOK && covidOK
 }

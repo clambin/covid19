@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/pprof"
+	"time"
 
 	"covid19/internal/version"
 )
@@ -78,5 +79,11 @@ func main() {
 		),
 	)
 
-	monitor.Run(&cfg, covidProbe, populationProbe)
+	for {
+		if ok := monitor.Run(&cfg, covidProbe, populationProbe); !ok || cfg.Once {
+			break
+		}
+
+		time.Sleep(cfg.Interval)
+	}
 }
