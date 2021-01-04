@@ -44,6 +44,7 @@ func main() {
 	a.Flag("report.updates.pushover.token", "pushover API token to report selected country updates").StringVar(&cfg.Reports.Updates.Pushover.Token)
 	a.Flag("report.updates.pushover.user", "pushover user token to report selected country updates").StringVar(&cfg.Reports.Updates.Pushover.User)
 	a.Flag("report.updates.slack.url", "slack webhook URL to report selected country updates").StringVar(&cfg.Reports.Updates.Slack.URL)
+	a.Flag("report.updates.slack.channel", "slack channel to report selected country updates").Default("#covid").StringVar(&cfg.Reports.Updates.Slack.Channel)
 
 	if _, err := a.Parse(os.Args[1:]); err != nil {
 		a.Usage(os.Args[1:])

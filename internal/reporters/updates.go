@@ -18,7 +18,8 @@ type ReportsConfiguration struct {
 			User  string
 		}
 		Slack struct {
-			URL string
+			URL     string
+			Channel string
 		}
 	}
 }
@@ -84,7 +85,7 @@ func (reporter *UpdatesReporter) process(entries []coviddb.CountryEntry) {
 				}
 				if reporter.config.Updates.Slack.URL != "" {
 					payload := slack.Payload{
-						Channel: "#covid",
+						Channel: reporter.config.Updates.Slack.Channel,
 						Text:    title + "\n" + message,
 					}
 					_ = slack.Send(reporter.config.Updates.Slack.URL, "", payload)
