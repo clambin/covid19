@@ -3,11 +3,9 @@ package reporters
 import (
 	"covid19/internal/coviddb"
 
+	"fmt"
 	"github.com/arcanericky/pushover"
 	slack "github.com/ashwanthkumar/slack-go-webhook"
-	log "github.com/sirupsen/logrus"
-
-	"fmt"
 )
 
 type ReportsConfiguration struct {
@@ -75,7 +73,7 @@ func (reporter *UpdatesReporter) process(entries []coviddb.CountryEntry) {
 				reporter.SentReqs = append(reporter.SentReqs, message)
 
 				if reporter.config.Updates.Pushover.Token != "" && reporter.config.Updates.Pushover.User != "" {
-					_, err = pushover.Message(pushover.MessageRequest{
+					_, _ = pushover.Message(pushover.MessageRequest{
 						Token:   reporter.config.Updates.Pushover.Token,
 						User:    reporter.config.Updates.Pushover.User,
 						Title:   title,
@@ -91,10 +89,6 @@ func (reporter *UpdatesReporter) process(entries []coviddb.CountryEntry) {
 					_ = slack.Send(reporter.config.Updates.Slack.URL, "", payload)
 				}
 			}
-		}
-		if err != nil {
-			log.Warnf("could not report on new entries: " + err.Error())
-			break
 		}
 	}
 }
