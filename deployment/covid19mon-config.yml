@@ -10,4 +10,6 @@ stringData:
   pg_database: "covid19"
   pg_user: "covid"
   pg_password: "__PGPASSWORD__"
+  pushover_token: "__TOKEN__"
+  pushover_user: "__USER__"
 ---

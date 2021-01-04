@@ -26,7 +26,10 @@ spec:
               - '--postgres-database=$(pg_database)'
               - '--postgres-user=$(pg_user)'
               - '--postgres-password=$(pg_password)'
-              - '--pushgateway=http://prometheus-pushgateway.monitoring.svc:9091'
+              - '--report.countries.url=http://prometheus-pushgateway.monitoring:9091'
+              - '--report.updates.token=$(pushover_token)'
+              - '--report.updates.user=$(pushover_user)'
+              - '--report.updates.countries=Belgium,US'
             resources:
               requests:
                 cpu: 5m
