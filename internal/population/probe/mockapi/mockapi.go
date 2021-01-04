@@ -1,4 +1,4 @@
-package mock
+package mockapi
 
 // API handle
 type API struct {

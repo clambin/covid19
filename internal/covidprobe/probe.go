@@ -1,22 +1,21 @@
-package probe
+package covidprobe
 
 import (
 	log "github.com/sirupsen/logrus"
 
-	"covid19/internal/covid/apiclient"
 	"covid19/internal/coviddb"
 	"covid19/internal/reporters"
 )
 
 // Probe handle
 type Probe struct {
-	apiClient apiclient.API
+	apiClient APIClient
 	db        coviddb.DB
 	reporters *reporters.Reporters
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(apiClient apiclient.API, db coviddb.DB, reporters *reporters.Reporters) *Probe {
+func NewProbe(apiClient APIClient, db coviddb.DB, reporters *reporters.Reporters) *Probe {
 	return &Probe{apiClient: apiClient, db: db, reporters: reporters}
 }
 
@@ -45,7 +44,7 @@ func (probe *Probe) Run() error {
 }
 
 // findNewCountryStats returns any new stats (ie either more recent or the country has no entries yet)
-func (probe *Probe) findNewCountryStats(newCountryStats map[string]apiclient.CountryStats) ([]coviddb.CountryEntry, error) {
+func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats) ([]coviddb.CountryEntry, error) {
 	result := make([]coviddb.CountryEntry, 0)
 
 	latestDBEntries, err := probe.db.ListLatestByCountry()

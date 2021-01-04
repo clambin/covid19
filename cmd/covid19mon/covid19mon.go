@@ -1,22 +1,21 @@
 package main
 
 import (
-	covidapi "covid19/internal/covid/apiclient"
-	covidprobe "covid19/internal/covid/probe"
-	"covid19/internal/coviddb"
-	"covid19/internal/monitor"
-	popapi "covid19/internal/population/apiclient"
-	popdb "covid19/internal/population/db"
-	popprobe "covid19/internal/population/probe"
-	"covid19/internal/reporters"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"path/filepath"
 	"runtime/pprof"
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
+
+	"covid19/internal/coviddb"
+	"covid19/internal/covidprobe"
+	"covid19/internal/monitor"
+	popdb "covid19/internal/population/db"
+	popprobe "covid19/internal/population/probe"
+	"covid19/internal/reporters"
 	"covid19/internal/version"
 )
 
@@ -99,8 +98,8 @@ func main() {
 		)
 	}
 
-	covidProbe := covidprobe.NewProbe(covidapi.New(cfg.APIKey), covidDB, rep)
-	populationProbe := popprobe.Create(popapi.New(cfg.APIKey), popDB)
+	covidProbe := covidprobe.NewProbe(covidprobe.NewAPIClient(cfg.APIKey), covidDB, rep)
+	populationProbe := popprobe.Create(popprobe.NewAPIClient(cfg.APIKey), popDB)
 
 	for {
 		if ok := monitor.Run(&cfg, covidProbe, populationProbe); !ok || cfg.Once {

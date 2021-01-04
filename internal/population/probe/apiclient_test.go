@@ -1,4 +1,4 @@
-package apiclient_test
+package probe_test
 
 import (
 	"bytes"
@@ -9,12 +9,12 @@ import (
 	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
 
-	"covid19/internal/population/apiclient"
+	"covid19/internal/population/probe"
 )
 
 func TestGetPopulation(t *testing.T) {
-	apiClient := apiclient.New("1234")
-	apiClient.(*apiclient.APIClient).Client.Client = httpstub.NewTestClient(loopback)
+	apiClient := probe.NewAPIClient("1234")
+	apiClient.(*probe.RapidAPIClient).Client.Client = httpstub.NewTestClient(loopback)
 
 	response, err := apiClient.GetPopulation()
 

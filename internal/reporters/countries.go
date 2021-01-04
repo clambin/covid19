@@ -23,7 +23,7 @@ func NewCountriesReporter(url string) *CountriesReporter {
 	return &CountriesReporter{pusher: pusher}
 }
 
-// Report acts on new covid entries
+// Report acts on new covidprobe entries
 func (reporter *CountriesReporter) Report(entries []coviddb.CountryEntry) {
 	countries := make(map[string]int, len(entries))
 	for _, entry := range entries {

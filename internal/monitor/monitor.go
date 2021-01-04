@@ -5,7 +5,7 @@ import (
 
 	"time"
 
-	covidprobe "covid19/internal/covid/probe"
+	"covid19/internal/covidprobe"
 	popprobe "covid19/internal/population/probe"
 )
 

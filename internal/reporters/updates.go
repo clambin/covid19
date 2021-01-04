@@ -29,7 +29,7 @@ func NewUpdatesReporter(apiToken, userToken string, countries []string, coviddb 
 	}
 }
 
-// Report acts on new covid entries for countries we want to report on
+// Report acts on new covidprobe entries for countries we want to report on
 func (reporter *UpdatesReporter) Report(entries []coviddb.CountryEntry) {
 	toReport := make([]coviddb.CountryEntry, 0)
 	for _, entry := range entries {

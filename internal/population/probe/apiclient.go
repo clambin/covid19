@@ -1,4 +1,4 @@
-package apiclient
+package probe
 
 import (
 	"encoding/json"
@@ -8,23 +8,23 @@ import (
 	"github.com/clambin/gotools/rapidapi"
 )
 
-// API interface representing a Population API Client
-type API interface {
+// APIClient interface representing a Population API Client
+type APIClient interface {
 	GetPopulation() (map[string]int64, error)
 }
 
-// APIClient API Client handle
-type APIClient struct {
+// RapidAPIClient API Client handle
+type RapidAPIClient struct {
 	rapidapi.Client
 }
 
 // New creates a new Population API Client
-func New(apiKey string) API {
-	return &APIClient{rapidapi.Client{Client: &http.Client{}, HostName: rapidAPIHost, APIKey: apiKey}}
+func NewAPIClient(apiKey string) APIClient {
+	return &RapidAPIClient{rapidapi.Client{Client: &http.Client{}, HostName: rapidAPIHost, APIKey: apiKey}}
 }
 
 // GetPopulation finds the most recent data for all countries
-func (client *APIClient) GetPopulation() (map[string]int64, error) {
+func (client *RapidAPIClient) GetPopulation() (map[string]int64, error) {
 	entries := make(map[string]int64)
 	stats, err := client.getStats()
 
@@ -58,7 +58,7 @@ type populationResponse struct {
 }
 
 // getStats retrieves today's covid19 country stats from rapidapi.com
-func (client *APIClient) getStats() (*populationResponse, error) {
+func (client *RapidAPIClient) getStats() (*populationResponse, error) {
 	var stats populationResponse
 
 	resp, err := client.Client.CallAsReader("/countries")

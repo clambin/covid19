@@ -8,12 +8,12 @@ import (
 	"covid19/internal/coviddb"
 )
 
-// DB mock database used for unit test tools
+// DB mockapi database used for unit test tools
 type DB struct {
 	data []coviddb.CountryEntry
 }
 
-// Create a mock database
+// Create a mockapi database
 func Create(data []coviddb.CountryEntry) *DB {
 	return &DB{data: data}
 }

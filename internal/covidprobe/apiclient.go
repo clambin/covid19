@@ -1,4 +1,4 @@
-package apiclient
+package covidprobe
 
 import (
 	"encoding/json"
@@ -10,18 +10,18 @@ import (
 )
 
 // API interface representing a Population API Client
-type API interface {
+type APIClient interface {
 	GetCountryStats() (map[string]CountryStats, error)
 }
 
 // APIClient API Client handle
-type APIClient struct {
+type RapidAPIClient struct {
 	rapidapi.Client
 }
 
-// New creates a new Covid API Client
-func New(apiKey string) API {
-	return &APIClient{rapidapi.Client{Client: &http.Client{}, HostName: rapidAPIHost, APIKey: apiKey}}
+// NewAPIClient creates a new Covid API Client
+func NewAPIClient(apiKey string) APIClient {
+	return &RapidAPIClient{rapidapi.Client{Client: &http.Client{}, HostName: rapidAPIHost, APIKey: apiKey}}
 }
 
 // CountryStats contains total figures for one country
@@ -33,7 +33,7 @@ type CountryStats struct {
 }
 
 // GetCountryStats finds the most recent figured for all countries
-func (client *APIClient) GetCountryStats() (map[string]CountryStats, error) {
+func (client *RapidAPIClient) GetCountryStats() (map[string]CountryStats, error) {
 	countryStats := make(map[string]CountryStats, 0)
 	stats, err := client.getStats()
 
@@ -84,7 +84,7 @@ type statsResponse struct {
 }
 
 // getStats retrieves today's covid19 country stats from rapidapi.com
-func (client *APIClient) getStats() (*statsResponse, error) {
+func (client *RapidAPIClient) getStats() (*statsResponse, error) {
 	var stats statsResponse
 
 	resp, err := client.Client.CallAsReader("/v1/stats")

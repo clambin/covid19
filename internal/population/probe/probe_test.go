@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	mockAPI "covid19/internal/population/apiclient/mock"
 	mockDB "covid19/internal/population/db/mock"
 	"covid19/internal/population/probe"
+	"covid19/internal/population/probe/mockapi"
 )
 
 func TestPopulationProbe(t *testing.T) {
 	db := mockDB.Create(map[string]int64{})
-	apiClient := mockAPI.New(map[string]int64{
+	apiClient := mockapi.New(map[string]int64{
 		"BE": int64(11248330),
 		"US": int64(321645000),
 	})

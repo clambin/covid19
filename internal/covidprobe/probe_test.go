@@ -1,4 +1,4 @@
-package probe_test
+package covidprobe_test
 
 import (
 	"covid19/internal/reporters"
@@ -7,11 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"covid19/internal/covid/apiclient"
-	mockapi "covid19/internal/covid/apiclient/mock"
-	"covid19/internal/covid/probe"
 	"covid19/internal/coviddb"
 	mockdb "covid19/internal/coviddb/mock"
+	"covid19/internal/covidprobe"
+	"covid19/internal/covidprobe/mockapi"
 )
 
 var lastUpdate = time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC)
@@ -48,7 +47,7 @@ func TestProbe(t *testing.T) {
 			Deaths:    1,
 		},
 	})
-	apiClient := mockapi.New(map[string]apiclient.CountryStats{
+	apiClient := mockapi.New(map[string]covidprobe.CountryStats{
 		"Belgium":     {LastUpdate: lastUpdate, Confirmed: 4, Recovered: 2, Deaths: 1},
 		"US":          {LastUpdate: lastUpdate, Confirmed: 20, Recovered: 15, Deaths: 5},
 		"NotACountry": {LastUpdate: lastUpdate, Confirmed: 0, Recovered: 0, Deaths: 0},
@@ -57,7 +56,7 @@ func TestProbe(t *testing.T) {
 	r := reporters.Create()
 	r.Add(reporters.NewCountriesReporter("localhost:8080"))
 
-	p := probe.NewProbe(apiClient, dbh, r)
+	p := covidprobe.NewProbe(apiClient, dbh, r)
 
 	err := p.Run()
 

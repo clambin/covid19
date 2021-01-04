@@ -3,18 +3,17 @@ package probe
 import (
 	log "github.com/sirupsen/logrus"
 
-	"covid19/internal/population/apiclient"
 	"covid19/internal/population/db"
 )
 
 // Probe handle
 type Probe struct {
-	apiClient apiclient.API
+	apiClient APIClient
 	db        db.DB
 }
 
 // Create a new Probe handle
-func Create(apiClient apiclient.API, db db.DB) *Probe {
+func Create(apiClient APIClient, db db.DB) *Probe {
 	return &Probe{apiClient: apiClient, db: db}
 }
 
