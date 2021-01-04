@@ -2,30 +2,42 @@ package reporters
 
 import (
 	"covid19/internal/coviddb"
-	"fmt"
+
 	"github.com/arcanericky/pushover"
+	slack "github.com/ashwanthkumar/slack-go-webhook"
 	log "github.com/sirupsen/logrus"
+
+	"fmt"
 )
+
+type ReportsConfiguration struct {
+	Countries []string
+	Updates   struct {
+		Pushover struct {
+			Token string
+			User  string
+		}
+		Slack struct {
+			URL string
+		}
+	}
+}
 
 // UpdatesReporter reports new data for a list of countries via pushover
 type UpdatesReporter struct {
-	token     string
-	user      string
-	countries []string
-	db        coviddb.DB
-	SentReqs  []pushover.MessageRequest
+	config   *ReportsConfiguration
+	db       coviddb.DB
+	SentReqs []string
 }
 
 // NewNewUpdatesReporter creates a new NewUpdatesReporter object for the specified list of countries.
 // Selected countries getting new data will be reported via Pushover with the specified
 // Pushover API & User tokens.
-func NewUpdatesReporter(apiToken, userToken string, countries []string, coviddb coviddb.DB) *UpdatesReporter {
+func NewUpdatesReporter(config *ReportsConfiguration, db coviddb.DB) *UpdatesReporter {
 	return &UpdatesReporter{
-		token:     apiToken,
-		user:      userToken,
-		countries: countries,
-		db:        coviddb,
-		SentReqs:  make([]pushover.MessageRequest, 0),
+		config:   config,
+		db:       db,
+		SentReqs: make([]string, 0),
 	}
 }
 
@@ -33,7 +45,7 @@ func NewUpdatesReporter(apiToken, userToken string, countries []string, coviddb 
 func (reporter *UpdatesReporter) Report(entries []coviddb.CountryEntry) {
 	toReport := make([]coviddb.CountryEntry, 0)
 	for _, entry := range entries {
-		if isSelected(entry.Name, reporter.countries) {
+		if isSelected(entry.Name, reporter.config.Countries) {
 			toReport = append(toReport, entry)
 		}
 	}
@@ -53,21 +65,29 @@ func (reporter *UpdatesReporter) process(entries []coviddb.CountryEntry) {
 	for _, entry = range entries {
 		if dbEntry, err = reporter.db.GetLastBeforeDate(entry.Name, entry.Timestamp); err == nil {
 			if dbEntry != nil {
-				req := pushover.MessageRequest{
-					Token: reporter.token,
-					User:  reporter.user,
-					Title: "New covid19 data for " + entry.Name,
-					Message: fmt.Sprintf("New confirmed: %d\nNew deaths: %d\nNew recovered: %d",
-						entry.Confirmed-dbEntry.Confirmed,
-						entry.Deaths-dbEntry.Deaths,
-						entry.Recovered-dbEntry.Recovered,
-					),
+				title := fmt.Sprintf("New covid data for %s", entry.Name)
+				message := fmt.Sprintf("New confirmed: %d\nNew deaths: %d\nNew recovered: %d",
+					entry.Confirmed-dbEntry.Confirmed,
+					entry.Deaths-dbEntry.Deaths,
+					entry.Recovered-dbEntry.Recovered,
+				)
+				reporter.SentReqs = append(reporter.SentReqs, message)
+
+				if reporter.config.Updates.Pushover.Token != "" && reporter.config.Updates.Pushover.User != "" {
+					_, err = pushover.Message(pushover.MessageRequest{
+						Token:   reporter.config.Updates.Pushover.Token,
+						User:    reporter.config.Updates.Pushover.User,
+						Title:   title,
+						Message: message,
+					},
+					)
 				}
-				if req.Token != "" && req.User != "" {
-					_, err = pushover.Message(req)
-				} else {
-					reporter.SentReqs = append(reporter.SentReqs, req)
-					// unit test mode: record the entry so we can examine the output
+				if reporter.config.Updates.Slack.URL != "" {
+					payload := slack.Payload{
+						Channel: "#covid",
+						Text:    title + "\n" + message,
+					}
+					_ = slack.Send(reporter.config.Updates.Slack.URL, "", payload)
 				}
 			}
 		}

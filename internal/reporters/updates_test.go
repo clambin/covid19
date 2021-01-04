@@ -22,7 +22,14 @@ func TestNewDataReporter(t *testing.T) {
 		},
 	})
 	r := reporters.Create()
-	newDataReporter := reporters.NewUpdatesReporter("", "", []string{"Belgium"}, db)
+
+	reportersConfig := reporters.ReportsConfiguration{}
+	reportersConfig.Countries = []string{"Belgium"}
+	reportersConfig.Updates.Pushover.Token = "1234"
+	reportersConfig.Updates.Pushover.Token = "5678"
+
+	newDataReporter := reporters.NewUpdatesReporter(&reportersConfig, db)
+
 	r.Add(newDataReporter)
 
 	r.Report([]coviddb.CountryEntry{
@@ -45,6 +52,5 @@ func TestNewDataReporter(t *testing.T) {
 	})
 
 	assert.Len(t, newDataReporter.SentReqs, 1)
-	assert.Equal(t, "New covid19 data for Belgium", newDataReporter.SentReqs[0].Title)
-	assert.Equal(t, "New confirmed: 5\nNew deaths: 0\nNew recovered: 1", newDataReporter.SentReqs[0].Message)
+	assert.Equal(t, "New confirmed: 5\nNew deaths: 0\nNew recovered: 1", newDataReporter.SentReqs[0])
 }
