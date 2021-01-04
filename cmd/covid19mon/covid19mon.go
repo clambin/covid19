@@ -99,7 +99,7 @@ func main() {
 	}
 
 	covidProbe := covidprobe.NewProbe(cfg.APIKey, covidDB, rep)
-	populationProbe := popprobe.Create(popprobe.NewAPIClient(cfg.APIKey), popDB)
+	populationProbe := popprobe.Create(cfg.APIKey, popDB)
 
 	for {
 		if ok := monitor.Run(&cfg, covidProbe, populationProbe); !ok || cfg.Once {

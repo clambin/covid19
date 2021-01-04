@@ -12,12 +12,12 @@ import (
 
 func TestPopulationProbe(t *testing.T) {
 	db := mockDB.Create(map[string]int64{})
-	apiClient := mockapi.New(map[string]int64{
+
+	p := probe.Create("", db)
+	p.APIClient = mockapi.New(map[string]int64{
 		"BE": int64(11248330),
 		"US": int64(321645000),
 	})
-
-	p := probe.Create(apiClient, db)
 
 	// DB should be empty
 	entries, err := db.List()

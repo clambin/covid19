@@ -28,11 +28,11 @@ func TestMonitor(t *testing.T) {
 	})
 
 	db2 := mockdb2.Create(map[string]int64{})
-	api2 := mockapi2.New(map[string]int64{
+	popProbe := popprobe.Create("", db2)
+	popProbe.APIClient = mockapi2.New(map[string]int64{
 		"BE": int64(11248330),
 		"US": int64(321645000),
 	})
-	popProbe := popprobe.Create(api2, db2)
 
 	ok := monitor.Run(&cfg, covidProbe, popProbe)
 	assert.True(t, ok)
