@@ -1,10 +1,10 @@
 package covidprobe
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	"covid19/internal/coviddb"
 	"covid19/internal/reporters"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Probe handle

@@ -38,7 +38,6 @@ func main() {
 	a.Flag("postgres-user", "Postgres DB User").Default("covid").StringVar(&cfg.PostgresUser)
 	a.Flag("postgres-password", "Postgres DB Password").StringVar(&cfg.PostgresPassword)
 	a.Flag("api-key", "API Key for RapidAPI Covid19 API").StringVar(&cfg.APIKey)
-	a.Flag("pushgateway", "URL of Prometheus pushgateway (obsolete").StringVar(&cfg.Reports.Countries.PushGateway)
 	a.Flag("report.countries.url", "URL of Prometheus pushgateway to report daily update for all countries").StringVar(&cfg.Reports.Countries.PushGateway)
 	a.Flag("report.updates.token", "pushover API token to report selected country updates").StringVar(&cfg.Reports.Updates.Token)
 	a.Flag("report.updates.user", "pushover user token to report selected country updates").StringVar(&cfg.Reports.Updates.User)

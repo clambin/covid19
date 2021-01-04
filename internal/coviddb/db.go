@@ -200,6 +200,7 @@ func (db *PostgresDB) Add(entries []CountryEntry) error {
 				"covid19",
 				"time", "country_code", "country_name", "confirmed", "death", "recovered",
 			)); err == nil {
+				defer stmt.Close()
 
 				for _, entry := range entries {
 					_, err = stmt.Exec(
@@ -212,10 +213,6 @@ func (db *PostgresDB) Add(entries []CountryEntry) error {
 
 				if err == nil {
 					_, err = stmt.Exec()
-				}
-
-				if err == nil {
-					err = stmt.Close()
 				}
 
 				if err == nil {

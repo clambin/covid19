@@ -32,7 +32,7 @@ type CountryStats struct {
 	Recovered  int64
 }
 
-// GetCountryStats finds the most recent figured for all countries
+// GetCountryStats finds the most recent figures for all countries
 func (client *RapidAPIClient) GetCountryStats() (map[string]CountryStats, error) {
 	countryStats := make(map[string]CountryStats, 0)
 	stats, err := client.getStats()
