@@ -9,19 +9,23 @@ import (
 
 // Probe handle
 type Probe struct {
-	apiClient APIClient
+	APIClient APIClient
 	db        coviddb.DB
 	reporters *reporters.Reporters
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(apiClient APIClient, db coviddb.DB, reporters *reporters.Reporters) *Probe {
-	return &Probe{apiClient: apiClient, db: db, reporters: reporters}
+func NewProbe(apiKey string, db coviddb.DB, reporters *reporters.Reporters) *Probe {
+	return &Probe{
+		APIClient: NewAPIClient(apiKey),
+		db:        db,
+		reporters: reporters,
+	}
 }
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
 func (probe *Probe) Run() error {
-	countryStats, err := probe.apiClient.GetCountryStats()
+	countryStats, err := probe.APIClient.GetCountryStats()
 
 	if err != nil {
 		log.Warning(err)

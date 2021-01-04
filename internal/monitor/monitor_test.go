@@ -20,12 +20,12 @@ func TestMonitor(t *testing.T) {
 	cfg := monitor.Configuration{Once: true, Debug: true}
 
 	db1 := mockdb1.Create([]coviddb.CountryEntry{})
-	api1 := mockapi1.New(map[string]covidprobe.CountryStats{
+	covidProbe := covidprobe.NewProbe("", db1, nil)
+	covidProbe.APIClient = mockapi1.New(map[string]covidprobe.CountryStats{
 		"Belgium":     {LastUpdate: time.Now(), Confirmed: 4, Recovered: 2, Deaths: 1},
 		"US":          {LastUpdate: time.Now(), Confirmed: 20, Recovered: 15, Deaths: 5},
 		"NotACountry": {LastUpdate: time.Now(), Confirmed: 0, Recovered: 0, Deaths: 0},
 	})
-	covidProbe := covidprobe.NewProbe(api1, db1, nil)
 
 	db2 := mockdb2.Create(map[string]int64{})
 	api2 := mockapi2.New(map[string]int64{

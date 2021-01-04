@@ -98,7 +98,7 @@ func main() {
 		)
 	}
 
-	covidProbe := covidprobe.NewProbe(covidprobe.NewAPIClient(cfg.APIKey), covidDB, rep)
+	covidProbe := covidprobe.NewProbe(cfg.APIKey, covidDB, rep)
 	populationProbe := popprobe.Create(popprobe.NewAPIClient(cfg.APIKey), popDB)
 
 	for {
