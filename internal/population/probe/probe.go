@@ -22,17 +22,15 @@ func Create(apiKey string, db db.DB) *Probe {
 
 // Run gets latest data and updates the database
 func (probe *Probe) Run() error {
-	// Call the API
-	population, err := probe.APIClient.GetPopulation()
+	var (
+		err        error
+		population map[string]int64
+	)
 
-	if err == nil && len(population) > 0 {
+	if population, err = probe.APIClient.GetPopulation(); err == nil && len(population) > 0 {
 		log.Debugf("Got %d new entries", len(population))
-
 		err = probe.db.Add(population)
 	}
 
-	if err != nil {
-		log.Warning(err)
-	}
 	return err
 }

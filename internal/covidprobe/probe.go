@@ -25,16 +25,16 @@ func NewProbe(apiKey string, db coviddb.DB, reporters *reporters.Reporters) *Pro
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
 func (probe *Probe) Run() error {
-	countryStats, err := probe.APIClient.GetCountryStats()
+	var (
+		err          error
+		countryStats map[string]CountryStats
+		newRecords   []coviddb.CountryEntry
+	)
 
-	if err != nil {
-		log.Warning(err)
-	} else if len(countryStats) > 0 {
+	if countryStats, err = probe.APIClient.GetCountryStats(); err == nil && len(countryStats) > 0 {
 		log.Debugf("Got %d new entries", len(countryStats))
 
-		newRecords, err := probe.findNewCountryStats(countryStats)
-
-		if err == nil && len(newRecords) > 0 {
+		if newRecords, err = probe.findNewCountryStats(countryStats); err == nil && len(newRecords) > 0 {
 			if probe.reporters != nil {
 				probe.reporters.Report(newRecords)
 			}
