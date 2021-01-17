@@ -26,10 +26,11 @@ type PostgresDB struct {
 
 // NewPostgresDB create a new PostgresDB object
 func NewPostgresDB(host string, port int, database string, user string, password string) *PostgresDB {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, database)
-
-	return &PostgresDB{psqlInfo: psqlInfo, initialized: false}
+	return &PostgresDB{
+		psqlInfo: fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			host, port, user, password, database),
+		initialized: false,
+	}
 }
 
 // CountryEntry represents one row in the Covid DB
@@ -44,17 +45,20 @@ type CountryEntry struct {
 
 // List retrieved all records from the database up to endDate
 func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
-	entries := make([]CountryEntry, 0)
+	var (
+		err     error
+		dbh     *sql.DB
+		rows    *sql.Rows
+		entries = make([]CountryEntry, 0)
+	)
 
-	dbh, err := sql.Open("postgres", db.psqlInfo)
-
-	if err == nil {
+	if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
 		defer dbh.Close()
 		err = db.initializeDB(dbh)
 	}
 
 	if err == nil {
-		rows, err := dbh.Query(fmt.Sprintf(
+		rows, err = dbh.Query(fmt.Sprintf(
 			"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
 			endDate.Format("2006-01-02 15:04:05")))
 
@@ -75,19 +79,20 @@ func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 
 // ListLatestByCountry returns the timestamp of each country's last update
 func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
-	entries := make(map[string]time.Time, 0)
+	var (
+		err     error
+		dbh     *sql.DB
+		rows    *sql.Rows
+		entries = make(map[string]time.Time, 0)
+	)
 
-	dbh, err := sql.Open("postgres", db.psqlInfo)
-
-	if err == nil {
+	if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
 		defer dbh.Close()
 		err = db.initializeDB(dbh)
 	}
 
 	if err == nil {
-		rows, err := dbh.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`)
-
-		if err == nil {
+		if rows, err = dbh.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`); err == nil {
 			defer rows.Close()
 			for rows.Next() {
 				var (
@@ -107,19 +112,20 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 
 // GetFirstEntry returns the timestamp of the first entry
 func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
-	first := time.Time{}
+	var (
+		err   error
+		dbh   *sql.DB
+		rows  *sql.Rows
+		first time.Time
+	)
 
-	dbh, err := sql.Open("postgres", db.psqlInfo)
-
-	if err == nil {
+	if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
 		defer dbh.Close()
 		err = db.initializeDB(dbh)
 	}
 
 	if err == nil {
-		rows, err := dbh.Query(`SELECT MIN(time) FROM covid19`)
-
-		if err == nil {
+		if rows, err = dbh.Query(`SELECT MIN(time) FROM covid19`); err == nil {
 			defer rows.Close()
 			for rows.Next() {
 				_ = rows.Scan(&first)
@@ -186,17 +192,21 @@ func (db *PostgresDB) GetLastBeforeDate(countryName string, before time.Time) (*
 
 // Add inserts all specified records in the covid19 database table
 func (db *PostgresDB) Add(entries []CountryEntry) error {
+	var (
+		err  error
+		dbh  *sql.DB
+		txn  *sql.Tx
+		stmt *sql.Stmt
+	)
 
-	dbh, err := sql.Open("postgres", db.psqlInfo)
-
-	if err == nil {
+	if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
 		defer dbh.Close()
 		err = db.initializeDB(dbh)
 	}
 
 	if err == nil {
-		if txn, err := dbh.Begin(); err == nil {
-			if stmt, err := txn.Prepare(pq.CopyIn(
+		if txn, err = dbh.Begin(); err == nil {
+			if stmt, err = txn.Prepare(pq.CopyIn(
 				"covid19",
 				"time", "country_code", "country_name", "confirmed", "death", "recovered",
 			)); err == nil {

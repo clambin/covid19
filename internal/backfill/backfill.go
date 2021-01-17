@@ -25,18 +25,31 @@ func Create(db coviddb.DB) *Backfiller {
 // Then add any historical record that is older than the first
 // record in the DB
 func (backFiller *Backfiller) Run() error {
-	countries, err := backFiller.getCountries()
+	var (
+		err       error
+		countries map[string]struct {
+			Name string
+			Code string
+		}
+		entries []struct {
+			Confirmed int64
+			Recovered int64
+			Deaths    int64
+			Date      time.Time
+		}
+		first time.Time
+	)
+
+	countries, err = backFiller.getCountries()
 	if err == nil {
-		first, err := backFiller.DB.GetFirstEntry()
-		if err == nil {
+		if first, err = backFiller.DB.GetFirstEntry(); err == nil {
 			log.Debugf("First entry in DB: %s", first.String())
 
 			for slug, details := range countries {
 				realName := lookupCountryName(details.Name)
 				log.Debugf("Getting data for %s (slug: %s)", realName, slug)
 				records := make([]coviddb.CountryEntry, 0)
-				entries, err := backFiller.getHistoricalData(slug)
-				if err == nil {
+				if entries, err = backFiller.getHistoricalData(slug); err == nil {
 					for _, entry := range entries {
 						log.Debugf("Entry date: %s", entry.Date.String())
 						if entry.Date.Before(first) {

@@ -33,14 +33,18 @@ func NewPostgresDB(host string, port int, database string, user string, password
 
 // List all records from the population table
 func (db *PostgresDB) List() (map[string]int64, error) {
-	entries := make(map[string]int64, 0)
-	err := db.initializeDB()
+	var (
+		err     error
+		dbh     *sql.DB
+		rows    *sql.Rows
+		entries = make(map[string]int64, 0)
+	)
 
-	if err == nil {
-		if dbh, err := sql.Open("postgres", db.psqlInfo); err == nil {
+	if err = db.initializeDB(); err == nil {
+		if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
 			defer dbh.Close()
 
-			rows, err := dbh.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
+			rows, err = dbh.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
 
 			if err == nil {
 				defer rows.Close()
@@ -68,10 +72,13 @@ func replaceSQL(old, searchPattern string) string {
 
 // Add all specified records in the population database table
 func (db *PostgresDB) Add(entries map[string]int64) error {
-	err := db.initializeDB()
+	var (
+		err error
+		dbh *sql.DB
+	)
 
-	if err == nil {
-		if dbh, err := sql.Open("postgres", db.psqlInfo); err == nil {
+	if err = db.initializeDB(); err == nil {
+		if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
 			defer dbh.Close()
 
 			// Prepare the SQL statement

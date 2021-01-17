@@ -25,13 +25,16 @@ func NewAPIClient(apiKey string) APIClient {
 
 // GetPopulation finds the most recent data for all countries
 func (client *RapidAPIClient) GetPopulation() (map[string]int64, error) {
-	entries := make(map[string]int64)
-	stats, err := client.getStats()
+	var (
+		err        error
+		stats      *populationResponse
+		population int64
+		entries    = make(map[string]int64)
+	)
 
-	if err == nil {
+	if stats, err = client.getStats(); err == nil {
 		for _, entry := range stats.Data.Countries {
-			population, err := strconv.ParseInt(entry.Population, 10, 64)
-			if err == nil {
+			if population, err = strconv.ParseInt(entry.Population, 10, 64); err == nil {
 				entries[entry.CountryCode] = population
 			}
 		}
