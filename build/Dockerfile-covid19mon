@@ -1,17 +1,11 @@
-FROM golang:1.15 AS builder
-
-WORKDIR /build
-
-COPY . ./
-
-ARG BUILD_VERSION=develop
-RUN CGO_ENABLED=0 go build -ldflags "-X covid19/internal/version.BuildVersion=$BUILD_VERSION" cmd/covid19mon/covid19mon.go
-
 FROM alpine
 
 WORKDIR /app
 
-COPY --from=builder /build/covid19mon /app
+ARG TARGETOS
+ARG TARGETARCH
+
+COPY bld/covid19mon-$TARGETOS-$TARGETARCH /app/covid19mon
 
 EXPOSE 5000
 ENTRYPOINT ["/app/covid19mon"]
