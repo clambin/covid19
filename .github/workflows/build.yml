@@ -83,7 +83,8 @@ jobs:
             GOOS=linux GOARCH=$ARCH \
               go build \
                 -ldflags "-X github.com/clambin/covid19/internal/version.BuildVersion=${{ steps.covid19mon_meta.outputs.version }}" \
-                -o bld/$TARGET-linux-$ARCH
+                -o bld/$TARGET-linux-$ARCH \
+                cmd/$TARGET/$TARGET.go
           done
         done
     - name: docker image for covid19mon
