@@ -1,0 +1,12 @@
+FROM alpine
+
+WORKDIR /app
+
+ARG TARGETOS
+ARG TARGETARCH
+
+COPY bld/covid19-$TARGETOS-$TARGETARCH /app/covid19
+
+EXPOSE 8080
+ENTRYPOINT ["/app/covid19"]
+CMD []

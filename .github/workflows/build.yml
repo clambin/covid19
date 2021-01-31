@@ -5,9 +5,9 @@ on:
     branches:
     - master
     - develop
-    - pushover
+    - merged
     tags:
-    - '*'
+    - 'v*'
 
 jobs:
   test:
@@ -58,27 +58,18 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: metadata for covid19mon
-      id: covid19mon_meta
+    - name: docker metadata
+      id: docker_meta
       uses: crazy-max/ghaction-docker-meta@v1
       with:
-        images: clambin/covid19mon
-        tag-sha: True
-        tag-semver: |
-          {{version}}
-          {{major}}.{{minor}}.{{patch}}
-    - name: metadata for covid19api
-      id: covid19api_meta
-      uses: crazy-max/ghaction-docker-meta@v1
-      with:
-        images: clambin/covid19api
+        images: clambin/covid19
         tag-sha: True
         tag-semver: |
           {{version}}
           {{major}}.{{minor}}.{{patch}}
     - name: build
       run: |
-        for TARGET in covid19mon covid19api; do
+        for TARGET in covid19; do
           for ARCH in amd64 arm; do
             GOOS=linux GOARCH=$ARCH \
               go build \
@@ -87,33 +78,18 @@ jobs:
                 cmd/$TARGET/$TARGET.go
           done
         done
-    - name: docker image for covid19mon
+    - name: docker image
       uses: docker/build-push-action@v2
       with:
         context: .
-        file: ./build/Dockerfile-covid19mon
+        file: ./build/Dockerfile
         platforms: linux/amd64,linux/arm/v7
         push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.covid19mon_meta.outputs.tags }}
-        labels: ${{ steps.covid19mon_meta.outputs.labels }}
-    - name: docker image for covid19api
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        file: ./build/Dockerfile-covid19api
-        platforms: linux/amd64,linux/arm/v7
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.covid19api_meta.outputs.tags }}
-        labels: ${{ steps.covid19api_meta.outputs.labels }}
+        tags: ${{ steps.docker_meta.outputs.tags }}
+        labels: ${{ steps.docker_meta.outputs.labels }}
     - name: Docker Hub Description
       uses: peter-evans/dockerhub-description@v2
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-        repository: clambin/covid19mon
-    - name: Docker Hub Description
-      uses: peter-evans/dockerhub-description@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-        repository: clambin/covid19api
+        repository: clambin/covid19
