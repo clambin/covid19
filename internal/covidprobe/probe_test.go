@@ -1,12 +1,11 @@
 package covidprobe_test
 
 import (
+	"covid19/internal/configuration"
 	"covid19/internal/coviddb"
 	mockdb "covid19/internal/coviddb/mock"
 	"covid19/internal/covidprobe"
 	"covid19/internal/covidprobe/mockapi"
-	"covid19/internal/reporters"
-
 	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
 
@@ -49,10 +48,17 @@ func TestProbe(t *testing.T) {
 		},
 	})
 
-	r := reporters.Create()
-	r.Add(reporters.NewCountriesReporter("localhost:8080"))
-
-	p := covidprobe.NewProbe("", dbh, r)
+	cfg := configuration.MonitorConfiguration{
+		Enabled: true,
+		Notifications: configuration.NotificationsConfiguration{
+			Enabled: true,
+			URL:     "",
+			Countries: []string{
+				"US", "Belgium",
+			},
+		},
+	}
+	p := covidprobe.NewProbe(&cfg, dbh)
 	p.APIClient = mockapi.New(map[string]covidprobe.CountryStats{
 		"Belgium":     {LastUpdate: lastUpdate, Confirmed: 4, Recovered: 2, Deaths: 1},
 		"US":          {LastUpdate: lastUpdate, Confirmed: 20, Recovered: 15, Deaths: 5},
