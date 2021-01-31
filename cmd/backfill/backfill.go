@@ -43,7 +43,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	log.Info("backfill v" + version.BuildVersion)
+	log.WithField("version", version.BuildVersion).Info("backfill")
 
 	app := backfill.Create(coviddb.NewPostgresDB(
 		cfg.postgresHost,

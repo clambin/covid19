@@ -6,5 +6,4 @@
 ![GitHub](https://img.shields.io/github/license/clambin/covid19?style=plastic)
 
 
-Golang implementation of [clambin/covid19mon](https://github.com/clambin/covid19mon)
-
+Covid19 data tracker. See [Github](https://github.com/clambin/covid19) for source code. 

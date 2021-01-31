@@ -55,7 +55,7 @@ func main() {
 		cfg.Reports.Countries = strings.Split(reportUpdatesCountries, ",")
 	}
 
-	log.Info("covid19mon v" + version.BuildVersion)
+	log.WithField("version", version.BuildVersion).Info("covid19mon")
 
 	if cfg.ProfileName != "" {
 		cfg.Once = true

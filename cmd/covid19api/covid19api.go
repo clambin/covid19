@@ -48,10 +48,10 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	log.Info("covid19api v" + version.BuildVersion)
+	log.WithField("version", version.BuildVersion).Info("covid19api")
 
 	covidDB := coviddb.NewPostgresDB(cfg.postgresHost, cfg.postgresPort, cfg.postgresDatabase, cfg.postgresUser, cfg.postgresPassword)
 	handler, _ := covidhandler.Create(covidDB)
 	server := apiserver.Create(handler, cfg.port)
-	server.Run()
+	_ = server.Run()
 }
