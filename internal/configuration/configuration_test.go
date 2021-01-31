@@ -65,17 +65,11 @@ grafana:
 }
 
 func TestLoadConfiguration_Defaults(t *testing.T) {
-	os.Setenv("pg_password", "password-from-envvar")
-
 	cfg, err := configuration.LoadConfiguration([]byte{})
 
 	assert.Nil(t, err)
 	assert.Equal(t, 8080, cfg.Port)
 	assert.False(t, cfg.Debug)
-	assert.Equal(t, 5432, cfg.Postgres.Port)
-	assert.Equal(t, "covid19", cfg.Postgres.Database)
-	assert.Equal(t, "covid", cfg.Postgres.User)
-	assert.Equal(t, "password-from-envvar", cfg.Postgres.Password)
 	assert.True(t, cfg.Monitor.Enabled)
 	assert.Equal(t, 20*time.Minute, cfg.Monitor.Interval)
 	assert.False(t, cfg.Grafana.Enabled)
