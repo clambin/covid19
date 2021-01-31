@@ -3,10 +3,8 @@ package coviddb
 import (
 	"database/sql"
 	"fmt"
-	"time"
-
 	"github.com/lib/pq"
-	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 // DB interface representing a Covid Database
@@ -70,7 +68,6 @@ func (db *PostgresDB) List(endDate time.Time) ([]CountryEntry, error) {
 					entries = append(entries, entry)
 				}
 			}
-			log.Debugf("Found %d records", len(entries))
 		}
 	}
 
@@ -103,7 +100,6 @@ func (db *PostgresDB) ListLatestByCountry() (map[string]time.Time, error) {
 					entries[country] = timestamp
 				}
 			}
-			log.Debugf("Found %d records", len(entries))
 		}
 	}
 
@@ -130,7 +126,6 @@ func (db *PostgresDB) GetFirstEntry() (time.Time, error) {
 			for rows.Next() {
 				_ = rows.Scan(&first)
 			}
-			log.Debugf("First record: %s", first.String())
 		}
 	}
 
