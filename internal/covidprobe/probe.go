@@ -52,13 +52,13 @@ func (probe *Probe) Run() error {
 	countryStats, err = probe.APIClient.GetCountryStats()
 
 	if err == nil && len(countryStats) > 0 {
-		log.Debugf("Got %d new entries", len(countryStats))
+		log.WithField("countryStats", len(countryStats)).Debug("covidProbe got new entries")
 
 		newRecords, err = probe.findNewCountryStats(countryStats)
 	}
 
 	if err == nil && len(newRecords) > 0 {
-		log.Infof("Adding %d new entries", len(newRecords))
+		log.WithField("newRecords", len(newRecords)).Info("covidProbe inserting new entries")
 
 		if err = probe.cacheLatestUpdates(); err != nil {
 			log.WithField("err", err).Warning("failed to get latest entries in DB")

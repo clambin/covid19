@@ -28,7 +28,7 @@ func (probe *Probe) Run() error {
 	)
 
 	if population, err = probe.APIClient.GetPopulation(); err == nil && len(population) > 0 {
-		log.Debugf("Got %d new entries", len(population))
+		log.WithField("population", len(population)).Debug("populationProbe got new entries")
 		err = probe.db.Add(population)
 	}
 
