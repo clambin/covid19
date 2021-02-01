@@ -60,7 +60,7 @@ jobs:
             for ARCH in amd64 arm; do
               GOOS=linux GOARCH=$ARCH \
                 go build \
-                  -ldflags "-X github.com/clambin/covid19/internal/version.BuildVersion=$RELEASE_VERSION" \
+                  -ldflags "-X covid19/internal/version.BuildVersion=$RELEASE_VERSION" \
                   -o bld/$TARGET-linux-$ARCH \
                   cmd/$TARGET/$TARGET.go
             done
