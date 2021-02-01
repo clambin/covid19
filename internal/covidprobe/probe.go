@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/clambin/gotools/metrics"
 	"github.com/containrrr/shoutrrr"
+	"github.com/containrrr/shoutrrr/pkg/router"
+	"github.com/containrrr/shoutrrr/pkg/types"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"time"
@@ -17,6 +19,7 @@ type Probe struct {
 	db            coviddb.DB
 	notifications *configuration.NotificationsConfiguration
 	lastUpdate    map[string]time.Time
+	notifier      *router.ServiceRouter
 }
 
 // NewProbe creates a new Probe handle
@@ -34,7 +37,8 @@ func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB) *Probe {
 		if len(cfg.Notifications.Countries) == 0 {
 			log.Warning("notifications enabled but not countries specified. Ignoring")
 		} else {
-			probe.lastUpdate = make(map[string]time.Time)
+			probe.notifier, _ = shoutrrr.CreateSender(cfg.Notifications.URL)
+			_ = probe.cacheLatestUpdates()
 		}
 	}
 
@@ -64,11 +68,16 @@ func (probe *Probe) Run() error {
 			log.WithField("err", err).Warning("failed to get latest entries in DB")
 		}
 
+		probe.metricsLatestUpdates(newRecords)
+		if err = probe.notifyLatestUpdates(newRecords); err != nil {
+			log.WithFields(log.Fields{
+				"err": err,
+				"url": probe.notifications.URL,
+			}).Debug("notification failed")
+		}
+
 		if err = probe.db.Add(newRecords); err != nil {
 			log.WithField("err", err).Fatal("failed to add new entries in the DB")
-		} else {
-			probe.metricsLatestUpdates(newRecords)
-			err = probe.notifyLatestUpdates(newRecords)
 		}
 	}
 
@@ -110,17 +119,17 @@ func (probe *Probe) cacheLatestUpdates() error {
 		err           error
 		latestUpdates map[string]time.Time
 	)
-	if probe.lastUpdate != nil {
-		latestUpdates, err = probe.db.ListLatestByCountry()
 
-		if err == nil {
-			for _, country := range probe.notifications.Countries {
-				if lastUpdate, ok := latestUpdates[country]; ok {
-					probe.lastUpdate[country] = lastUpdate
-				}
+	probe.lastUpdate = make(map[string]time.Time)
+
+	if latestUpdates, err = probe.db.ListLatestByCountry(); err == nil {
+		for _, country := range probe.notifications.Countries {
+			if lastUpdate, ok := latestUpdates[country]; ok {
+				probe.lastUpdate[country] = lastUpdate
 			}
 		}
 	}
+
 	return err
 }
 
@@ -135,39 +144,37 @@ func (probe *Probe) shouldNotify(entryCountry string) bool {
 
 // notifyLatestUpdates sends a notification for each country that has a new update
 func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error {
-	var err error
+	var (
+		err     error
+		dbEntry *coviddb.CountryEntry
+	)
 
-	if probe.lastUpdate != nil {
-		for _, newEntry := range newEntries {
-			// Do we need to send a notification?
-			if probe.shouldNotify(newEntry.Name) {
-				oldTime, ok := probe.lastUpdate[newEntry.Name]
+	for _, newEntry := range newEntries {
+		// Do we need to send a notification?
+		if probe.shouldNotify(newEntry.Name) {
+			oldTime, ok := probe.lastUpdate[newEntry.Name]
 
-				if ok == false || newEntry.Timestamp.After(oldTime) {
+			if ok == false || newEntry.Timestamp.After(oldTime) {
+				// get previous values
+				if dbEntry, err = probe.db.GetLastBeforeDate(newEntry.Name, newEntry.Timestamp); err == nil && dbEntry != nil {
 					// send notification
 					// FIXME: how to use shoutrrr during unit testing?
-					err2 := shoutrrr.Send(probe.notifications.URL,
-						fmt.Sprintf("New covid data for %s\nNew confirmed: %d\nNew deaths: %d\nNew recovered: %d",
-							newEntry.Name,
-							newEntry.Confirmed,
-							newEntry.Deaths,
-							newEntry.Recovered,
+					params := types.Params{}
+					params.SetTitle("New covid data for " + newEntry.Name)
+					probe.notifier.Send(
+						fmt.Sprintf("New confirmed: %d\nNew deaths: %d\nNew recovered: %d",
+							newEntry.Confirmed-dbEntry.Confirmed,
+							newEntry.Deaths-dbEntry.Deaths,
+							newEntry.Recovered-dbEntry.Recovered,
 						),
+						&params,
 					)
-
-					if err2 != nil {
-						log.WithFields(log.Fields{
-							"err":     err2,
-							"url":     probe.notifications.URL,
-							"country": newEntry.Name,
-						}).Debug("notification failed")
-					}
-
-					probe.lastUpdate[newEntry.Name] = newEntry.Timestamp
 				}
+				probe.lastUpdate[newEntry.Name] = newEntry.Timestamp
 			}
 		}
 	}
+
 	return err
 }
 
