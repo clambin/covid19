@@ -56,11 +56,6 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.vars.outputs.branch }}
         run: |
-          echo $GITHUB_REF
-          echo ${GITHUB_REF#refs/*/}
-          echo ${GITHUB_REF##*/}
-          echo $RELEASE_VERSION
-          echo ${{ steps.vars.output.branch }}
           for TARGET in covid19 backfill; do
             for ARCH in amd64 arm; do
               GOOS=linux GOARCH=$ARCH \
