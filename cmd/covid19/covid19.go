@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func main() {
@@ -86,11 +87,15 @@ func startMonitor(cfg *configuration.Configuration) {
 	go func() {
 		var err error
 
-		if err = covidProbe.Run(); err != nil {
-			log.WithField("err", err).Warning("covidProbe failed")
-		}
-		if err = populationProbe.Run(); err != nil {
-			log.WithField("err", err).Warning("populationProbe failed")
+		for {
+			if err = covidProbe.Run(); err != nil {
+				log.WithField("err", err).Warning("covidProbe failed")
+			}
+			if err = populationProbe.Run(); err != nil {
+				log.WithField("err", err).Warning("populationProbe failed")
+			}
+
+			time.Sleep(cfg.Monitor.Interval)
 		}
 	}()
 }
