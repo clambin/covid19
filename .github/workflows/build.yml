@@ -54,7 +54,7 @@ jobs:
         run: echo ::set-output name=branch::${GITHUB_REF##*/}
       - name: build
         env:
-          RELEASE_VERSION: ${{ steps.vars.output.branch }}
+          RELEASE_VERSION: ${{ steps.vars.outputs.branch }}
         run: |
           echo $GITHUB_REF
           echo ${GITHUB_REF#refs/*/}
