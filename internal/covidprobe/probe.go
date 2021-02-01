@@ -124,6 +124,15 @@ func (probe *Probe) cacheLatestUpdates() error {
 	return err
 }
 
+func (probe *Probe) shouldNotify(entryCountry string) bool {
+	for _, country := range probe.notifications.Countries {
+		if country == entryCountry {
+			return true
+		}
+	}
+	return false
+}
+
 // notifyLatestUpdates sends a notification for each country that has a new update
 func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error {
 	var err error
@@ -131,29 +140,31 @@ func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error
 	if probe.lastUpdate != nil {
 		for _, newEntry := range newEntries {
 			// Do we need to send a notification?
-			oldTime, ok := probe.lastUpdate[newEntry.Name]
+			if probe.shouldNotify(newEntry.Name) {
+				oldTime, ok := probe.lastUpdate[newEntry.Name]
 
-			if ok == false || newEntry.Timestamp.After(oldTime) {
-				// send notification
-				// FIXME: how to use shoutrrr during unit testing?
-				err2 := shoutrrr.Send(probe.notifications.URL,
-					fmt.Sprintf("New covid data for %s\nNew confirmed: %d\nNew deaths: %d\nNew recovered: %d",
-						newEntry.Name,
-						newEntry.Confirmed,
-						newEntry.Deaths,
-						newEntry.Recovered,
-					),
-				)
+				if ok == false || newEntry.Timestamp.After(oldTime) {
+					// send notification
+					// FIXME: how to use shoutrrr during unit testing?
+					err2 := shoutrrr.Send(probe.notifications.URL,
+						fmt.Sprintf("New covid data for %s\nNew confirmed: %d\nNew deaths: %d\nNew recovered: %d",
+							newEntry.Name,
+							newEntry.Confirmed,
+							newEntry.Deaths,
+							newEntry.Recovered,
+						),
+					)
 
-				if err2 != nil {
-					log.WithFields(log.Fields{
-						"err":     err2,
-						"url":     probe.notifications.URL,
-						"country": newEntry.Name,
-					}).Debug("notification failed")
+					if err2 != nil {
+						log.WithFields(log.Fields{
+							"err":     err2,
+							"url":     probe.notifications.URL,
+							"country": newEntry.Name,
+						}).Debug("notification failed")
+					}
+
+					probe.lastUpdate[newEntry.Name] = newEntry.Timestamp
 				}
-
-				probe.lastUpdate[newEntry.Name] = newEntry.Timestamp
 			}
 		}
 	}
