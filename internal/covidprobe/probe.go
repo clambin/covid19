@@ -130,14 +130,13 @@ func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error
 
 	if probe.lastUpdate != nil {
 		for _, newEntry := range newEntries {
-			// Report to Prometheus
 			// Do we need to send a notification?
 			oldTime, ok := probe.lastUpdate[newEntry.Name]
 
 			if ok == false || newEntry.Timestamp.After(oldTime) {
 				// send notification
 				// FIXME: how to use shoutrrr during unit testing?
-				_ = shoutrrr.Send(probe.notifications.URL,
+				err2 := shoutrrr.Send(probe.notifications.URL,
 					fmt.Sprintf("New covid data for %s\nNew confirmed: %d\nNew deaths: %d\nNew recovered: %d",
 						newEntry.Name,
 						newEntry.Confirmed,
@@ -145,6 +144,14 @@ func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error
 						newEntry.Recovered,
 					),
 				)
+
+				if err2 != nil {
+					log.WithFields(log.Fields{
+						"err":     err2,
+						"url":     probe.notifications.URL,
+						"country": newEntry.Name,
+					}).Debug("notification failed")
+				}
 
 				probe.lastUpdate[newEntry.Name] = newEntry.Timestamp
 			}
