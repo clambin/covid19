@@ -133,6 +133,7 @@ func (probe *Probe) cacheLatestUpdates() error {
 	return err
 }
 
+// shouldNotify helper function to check if we should send a notification when we receive new data for a country
 func (probe *Probe) shouldNotify(entryCountry string) bool {
 	for _, country := range probe.notifications.Countries {
 		if country == entryCountry {
@@ -161,7 +162,7 @@ func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error
 					// FIXME: how to use shoutrrr during unit testing?
 					params := types.Params{}
 					params.SetTitle("New covid data for " + newEntry.Name)
-					probe.notifier.Send(
+					_ = probe.notifier.Send(
 						fmt.Sprintf("New confirmed: %d\nNew deaths: %d\nNew recovered: %d",
 							newEntry.Confirmed-dbEntry.Confirmed,
 							newEntry.Deaths-dbEntry.Deaths,
