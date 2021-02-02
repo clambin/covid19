@@ -1,7 +1,7 @@
 package covidprobe
 
 var (
-	countryCodes = map[string]string{
+	CountryCodes = map[string]string{
 		"Andorra":                           "AD",
 		"United Arab Emirates":              "AE",
 		"Afghanistan":                       "AF",

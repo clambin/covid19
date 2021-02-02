@@ -18,8 +18,10 @@ type Probe struct {
 	APIClient     APIClient
 	db            coviddb.DB
 	notifications *configuration.NotificationsConfiguration
-	lastUpdate    map[string]time.Time
 	notifier      *router.ServiceRouter
+
+	LatestUpdates map[string]time.Time
+	NotifyCache   map[string]coviddb.CountryEntry
 }
 
 // NewProbe creates a new Probe handle
@@ -30,23 +32,55 @@ func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB) *Probe {
 		notifications: &cfg.Notifications,
 	}
 
-	if cfg.Notifications.Enabled {
-		if len(cfg.Notifications.Countries) == 0 {
-			log.Warning("notifications enabled but no countries specified. Ignoring")
-		} else {
-			var err error
-			if probe.notifier, err = shoutrrr.CreateSender(cfg.Notifications.URL); err == nil {
-				err = probe.cacheLatestUpdates()
-			}
+	var err error
+	if err = probe.initCaches(); err != nil {
+		log.WithField("err", err).Fatal("failed to access the database")
+	}
 
-			if err != nil {
-				log.WithField("err", err).Warning("failed to set up notifications")
-				probe.notifier = nil
-			}
+	if probe.notifications.Enabled {
+		if probe.notifier, err = shoutrrr.CreateSender(cfg.Notifications.URL); err != nil {
+			log.WithField("err", err).Error("failed to set up notifications")
+			probe.notifier = nil
 		}
 	}
 
 	return &probe
+}
+
+// initCaches initializes the LatestUpdates and NotifyCache structures.  This avoids recurring (expensive)
+// calls to the DB.
+//
+// Note: this assumes there's only one instance of covid19 running for a database (at worst, we can an entry for
+// each running covid19 instance.  Less efficient, but doesn't break anything).
+func (probe *Probe) initCaches() error {
+	var err error
+
+	probe.NotifyCache = make(map[string]coviddb.CountryEntry)
+	probe.LatestUpdates, err = probe.db.ListLatestByCountry()
+
+	if err == nil && probe.notifications.Enabled {
+		for _, country := range probe.notifications.Countries {
+			if code, ok := CountryCodes[country]; ok == true {
+				var entry *coviddb.CountryEntry
+				if entry, err = probe.db.GetLastBeforeDate(country, time.Now()); err == nil {
+					if entry != nil {
+						probe.NotifyCache[country] = *entry
+					} else {
+						probe.NotifyCache[country] = coviddb.CountryEntry{
+							Code: code,
+							Name: country,
+						}
+					}
+				} else {
+					break
+				}
+			} else {
+				log.WithField("country", country).Warning("ignoring invalid country in notifications configuration")
+			}
+		}
+	}
+
+	return err
 }
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
@@ -59,136 +93,104 @@ func (probe *Probe) Run() error {
 
 	countryStats, err = probe.APIClient.GetCountryStats()
 
-	if err == nil && len(countryStats) > 0 {
+	if err == nil {
 		log.WithField("countryStats", len(countryStats)).Debug("covidProbe got new entries")
 
-		newRecords, err = probe.findNewCountryStats(countryStats)
+		newRecords, err = probe.getNewRecords(countryStats)
 	}
 
 	if err == nil && len(newRecords) > 0 {
 		log.WithField("newRecords", len(newRecords)).Info("covidProbe inserting new entries")
 
-		/*
-			if err = probe.cacheLatestUpdates(); err != nil {
-				log.WithField("err", err).Warning("failed to get latest entries in DB")
-			}
-		*/
-
 		probe.metricsLatestUpdates(newRecords)
 
-		if probe.notifier != nil {
-			err = probe.notifyLatestUpdates(newRecords)
-			log.WithFields(log.Fields{
-				"err": err,
-				"url": probe.notifications.URL,
-			}).Debug("notification")
-		}
+		notifications := probe.getNotifications(newRecords)
 
 		if err = probe.db.Add(newRecords); err != nil {
 			log.WithField("err", err).Fatal("failed to add new entries in the DB")
 		}
-	}
 
-	return err
-}
-
-// findNewCountryStats returns any new stats (ie either more recent or the country has no entries yet)
-func (probe *Probe) findNewCountryStats(newCountryStats map[string]CountryStats) ([]coviddb.CountryEntry, error) {
-	result := make([]coviddb.CountryEntry, 0)
-
-	latestDBEntries, err := probe.db.ListLatestByCountry()
-
-	if err == nil {
-		for country, stats := range newCountryStats {
-			latestUpdate, ok := latestDBEntries[country]
-			if ok == false || stats.LastUpdate.After(latestUpdate) {
-				code, ok := countryCodes[country]
-				if ok == false {
-					log.WithField("country", country).Warning("skipping unknown country")
-				} else {
-					result = append(result, coviddb.CountryEntry{
-						Timestamp: stats.LastUpdate,
-						Code:      code,
-						Name:      country,
-						Confirmed: stats.Confirmed,
-						Recovered: stats.Recovered,
-						Deaths:    stats.Deaths})
-				}
-			}
-		}
-	}
-
-	return result, nil
-}
-
-// cacheLatestUpdates gets the last time for all countries we need to report on
-func (probe *Probe) cacheLatestUpdates() error {
-	var (
-		err           error
-		latestUpdates map[string]time.Time
-	)
-
-	probe.lastUpdate = make(map[string]time.Time)
-
-	if latestUpdates, err = probe.db.ListLatestByCountry(); err == nil {
-		for _, country := range probe.notifications.Countries {
-			if lastUpdate, ok := latestUpdates[country]; ok {
-				probe.lastUpdate[country] = lastUpdate
-			}
+		if err = probe.sendNotifications(notifications); err != nil {
+			log.WithField("key", err).Warn("failed to send notification")
 		}
 	}
 
 	return err
 }
 
-// shouldNotify helper function to check if we should send a notification when we receive new data for a country
-func (probe *Probe) shouldNotify(entryCountry string) bool {
-	for _, country := range probe.notifications.Countries {
-		if country == entryCountry {
-			return true
+// getNewRecords takes the newly collected country statistics and returns any new entries
+func (probe *Probe) getNewRecords(newCountryStats map[string]CountryStats) ([]coviddb.CountryEntry, error) {
+	var err error
+	records := make([]coviddb.CountryEntry, 0)
+
+	for country, stats := range newCountryStats {
+		current, ok := probe.LatestUpdates[country]
+
+		// No entry for this country exists, or the new stats are more recent than what we have
+		if ok == false || stats.LastUpdate.After(current) {
+			var code string
+			if code, ok = CountryCodes[country]; ok == false {
+				log.WithField("country", country).Warning("skipping unknown country")
+			} else {
+				records = append(records, coviddb.CountryEntry{
+					Timestamp: stats.LastUpdate,
+					Code:      code,
+					Name:      country,
+					Confirmed: stats.Confirmed,
+					Recovered: stats.Recovered,
+					Deaths:    stats.Deaths})
+
+				probe.LatestUpdates[country] = stats.LastUpdate
+			}
 		}
 	}
-	return false
+
+	return records, err
 }
 
-// notifyLatestUpdates sends a notification for each country that has a new update
-func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error {
-	var (
-		err     error
-		dbEntry *coviddb.CountryEntry
-	)
+type Notification struct {
+	Title   string
+	Message string
+}
+
+// getNotifications generates a notification for each new record for a country
+func (probe *Probe) getNotifications(newEntries []coviddb.CountryEntry) []Notification {
+	notifications := make([]Notification, 0)
 
 	for _, newEntry := range newEntries {
-		// Do we need to send a notification?
-		if probe.shouldNotify(newEntry.Name) {
-			oldTime, ok := probe.lastUpdate[newEntry.Name]
+		// NotifyCache only contains entries for countries we need to send notifications for
+		if dbEntry, ok := probe.NotifyCache[newEntry.Name]; ok {
+			notifications = append(notifications, Notification{
+				Title: "New covid data for " + newEntry.Name,
+				Message: fmt.Sprintf("Confirmed: %d, deaths: %d, recovered: %d",
+					newEntry.Confirmed-dbEntry.Confirmed,
+					newEntry.Deaths-dbEntry.Deaths,
+					newEntry.Recovered-dbEntry.Recovered,
+				),
+			})
 
-			if ok == false || newEntry.Timestamp.After(oldTime) {
-				// get previous values
-				if dbEntry, err = probe.db.GetLastBeforeDate(newEntry.Name, newEntry.Timestamp); err == nil && dbEntry != nil {
-					// send notification
-					// FIXME: how to use shoutrrr during unit testing?
-					params := types.Params{}
-					params.SetTitle("New covid data for " + newEntry.Name)
-					err2 := probe.notifier.Send(
-						fmt.Sprintf("Confirmed: %d, deaths: %d, recovered: %d",
-							newEntry.Confirmed-dbEntry.Confirmed,
-							newEntry.Deaths-dbEntry.Deaths,
-							newEntry.Recovered-dbEntry.Recovered,
-						),
-						&params,
-					)
-					log.WithFields(log.Fields{
-						"err":     err2,
-						"country": newEntry.Name,
-					}).Debug("notification sent")
-				}
-				probe.lastUpdate[newEntry.Name] = newEntry.Timestamp
-			}
+			probe.NotifyCache[newEntry.Name] = newEntry
 		}
 	}
 
-	return err
+	return notifications
+}
+
+// sendNotifications sends a notification for each country that has a new update
+func (probe *Probe) sendNotifications(notifications []Notification) error {
+	var errs []error
+
+	for _, notification := range notifications {
+		params := types.Params{}
+		params.SetTitle(notification.Title)
+		errs = probe.notifier.Send(notification.Message, &params)
+		for _, e := range errs {
+			if e != nil {
+				return e
+			}
+		}
+	}
+	return nil
 }
 
 // Metrics to be reported
