@@ -59,7 +59,7 @@ func LoadConfigurationFile(fileName string) (*Configuration, error) {
 func LoadConfiguration(content []byte) (*Configuration, error) {
 	configuration := Configuration{
 		Port:     8080,
-		Postgres: LoadPGEnvironment(),
+		Postgres: loadPGEnvironment(),
 		Monitor: MonitorConfiguration{
 			Enabled:  true,
 			Interval: 20 * time.Minute,
@@ -73,7 +73,7 @@ func LoadConfiguration(content []byte) (*Configuration, error) {
 }
 
 // loadPGEnvironment loads Postgres config from environment variables
-func LoadPGEnvironment() PostgresDB {
+func loadPGEnvironment() PostgresDB {
 	var (
 		err        error
 		pgHost     string

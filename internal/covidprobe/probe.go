@@ -31,14 +31,18 @@ func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB) *Probe {
 	}
 
 	if cfg.Notifications.Enabled {
-		// if cfg.Notifications.URL == "" {
-		// 	log.Warning("notifications enabled but no URL set. Ignoring")
-		// } else
 		if len(cfg.Notifications.Countries) == 0 {
-			log.Warning("notifications enabled but not countries specified. Ignoring")
+			log.Warning("notifications enabled but no countries specified. Ignoring")
 		} else {
-			probe.notifier, _ = shoutrrr.CreateSender(cfg.Notifications.URL)
-			_ = probe.cacheLatestUpdates()
+			var err error
+			if probe.notifier, err = shoutrrr.CreateSender(cfg.Notifications.URL); err == nil {
+				err = probe.cacheLatestUpdates()
+			}
+
+			if err != nil {
+				log.WithField("err", err).Warning("failed to set up notifications")
+				probe.notifier = nil
+			}
 		}
 	}
 
@@ -64,12 +68,16 @@ func (probe *Probe) Run() error {
 	if err == nil && len(newRecords) > 0 {
 		log.WithField("newRecords", len(newRecords)).Info("covidProbe inserting new entries")
 
-		if err = probe.cacheLatestUpdates(); err != nil {
-			log.WithField("err", err).Warning("failed to get latest entries in DB")
-		}
+		/*
+			if err = probe.cacheLatestUpdates(); err != nil {
+				log.WithField("err", err).Warning("failed to get latest entries in DB")
+			}
+		*/
 
 		probe.metricsLatestUpdates(newRecords)
-		if err = probe.notifyLatestUpdates(newRecords); err != nil {
+
+		if probe.notifier != nil {
+			err = probe.notifyLatestUpdates(newRecords)
 			log.WithFields(log.Fields{
 				"err": err,
 				"url": probe.notifications.URL,
@@ -162,7 +170,7 @@ func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error
 					// FIXME: how to use shoutrrr during unit testing?
 					params := types.Params{}
 					params.SetTitle("New covid data for " + newEntry.Name)
-					_ = probe.notifier.Send(
+					err2 := probe.notifier.Send(
 						fmt.Sprintf("New confirmed: %d\nNew deaths: %d\nNew recovered: %d",
 							newEntry.Confirmed-dbEntry.Confirmed,
 							newEntry.Deaths-dbEntry.Deaths,
@@ -170,6 +178,10 @@ func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error
 						),
 						&params,
 					)
+					log.WithFields(log.Fields{
+						"err":     err2,
+						"country": newEntry.Name,
+					}).Debug("notification sent")
 				}
 				probe.lastUpdate[newEntry.Name] = newEntry.Timestamp
 			}
