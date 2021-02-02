@@ -81,7 +81,7 @@ func (probe *Probe) Run() error {
 			log.WithFields(log.Fields{
 				"err": err,
 				"url": probe.notifications.URL,
-			}).Debug("notification failed")
+			}).Debug("notification")
 		}
 
 		if err = probe.db.Add(newRecords); err != nil {
