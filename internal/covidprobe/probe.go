@@ -171,7 +171,7 @@ func (probe *Probe) notifyLatestUpdates(newEntries []coviddb.CountryEntry) error
 					params := types.Params{}
 					params.SetTitle("New covid data for " + newEntry.Name)
 					err2 := probe.notifier.Send(
-						fmt.Sprintf("New confirmed: %d\nNew deaths: %d\nNew recovered: %d",
+						fmt.Sprintf("Confirmed: %d, deaths: %d, recovered: %d",
 							newEntry.Confirmed-dbEntry.Confirmed,
 							newEntry.Deaths-dbEntry.Deaths,
 							newEntry.Recovered-dbEntry.Recovered,
