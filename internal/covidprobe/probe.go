@@ -20,8 +20,7 @@ type Probe struct {
 	notifications *configuration.NotificationsConfiguration
 	notifier      *router.ServiceRouter
 
-	LatestUpdates map[string]time.Time
-	NotifyCache   map[string]coviddb.CountryEntry
+	NotifyCache map[string]coviddb.CountryEntry
 }
 
 // NewProbe creates a new Probe handle
@@ -33,7 +32,7 @@ func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB) *Probe {
 	}
 
 	var err error
-	if err = probe.initCaches(); err != nil {
+	if err = probe.initCache(); err != nil {
 		log.WithField("err", err).Fatal("failed to access the database")
 	}
 
@@ -47,18 +46,13 @@ func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB) *Probe {
 	return &probe
 }
 
-// initCaches initializes the LatestUpdates and NotifyCache structures.  This avoids recurring (expensive)
-// calls to the DB.
-//
-// Note: this assumes there's only one instance of covid19 running for a database (at worst, we can an entry for
-// each running covid19 instance.  Less efficient, but doesn't break anything).
-func (probe *Probe) initCaches() error {
+// initCache initializes the NotifyCache structure
+func (probe *Probe) initCache() error {
 	var err error
 
 	probe.NotifyCache = make(map[string]coviddb.CountryEntry)
-	probe.LatestUpdates, err = probe.db.ListLatestByCountry()
 
-	if err == nil && probe.notifications.Enabled {
+	if probe.notifications.Enabled {
 		for _, country := range probe.notifications.Countries {
 			if code, ok := CountryCodes[country]; ok == true {
 				var entry *coviddb.CountryEntry
@@ -120,11 +114,16 @@ func (probe *Probe) Run() error {
 
 // getNewRecords takes the newly collected country statistics and returns any new entries
 func (probe *Probe) getNewRecords(newCountryStats map[string]CountryStats) ([]coviddb.CountryEntry, error) {
-	var err error
+	var (
+		err           error
+		latestUpdates map[string]time.Time
+	)
 	records := make([]coviddb.CountryEntry, 0)
 
+	latestUpdates, err = probe.db.ListLatestByCountry()
+
 	for country, stats := range newCountryStats {
-		current, ok := probe.LatestUpdates[country]
+		current, ok := latestUpdates[country]
 
 		// No entry for this country exists, or the new stats are more recent than what we have
 		if ok == false || stats.LastUpdate.After(current) {
@@ -139,8 +138,6 @@ func (probe *Probe) getNewRecords(newCountryStats map[string]CountryStats) ([]co
 					Confirmed: stats.Confirmed,
 					Recovered: stats.Recovered,
 					Deaths:    stats.Deaths})
-
-				probe.LatestUpdates[country] = stats.LastUpdate
 			}
 		}
 	}
