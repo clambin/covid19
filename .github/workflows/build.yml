@@ -72,7 +72,7 @@ jobs:
               cmd/$TARGET/$TARGET.go
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ metrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
+          name: ${{ matrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: ./bld/*
   docker:
     needs: build
