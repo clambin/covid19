@@ -72,7 +72,7 @@ jobs:
               cmd/$TARGET/$TARGET.go
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ target }}-${{ matrix.platform }}-${{ matrix.arch }}
+          name: ${{ target }} ${{ matrix.platform }} ${{ matrix.arch }}
           path: ./bld/*
   docker:
     needs: build
@@ -86,11 +86,11 @@ jobs:
       - run: ls -R ./dummy
       - uses: actions/download-artifact@v2
         with:
-          name: covid19-linux-arm
+          name: covid19 linux arm
           path: ./bld
       - uses: actions/download-artifact@v2
         with:
-          name: covid19-linux-amd64
+          name: covid19 linux amd64
           path: ./bld
       - name: Fix permissions
         run: chmod +x bld/*
