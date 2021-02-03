@@ -79,10 +79,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Download artifacts
-        uses: action/download-artifact@v2
+      - uses: actions/download-artifact@v2
         with:
-          # name:
+          name: covid19 linux arm
+          path: ./bld
+      - uses: actions/download-artifact@v2
+        with:
+          name: covid19 linux amd64
           path: ./bld
       - run: ls -R ./bld
       - uses: docker/setup-qemu-action@v1
