@@ -62,7 +62,7 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
           PLATFORM: ${{ matrix.platform }}
-          ARCH: ${{ matrix.arch }}}
+          ARCH: ${{ matrix.arch }}
           RELEASE_VERSION: ${{ steps.vars.outputs.branch }}
         run: |
           GOOS=$PLATFORM GOARCH=$ARCH \
