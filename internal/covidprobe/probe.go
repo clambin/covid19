@@ -56,6 +56,7 @@ func (probe *Probe) initCache() error {
 		for _, country := range probe.notifications.Countries {
 			if code, ok := CountryCodes[country]; ok == true {
 				var entry *coviddb.CountryEntry
+				// Could add a db.GetLatest() though latest should always be less than 'now' on startup
 				if entry, err = probe.db.GetLastBeforeDate(country, time.Now()); err == nil {
 					if entry != nil {
 						probe.NotifyCache[country] = *entry
