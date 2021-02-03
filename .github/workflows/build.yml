@@ -79,11 +79,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: test all artifact download
-        uses: actions/download-artifact@v2
-        with:
-          path: dummy
-      - run: ls -R ./dummy
       - uses: actions/download-artifact@v2
         with:
           name: covid19-linux-arm
