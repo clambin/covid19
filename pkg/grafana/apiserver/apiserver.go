@@ -75,7 +75,7 @@ func (apiServer *APIServer) hello(w http.ResponseWriter, _ *http.Request) {
 func (apiServer *APIServer) search(w http.ResponseWriter, _ *http.Request) {
 	log.Info("/search")
 	output := apiServer.apiHandler.Search()
-	log.Debugf("/search: '%s'", output)
+	log.WithField("output", output).Debug("/search")
 	targetsJSON, _ := json.Marshal(output)
 	w.WriteHeader(http.StatusOK)
 	w.Write(targetsJSON)
@@ -99,7 +99,7 @@ func (apiServer *APIServer) query(w http.ResponseWriter, req *http.Request) {
 	parameters, err := parseRequest(req.Body)
 
 	if err != nil {
-		log.Warningf("error parsing the request (%v). Aborting", err)
+		log.WithField("err", err).Warning("error parsing request")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -107,12 +107,12 @@ func (apiServer *APIServer) query(w http.ResponseWriter, req *http.Request) {
 	output, err := apiServer.apiHandler.Query(parameters)
 
 	if err != nil {
-		log.Warning("Internal Server Error")
+		log.WithField("err", err).Warning("Internal Server Error")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	log.Debugf("/query: %v", output)
+	log.WithField("output", output).Debug("/query")
 	w.WriteHeader(http.StatusOK)
 	targetsJSON, _ := json.Marshal(output)
 	w.Write(targetsJSON)
