@@ -16,11 +16,12 @@
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "id": 169,
-    "iteration": 1607377817532,
+    "id": 217,
+    "iteration": 1612557195736,
     "links": [],
     "panels": [
         {
+            "collapsed": false,
             "datasource": null,
             "gridPos": {
                 "h": 1,
@@ -29,6 +30,7 @@
                 "y": 0
             },
             "id": 32,
+            "panels": [],
             "title": "Country",
             "type": "row"
         },
@@ -36,6 +38,9 @@
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
                     "custom": {
                         "align": "center",
                         "displayMode": "auto",
@@ -64,7 +69,7 @@
             "options": {
                 "showHeader": false
             },
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "targets": [
                 {
                     "format": "table",
@@ -242,7 +247,7 @@
                 "alertThreshold": true
             },
             "percentage": true,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -360,6 +365,9 @@
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
                     "custom": {
                         "align": null,
                         "filterable": false
@@ -446,7 +454,7 @@
                     }
                 ]
             },
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "targets": [
                 {
                     "format": "table",
@@ -553,7 +561,7 @@
                 "alertThreshold": true
             },
             "percentage": false,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -573,6 +581,7 @@
                             "type": "time"
                         }
                     ],
+                    "hide": true,
                     "metricColumn": "none",
                     "rawQuery": false,
                     "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1d),\n  avg(death) - lag(avg(death)) OVER (ORDER BY $__timeGroup(\"time\",1d)) AS \"death\",\n  avg(recovered) - lag(avg(recovered)) OVER (ORDER BY $__timeGroup(\"time\",1d)) AS \"recovered\",\n  avg(confirmed) - lag(avg(confirmed)) OVER (ORDER BY $__timeGroup(\"time\",1d)) AS \"confirmed\"\nFROM covid19\nWHERE\n  $__timeFilter(\"time\") AND\n  country_name = '$country'\nGROUP BY 1\nORDER BY 1",
@@ -608,6 +617,122 @@
                             {
                                 "params": [
                                     "recovered"
+                                ],
+                                "type": "column"
+                            },
+                            {
+                                "params": [
+                                    "avg"
+                                ],
+                                "type": "aggregate"
+                            },
+                            {
+                                "params": [
+                                    "delta"
+                                ],
+                                "type": "window"
+                            },
+                            {
+                                "params": [
+                                    "recovered"
+                                ],
+                                "type": "alias"
+                            }
+                        ],
+                        [
+                            {
+                                "params": [
+                                    "confirmed"
+                                ],
+                                "type": "column"
+                            },
+                            {
+                                "params": [
+                                    "avg"
+                                ],
+                                "type": "aggregate"
+                            },
+                            {
+                                "params": [
+                                    "delta"
+                                ],
+                                "type": "window"
+                            },
+                            {
+                                "params": [
+                                    "confirmed"
+                                ],
+                                "type": "alias"
+                            }
+                        ]
+                    ],
+                    "table": "covid19",
+                    "timeColumn": "\"time\"",
+                    "timeColumnType": "timestamp",
+                    "where": [
+                        {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "macro"
+                        },
+                        {
+                            "datatype": "text",
+                            "name": "",
+                            "params": [
+                                "country_name",
+                                "=",
+                                "'$country'"
+                            ],
+                            "type": "expression"
+                        }
+                    ]
+                },
+                {
+                    "format": "time_series",
+                    "group": [
+                        {
+                            "params": [
+                                "1d",
+                                "none"
+                            ],
+                            "type": "time"
+                        }
+                    ],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1d),\n  avg(death) - lag(avg(death)) OVER (ORDER BY $__timeGroup(\"time\",1d)) AS \"death\",\n  avg(confirmed) - lag(avg(confirmed)) OVER (ORDER BY $__timeGroup(\"time\",1d)) AS \"confirmed\"\nFROM covid19\nWHERE\n  $__timeFilter(\"time\") AND\n  country_name = '$country'\nGROUP BY 1\nORDER BY 1",
+                    "refId": "B",
+                    "select": [
+                        [
+                            {
+                                "params": [
+                                    "death"
+                                ],
+                                "type": "column"
+                            },
+                            {
+                                "params": [
+                                    "avg"
+                                ],
+                                "type": "aggregate"
+                            },
+                            {
+                                "params": [
+                                    "delta"
+                                ],
+                                "type": "window"
+                            },
+                            {
+                                "params": [
+                                    "death"
+                                ],
+                                "type": "alias"
+                            }
+                        ],
+                        [
+                            {
+                                "params": [
+                                    "confirmed"
                                 ],
                                 "type": "column"
                             },
@@ -767,7 +892,7 @@
                 "alertThreshold": true
             },
             "percentage": false,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -891,12 +1016,13 @@
             },
             "id": 30,
             "panels": [],
-            "title": "Country",
+            "title": "Comparisons",
             "type": "row"
         },
         {
             "aliasColors": {
-                "Afghanistan": "dark-red"
+                "Afghanistan": "dark-red",
+                "South Africa": "dark-red"
             },
             "bars": false,
             "dashLength": 10,
@@ -935,7 +1061,7 @@
                 "alertThreshold": true
             },
             "percentage": false,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -949,7 +1075,7 @@
                     "group": [],
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  a.country_name AS \"Country\",\n  (a.confirmed - a.death - a.recovered) / b.population AS \"confirmed\"\nFROM covid19 a, population b\nWHERE\n  a.country_name = '$country' AND\n  a.country_code = b.country_code AND\n  $__timeFilter(\"time\")\nORDER BY 1",
+                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  a.country_name AS \"Country\",\n  a.confirmed / b.population AS \"confirmed\"\nFROM covid19 a, population b\nWHERE\n  a.country_name = '$country' AND\n  a.country_code = b.country_code AND\n  $__timeFilter(\"time\")\nORDER BY 1",
                     "refId": "B",
                     "select": [
                         [
@@ -975,7 +1101,7 @@
                     "group": [],
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  a.country_name AS \"Country\",\n  (a.confirmed - a.death - a.recovered) / b.population AS \"confirmed\"\nFROM covid19 a, population b\nWHERE\n  a.country_code in ('BE', 'US', 'NL', 'MY', 'DE', 'FR', 'IT', 'ES') AND\n  a.country_code = b.country_code AND\n  $__timeFilter(\"time\")\nORDER BY 1",
+                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  a.country_name AS \"Country\",\n  a.confirmed / b.population AS \"confirmed\"\nFROM covid19 a, population b\nWHERE\n  a.country_code in ('BE', 'US', 'NL', 'MY', 'DE', 'FR', 'IT', 'ES') AND\n  a.country_code = b.country_code AND\n  $__timeFilter(\"time\")\nORDER BY 1",
                     "refId": "A",
                     "select": [
                         [
@@ -1003,7 +1129,7 @@
             "timeFrom": null,
             "timeRegions": [],
             "timeShift": null,
-            "title": "Active vs. total population",
+            "title": "Confirmed cases vs. total population",
             "tooltip": {
                 "shared": false,
                 "sort": 2,
@@ -1045,7 +1171,8 @@
         },
         {
             "aliasColors": {
-                "Afghanistan": "dark-red"
+                "Afghanistan": "dark-red",
+                "South Africa": "dark-red"
             },
             "bars": false,
             "dashLength": 10,
@@ -1084,7 +1211,7 @@
                 "alertThreshold": true
             },
             "percentage": false,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -1195,8 +1322,8 @@
             }
         }
     ],
-    "refresh": "30s",
-    "schemaVersion": 26,
+    "refresh": "",
+    "schemaVersion": 27,
     "style": "dark",
     "tags": [],
     "templating": {
@@ -1210,6 +1337,7 @@
                 },
                 "datasource": "PostgreSQL",
                 "definition": "select distinct country_name from covid19",
+                "description": null,
                 "error": null,
                 "hide": 0,
                 "includeAll": false,
@@ -1250,5 +1378,5 @@
     "timezone": "",
     "title": "Covid19",
     "uid": "jQXLLIzRa",
-    "version": 7
+    "version": 6
 }

@@ -16,7 +16,7 @@
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "id": 166,
+    "id": 215,
     "links": [],
     "panels": [
         {
@@ -24,7 +24,7 @@
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": null,
+            "datasource": "Prometheus",
             "fieldConfig": {
                 "defaults": {
                     "custom": {}
@@ -57,7 +57,7 @@
                 "alertThreshold": true
             },
             "percentage": false,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -98,7 +98,7 @@
                     "label": null,
                     "logBase": 1,
                     "max": null,
-                    "min": null,
+                    "min": "0",
                     "show": true
                 },
                 {
@@ -121,7 +121,7 @@
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": null,
+            "datasource": "Prometheus",
             "description": "",
             "fieldConfig": {
                 "defaults": {
@@ -155,7 +155,7 @@
                 "alertThreshold": true
             },
             "percentage": false,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -164,18 +164,6 @@
             "stack": false,
             "steppedLine": false,
             "targets": [
-                {
-                    "expr": "avg by (path) (flask_http_request_duration_seconds_sum / flask_http_request_duration_seconds_count)",
-                    "interval": "",
-                    "legendFormat": "{{path}}",
-                    "refId": "B"
-                },
-                {
-                    "expr": "sum by (path) (covid19_http_duration_seconds_sum / covid19_http_duration_seconds_count)",
-                    "interval": "",
-                    "legendFormat": "{{path}}",
-                    "refId": "C"
-                },
                 {
                     "expr": "sum by (path) (grafana_api_duration_seconds_sum / grafana_api_duration_seconds_count)",
                     "interval": "",
@@ -231,7 +219,7 @@
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": null,
+            "datasource": "Prometheus",
             "fieldConfig": {
                 "defaults": {
                     "custom": {}
@@ -264,7 +252,7 @@
                 "alertThreshold": true
             },
             "percentage": false,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -334,210 +322,7 @@
             "bars": false,
             "dashLength": 10,
             "dashes": false,
-            "datasource": null,
-            "description": "",
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {}
-                },
-                "overrides": []
-            },
-            "fill": 1,
-            "fillGradient": 0,
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 8
-            },
-            "hiddenSeries": false,
-            "id": 34,
-            "legend": {
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "show": false,
-                "total": false,
-                "values": false
-            },
-            "lines": true,
-            "linewidth": 1,
-            "nullPointMode": "null",
-            "options": {
-                "alertThreshold": true
-            },
-            "percentage": false,
-            "pluginVersion": "7.3.4",
-            "pointradius": 2,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": false,
-            "steppedLine": false,
-            "targets": [
-                {
-                    "expr": "sum by (path) (grafana_api_duration_seconds_sum / grafana_api_duration_seconds_count)",
-                    "hide": true,
-                    "interval": "",
-                    "legendFormat": "{{path}}",
-                    "refId": "A"
-                },
-                {
-                    "expr": "grafana_datasource_request_duration_seconds_sum{datasource=\"covid19api\",code=\"200\"} / grafana_datasource_request_duration_seconds_sum{datasource=\"covid19api\",code=\"200\"}",
-                    "interval": "",
-                    "legendFormat": "",
-                    "refId": "B"
-                }
-            ],
-            "thresholds": [],
-            "timeFrom": null,
-            "timeRegions": [],
-            "timeShift": null,
-            "title": "API performance (grafana)",
-            "tooltip": {
-                "shared": true,
-                "sort": 0,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "$$hashKey": "object:226",
-                    "decimals": null,
-                    "format": "s",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                },
-                {
-                    "$$hashKey": "object:227",
-                    "format": "s",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
-        },
-        {
-            "aliasColors": {},
-            "bars": true,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": null,
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {}
-                },
-                "overrides": []
-            },
-            "fill": 1,
-            "fillGradient": 0,
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 16
-            },
-            "hiddenSeries": false,
-            "id": 36,
-            "legend": {
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "show": true,
-                "total": false,
-                "values": false
-            },
-            "lines": false,
-            "linewidth": 1,
-            "nullPointMode": "null",
-            "options": {
-                "alertThreshold": true
-            },
-            "percentage": false,
-            "pluginVersion": "7.3.4",
-            "pointradius": 2,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": false,
-            "steppedLine": false,
-            "targets": [
-                {
-                    "expr": "sum(covid_reported_count{job=\"covid19mon\"})",
-                    "interval": "",
-                    "legendFormat": "last reported",
-                    "refId": "A"
-                }
-            ],
-            "thresholds": [],
-            "timeFrom": null,
-            "timeRegions": [],
-            "timeShift": null,
-            "title": "Updates",
-            "tooltip": {
-                "shared": true,
-                "sort": 0,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "$$hashKey": "object:138",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                },
-                {
-                    "$$hashKey": "object:139",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
-        },
-        {
-            "aliasColors": {},
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
-            "datasource": null,
+            "datasource": "Prometheus",
             "fieldConfig": {
                 "defaults": {
                     "custom": {},
@@ -551,7 +336,7 @@
                 "h": 8,
                 "w": 12,
                 "x": 12,
-                "y": 16
+                "y": 8
             },
             "hiddenSeries": false,
             "id": 31,
@@ -571,7 +356,7 @@
                 "alertThreshold": true
             },
             "percentage": false,
-            "pluginVersion": "7.3.4",
+            "pluginVersion": "7.4.0",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -629,10 +414,107 @@
                 "align": false,
                 "alignLevel": null
             }
+        },
+        {
+            "aliasColors": {},
+            "bars": true,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {}
+                },
+                "overrides": []
+            },
+            "fill": 1,
+            "fillGradient": 0,
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 16
+            },
+            "hiddenSeries": false,
+            "id": 36,
+            "legend": {
+                "avg": false,
+                "current": false,
+                "max": false,
+                "min": false,
+                "show": true,
+                "total": false,
+                "values": false
+            },
+            "lines": false,
+            "linewidth": 1,
+            "nullPointMode": "null",
+            "options": {
+                "alertThreshold": true
+            },
+            "percentage": false,
+            "pluginVersion": "7.4.0",
+            "pointradius": 2,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+                {
+                    "expr": "sum(covid_reported_count{job=\"covid19mon\"})",
+                    "interval": "",
+                    "legendFormat": "last reported",
+                    "refId": "A"
+                }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeRegions": [],
+            "timeShift": null,
+            "title": "Updates",
+            "tooltip": {
+                "shared": true,
+                "sort": 0,
+                "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+                "buckets": null,
+                "mode": "time",
+                "name": null,
+                "show": true,
+                "values": []
+            },
+            "yaxes": [
+                {
+                    "$$hashKey": "object:138",
+                    "format": "short",
+                    "label": null,
+                    "logBase": 1,
+                    "max": null,
+                    "min": null,
+                    "show": true
+                },
+                {
+                    "$$hashKey": "object:139",
+                    "format": "short",
+                    "label": null,
+                    "logBase": 1,
+                    "max": null,
+                    "min": null,
+                    "show": true
+                }
+            ],
+            "yaxis": {
+                "align": false,
+                "alignLevel": null
+            }
         }
     ],
     "refresh": "30s",
-    "schemaVersion": 26,
+    "schemaVersion": 27,
     "style": "dark",
     "tags": [],
     "templating": {
@@ -658,5 +540,5 @@
     "timezone": "",
     "title": "Covid19 - API Server",
     "uid": "jQXLLIzRz",
-    "version": 22
+    "version": 5
 }
