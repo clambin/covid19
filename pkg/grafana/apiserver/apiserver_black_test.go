@@ -59,6 +59,42 @@ func TestAPIServer_Full(t *testing.T) {
 	}
 }
 
+func BenchmarkAPIServer(b *testing.B) {
+	server := apiserver.Create(newAPIHandler(), 8080)
+
+	go func() {
+		err := server.Run()
+
+		assert.Nil(b, err)
+	}()
+
+	time.Sleep(1 * time.Second)
+
+	req := `{
+	"maxDataPoints": 100,
+	"interval": "1y",
+	"range": {
+		"from": "2020-01-01T00:00:00.000Z",
+		"to": "2020-12-31T00:00:00.000Z"
+	},
+	"targets": [
+		{ "target": "A", "type": "foo" },
+		{ "target": "B", "type": "foo" }
+	]
+}`
+	var body string
+	var err error
+
+	for i := 0; i < 10000; i++ {
+		body, err = call("http://localhost:8080/query", "POST", req)
+	}
+
+	if assert.Nil(b, err) {
+		assert.Equal(b, `[{"target":"A","datapoints":[[1,2],[3,4]]},{"target":"B","datapoints":[[5,6],[7,8]]}]`, body)
+	}
+
+}
+
 func call(url, method, body string) (string, error) {
 	client := &http.Client{}
 	reqBody := bytes.NewBuffer([]byte(body))

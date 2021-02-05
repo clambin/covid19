@@ -85,12 +85,8 @@ func parseRequest(body io.Reader) (*APIQueryRequest, error) {
 	var params APIQueryRequest
 	buf, err := ioutil.ReadAll(body)
 	if err == nil {
-		rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
-		rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
-		log.Debugf("BODY: %q", rdr1)
-		body = rdr2
-
-		decoder := json.NewDecoder(body)
+		rdr := ioutil.NopCloser(bytes.NewBuffer(buf))
+		decoder := json.NewDecoder(rdr)
 		err = decoder.Decode(&params)
 	}
 	return &params, err
@@ -99,18 +95,7 @@ func parseRequest(body io.Reader) (*APIQueryRequest, error) {
 func (apiServer *APIServer) query(w http.ResponseWriter, req *http.Request) {
 	log.Info("/query")
 
-	/*
-		f, err := os.Create("query.prof")
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = pprof.StartCPUProfile(f)
-		if err != nil {
-			log.Fatal("could not start CPU profile: ", err)
-		}
-	*/
-
+	defer req.Body.Close()
 	parameters, err := parseRequest(req.Body)
 
 	if err != nil {
@@ -131,10 +116,6 @@ func (apiServer *APIServer) query(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	targetsJSON, _ := json.Marshal(output)
 	w.Write(targetsJSON)
-	/*
-		pprof.StopCPUProfile()
-		f.Close()
-	*/
 }
 
 // Prometheus metrics
