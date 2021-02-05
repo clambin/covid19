@@ -22,6 +22,7 @@ type Probe struct {
 
 	NotifyCache           map[string]coviddb.CountryEntry
 	KnownInvalidCountries map[string]bool
+	PrometheusMetrics     map[string]int
 }
 
 // NewProbe creates a new Probe handle
@@ -95,19 +96,21 @@ func (probe *Probe) Run() error {
 		newRecords, err = probe.getNewRecords(countryStats)
 	}
 
-	if err == nil && len(newRecords) > 0 {
-		log.WithField("newRecords", len(newRecords)).Info("covidProbe inserting new entries")
-
+	if err == nil {
 		probe.metricsLatestUpdates(newRecords)
 
-		notifications := probe.getNotifications(newRecords)
+		if len(newRecords) > 0 {
+			log.WithField("newRecords", len(newRecords)).Info("covidProbe inserting new entries")
 
-		if err = probe.db.Add(newRecords); err != nil {
-			log.WithField("err", err).Fatal("failed to add new entries in the DB")
-		}
+			notifications := probe.getNotifications(newRecords)
 
-		if err = probe.sendNotifications(notifications); err != nil {
-			log.WithField("key", err).Warn("failed to send notification")
+			if err = probe.db.Add(newRecords); err != nil {
+				log.WithField("err", err).Fatal("failed to add new entries in the DB")
+			}
+
+			if err = probe.sendNotifications(notifications); err != nil {
+				log.WithField("key", err).Warn("failed to send notification")
+			}
 		}
 	}
 
@@ -212,15 +215,22 @@ var (
 )
 
 func (probe *Probe) metricsLatestUpdates(newEntries []coviddb.CountryEntry) {
-	summary := make(map[string]int)
+	if probe.PrometheusMetrics == nil {
+		probe.PrometheusMetrics = make(map[string]int)
+	}
+
+	for country := range probe.PrometheusMetrics {
+		probe.PrometheusMetrics[country] = 0
+	}
+
 	for _, newEntry := range newEntries {
-		if count, ok := summary[newEntry.Name]; ok == false {
-			summary[newEntry.Name] = 1
+		if count, ok := probe.PrometheusMetrics[newEntry.Name]; ok == false {
+			probe.PrometheusMetrics[newEntry.Name] = 1
 		} else {
-			summary[newEntry.Name] = count + 1
+			probe.PrometheusMetrics[newEntry.Name] = count + 1
 		}
 	}
-	for country, count := range summary {
+	for country, count := range probe.PrometheusMetrics {
 		reportedCount.WithLabelValues(country).Set(float64(count))
 	}
 }

@@ -119,4 +119,15 @@ func TestProbe(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1.0, value)
 
+	// Run a 2nd time
+	_ = p.Run()
+
+	// Prometheus metrics should now be zero
+	value, err = metrics.LoadValue("covid_reported_count", "Belgium")
+	assert.Nil(t, err)
+	assert.Equal(t, 0.0, value)
+	value, err = metrics.LoadValue("covid_reported_count", "US")
+	assert.Nil(t, err)
+	assert.Equal(t, 0.0, value)
+
 }
