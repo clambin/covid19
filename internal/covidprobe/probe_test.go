@@ -94,6 +94,13 @@ func TestProbe(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, int64(0), record.Confirmed)
 
+	// Check we marked "NotACountry" as invalid (so it's logged only once)
+	if assert.NotNil(t, p.KnownInvalidCountries) {
+		assert.Len(t, p.KnownInvalidCountries, 1)
+		_, ok := p.KnownInvalidCountries["NotACountry"]
+		assert.True(t, ok)
+	}
+
 	// Check that the latest values were added to the DB
 	latest, err := dbh.ListLatestByCountry()
 

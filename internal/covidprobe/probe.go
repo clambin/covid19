@@ -20,7 +20,8 @@ type Probe struct {
 	notifications *configuration.NotificationsConfiguration
 	notifier      *router.ServiceRouter
 
-	NotifyCache map[string]coviddb.CountryEntry
+	NotifyCache           map[string]coviddb.CountryEntry
+	KnownInvalidCountries map[string]bool
 }
 
 // NewProbe creates a new Probe handle
@@ -130,7 +131,13 @@ func (probe *Probe) getNewRecords(newCountryStats map[string]CountryStats) ([]co
 		if ok == false || stats.LastUpdate.After(current) {
 			var code string
 			if code, ok = CountryCodes[country]; ok == false {
-				log.WithField("country", country).Warning("skipping unknown country")
+				if probe.KnownInvalidCountries == nil {
+					probe.KnownInvalidCountries = make(map[string]bool)
+				}
+				if _, ok = probe.KnownInvalidCountries[country]; ok == false {
+					log.WithField("country", country).Warning("skipping unknown country")
+					probe.KnownInvalidCountries[country] = true
+				}
 			} else {
 				records = append(records, coviddb.CountryEntry{
 					Timestamp: stats.LastUpdate,
