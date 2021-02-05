@@ -217,6 +217,10 @@ var (
 func (probe *Probe) metricsLatestUpdates(newEntries []coviddb.CountryEntry) {
 	if probe.PrometheusMetrics == nil {
 		probe.PrometheusMetrics = make(map[string]int)
+
+		for name := range CountryCodes {
+			probe.PrometheusMetrics[name] = 0
+		}
 	}
 
 	for country := range probe.PrometheusMetrics {
