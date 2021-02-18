@@ -12,7 +12,7 @@ require (
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/prometheus/client_golang v1.9.0
-	github.com/sirupsen/logrus v1.7.1
+	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
