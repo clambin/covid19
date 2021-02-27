@@ -28,7 +28,7 @@ type Probe struct {
 // NewProbe creates a new Probe handle
 func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB) *Probe {
 	probe := Probe{
-		APIClient:     NewAPIClient(cfg.RapidAPIKey),
+		APIClient:     NewAPIClient(cfg.RapidAPIKey.Value),
 		db:            db,
 		notifications: &cfg.Notifications,
 	}
@@ -39,7 +39,7 @@ func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB) *Probe {
 	}
 
 	if probe.notifications.Enabled {
-		if probe.notifier, err = shoutrrr.CreateSender(cfg.Notifications.URL); err != nil {
+		if probe.notifier, err = shoutrrr.CreateSender(cfg.Notifications.URL.Value); err != nil {
 			log.WithField("err", err).Error("failed to set up notifications")
 			probe.notifier = nil
 		}

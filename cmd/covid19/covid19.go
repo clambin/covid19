@@ -82,7 +82,7 @@ func startMonitor(cfg *configuration.Configuration) {
 	)
 
 	covidProbe := covidprobe.NewProbe(&cfg.Monitor, covidDB)
-	populationProbe := popprobe.Create(cfg.Monitor.RapidAPIKey, popDB)
+	populationProbe := popprobe.Create(cfg.Monitor.RapidAPIKey.Value, popDB)
 
 	go func() {
 		var err error

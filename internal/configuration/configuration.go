@@ -14,7 +14,7 @@ type Configuration struct {
 	Debug    bool                 `yaml:"debug"`
 	Postgres PostgresDB           `yaml:"postgres"`
 	Monitor  MonitorConfiguration `yaml:"monitor"`
-	Grafana  GrafanaConfiguration `taml:"grafana"`
+	Grafana  GrafanaConfiguration `yaml:"grafana"`
 }
 
 type PostgresDB struct {
@@ -28,18 +28,34 @@ type PostgresDB struct {
 type MonitorConfiguration struct {
 	Enabled       bool                       `yaml:"enabled"`
 	Interval      time.Duration              `yaml:"interval"`
-	RapidAPIKey   string                     `yaml:"rapidAPIKey"`
+	RapidAPIKey   ValueOrEnvVar              `yaml:"rapidAPIKey"`
 	Notifications NotificationsConfiguration `yaml:"notifications"`
+}
+
+type ValueOrEnvVar struct {
+	Value  string `yaml:"value"`
+	EnvVar string `yaml:"envVar"`
+}
+
+type NotificationsConfiguration struct {
+	Enabled   bool          `yaml:"enabled"`
+	URL       ValueOrEnvVar `yaml:"url"`
+	Countries []string      `yaml:"countries"`
 }
 
 type GrafanaConfiguration struct {
 	Enabled bool `yaml:"enabled"`
 }
 
-type NotificationsConfiguration struct {
-	Enabled   bool     `yaml:"enabled"`
-	URL       string   `yaml:"url"`
-	Countries []string `yaml:"countries"`
+// Set a ValueOrEnvVar
+func (v *ValueOrEnvVar) Set() {
+	if v.EnvVar != "" {
+		v.Value = os.Getenv(v.EnvVar)
+
+		if v.Value == "" {
+			log.WithField("envVar", v.EnvVar).Warning("environment variable not set")
+		}
+	}
 }
 
 // LoadConfigurationFile loads the configuration file from file
@@ -66,6 +82,11 @@ func LoadConfiguration(content []byte) (*Configuration, error) {
 		},
 	}
 	err := yaml.Unmarshal(content, &configuration)
+
+	if err == nil {
+		configuration.Monitor.RapidAPIKey.Set()
+		configuration.Monitor.Notifications.URL.Set()
+	}
 
 	log.WithField("err", err).Debug("LoadConfiguration")
 

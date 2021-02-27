@@ -63,13 +63,19 @@ monitor:
   # Be kind to API providers and don't put this too low. Data only changes daily anyway
   interval: 20m
   # API Key for the APIs. See below.
-  rapidAPIKey: "long-rapid-api-key"
+  rapidAPIKey:
+    value: "long-rapid-api-key"
+    # alternatively, specify an environment variable that holds the API Key:
+    envVar: "KEY_ENV_VAR_NAME"
   # covid19 can be configured to send a notification when new data is found for a set of countries
   notifications:
     # Turn on notifications. Default is true
     enabled: true
     # URL to send notifications to. See https://github.com/containrrr/shoutrrr for options
-    url: https://hooks.slack.com/services/token1/token2/token3
+    url:
+      value: https://hooks.slack.com/services/token1/token2/token3
+      # alternatively, specify an environment variable that holds the API Key:
+      envVar: "URL_ENV_VAR_NAME"
     # List of country names for which to send an event
     countries:
       - Belgium

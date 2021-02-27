@@ -54,7 +54,7 @@ func TestProbe(t *testing.T) {
 		Enabled: true,
 		Notifications: configuration.NotificationsConfiguration{
 			Enabled: true,
-			URL:     "",
+			URL:     configuration.ValueOrEnvVar{Value: ""},
 			Countries: []string{
 				"Belgium", "Sokovia", "France",
 			},
