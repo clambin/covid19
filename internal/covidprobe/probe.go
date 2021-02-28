@@ -2,6 +2,7 @@ package covidprobe
 
 import (
 	"covid19/internal/configuration"
+	"covid19/internal/covidcache"
 	"covid19/internal/coviddb"
 	"fmt"
 	"github.com/clambin/gotools/metrics"
@@ -17,6 +18,7 @@ import (
 type Probe struct {
 	APIClient     APIClient
 	db            coviddb.DB
+	cache         *covidcache.Cache
 	notifications *configuration.NotificationsConfiguration
 	notifier      *router.ServiceRouter
 
@@ -26,10 +28,11 @@ type Probe struct {
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB) *Probe {
+func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB, cache *covidcache.Cache) *Probe {
 	probe := Probe{
 		APIClient:     NewAPIClient(cfg.RapidAPIKey.Value),
 		db:            db,
+		cache:         cache,
 		notifications: &cfg.Notifications,
 	}
 
@@ -81,9 +84,8 @@ func (probe *Probe) initCache() error {
 }
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
-func (probe *Probe) Run() error {
+func (probe *Probe) Run() (err error) {
 	var (
-		err          error
 		countryStats map[string]CountryStats
 		newRecords   = make([]coviddb.CountryEntry, 0)
 	)
@@ -108,13 +110,18 @@ func (probe *Probe) Run() error {
 				log.WithField("err", err).Fatal("failed to add new entries in the DB")
 			}
 
+			if probe.cache != nil {
+				if err = probe.cache.Update(); err != nil {
+					log.WithField("err", err).Fatal("failed to update totals cache")
+				}
+			}
+
 			if err = probe.sendNotifications(notifications); err != nil {
 				log.WithField("key", err).Warn("failed to send notification")
 			}
 		}
 	}
-
-	return err
+	return
 }
 
 // getNewRecords takes the newly collected country statistics and returns any new entries

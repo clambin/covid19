@@ -2,6 +2,7 @@ package covidprobe_test
 
 import (
 	"covid19/internal/configuration"
+	"covid19/internal/covidcache"
 	"covid19/internal/coviddb"
 	mockdb "covid19/internal/coviddb/mock"
 	"covid19/internal/covidprobe"
@@ -50,6 +51,7 @@ var (
 
 func TestProbe(t *testing.T) {
 	dbh := mockdb.Create(seedDB)
+	cache := &covidcache.Cache{DB: dbh}
 	cfg := configuration.MonitorConfiguration{
 		Enabled: true,
 		Notifications: configuration.NotificationsConfiguration{
@@ -60,7 +62,7 @@ func TestProbe(t *testing.T) {
 			},
 		},
 	}
-	p := covidprobe.NewProbe(&cfg, dbh)
+	p := covidprobe.NewProbe(&cfg, dbh, cache)
 
 	// NotifyCache should contain the latest entry for each (valid) country we want to send notifications for
 	assert.Len(t, p.NotifyCache, 2)

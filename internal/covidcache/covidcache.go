@@ -1,0 +1,56 @@
+package covidcache
+
+import (
+	"covid19/internal/coviddb"
+	"time"
+)
+
+// Cache caches the total evolution of covid figures
+// Helper function to improve responsiveness of Grafana API server
+type Cache struct {
+	DB     coviddb.DB
+	totals []CacheEntry
+	deltas []CacheEntry
+}
+
+// CacheEntry holds one date's data
+type CacheEntry struct {
+	Timestamp time.Time
+	Confirmed int64
+	Recovered int64
+	Deaths    int64
+	Active    int64
+}
+
+// Update recalculates the cached data
+func (cache *Cache) Update() (err error) {
+	var entries []coviddb.CountryEntry
+
+	if entries, err = cache.DB.List(time.Now()); err == nil {
+		cache.totals = GetTotalCases(entries)
+		cache.deltas = GetTotalDeltas(cache.totals)
+
+	}
+	return
+}
+
+// GetTotals gets all totals up to the specified date
+func (cache *Cache) GetTotals(end time.Time) []CacheEntry {
+	return filterEntries(cache.totals, end)
+}
+
+// GetDeltas gets all deltas up to the specified date
+func (cache *Cache) GetDeltas(end time.Time) []CacheEntry {
+	return filterEntries(cache.deltas, end)
+}
+
+func filterEntries(entries []CacheEntry, end time.Time) (result []CacheEntry) {
+	for _, entry := range entries {
+		if entry.Timestamp.After(end) {
+			break
+		}
+		result = append(result, entry)
+	}
+	return
+
+}

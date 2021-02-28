@@ -2,6 +2,7 @@ package main
 
 import (
 	"covid19/internal/configuration"
+	"covid19/internal/covidcache"
 	"covid19/internal/coviddb"
 	"covid19/internal/covidhandler"
 	"covid19/internal/covidprobe"
@@ -50,12 +51,14 @@ func main() {
 
 	log.WithField("version", version.BuildVersion).Info("covid19 monitor starting")
 
+	var cache *covidcache.Cache
+
 	if cfg.Monitor.Enabled {
-		startMonitor(cfg)
+		cache = startMonitor(cfg, cfg.Grafana.Enabled)
 	}
 
 	if cfg.Grafana.Enabled {
-		runGrafanaServer(cfg)
+		runGrafanaServer(cfg, cache)
 	} else {
 		// Grafana Server won't start prometheus server, so we start one manually
 		listenAddress := fmt.Sprintf(":%d", cfg.Port)
@@ -64,7 +67,7 @@ func main() {
 	}
 }
 
-func startMonitor(cfg *configuration.Configuration) {
+func startMonitor(cfg *configuration.Configuration, createCache bool) (cache *covidcache.Cache) {
 	covidDB := coviddb.NewPostgresDB(
 		cfg.Postgres.Host,
 		cfg.Postgres.Port,
@@ -81,7 +84,10 @@ func startMonitor(cfg *configuration.Configuration) {
 		cfg.Postgres.Password,
 	)
 
-	covidProbe := covidprobe.NewProbe(&cfg.Monitor, covidDB)
+	if createCache {
+		cache = &covidcache.Cache{DB: covidDB}
+	}
+	covidProbe := covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
 	populationProbe := popprobe.Create(cfg.Monitor.RapidAPIKey.Value, popDB)
 
 	go func() {
@@ -98,17 +104,12 @@ func startMonitor(cfg *configuration.Configuration) {
 			time.Sleep(cfg.Monitor.Interval)
 		}
 	}()
+
+	return
 }
 
-func runGrafanaServer(cfg *configuration.Configuration) {
-	covidDB := coviddb.NewPostgresDB(
-		cfg.Postgres.Host,
-		cfg.Postgres.Port,
-		cfg.Postgres.Database,
-		cfg.Postgres.User,
-		cfg.Postgres.Password,
-	)
-	handler, _ := covidhandler.Create(covidDB)
+func runGrafanaServer(cfg *configuration.Configuration, cache *covidcache.Cache) {
+	handler, _ := covidhandler.Create(cache)
 	server := apiserver.Create(handler, cfg.Port)
 	_ = server.Run()
 }

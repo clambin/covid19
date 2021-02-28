@@ -1,30 +1,16 @@
-package covidhandler
+package covidcache
 
 import (
-	"time"
-
-	"github.com/mpvl/unique"
-
 	"covid19/internal/coviddb"
+	"github.com/mpvl/unique"
+	"time"
 )
 
-// Indexes for the output arrays of GetTotalCases / GetTotalDeltas
-const (
-	CONFIRMED = 0
-	RECOVERED = 1
-	DEATHS    = 2
-	ACTIVE    = 3
-
-	VALUE     = 0
-	TIMESTAMP = 1
-)
-
-// GetTotalCases calculates the total cases cross all countries over time
-// Output is structured for easy export to HTTP Response (JSON)
-func GetTotalCases(rows []coviddb.CountryEntry) [][][2]int64 {
+// GetTotalCases calculates the total cases across all countries over time
+func GetTotalCases(rows []coviddb.CountryEntry) (result []CacheEntry) {
 	var confirmed, recovered, deaths int64
 
-	// Helper datastructure to keep running count
+	// Helper data structure to keep running count
 	type covidData struct {
 		Confirmed int64
 		Recovered int64
@@ -46,7 +32,6 @@ func GetTotalCases(rows []coviddb.CountryEntry) [][][2]int64 {
 
 	// Go through each timestamp, record running total for each country & compute total cases
 	countryMap := make(map[string]covidData)
-	consolidated := make([][][2]int64, 4)
 	for _, timestamp := range timestamps {
 		for _, row := range timeMap[timestamp] {
 			countryMap[row.Code] = covidData{Confirmed: row.Confirmed, Recovered: row.Recovered, Deaths: row.Deaths}
@@ -57,29 +42,31 @@ func GetTotalCases(rows []coviddb.CountryEntry) [][][2]int64 {
 			recovered += data.Recovered
 			deaths += data.Deaths
 		}
-		epoch := timestamp.UnixNano() / 1000000
-		consolidated[CONFIRMED] = append(consolidated[CONFIRMED], [2]int64{confirmed, epoch})
-		consolidated[RECOVERED] = append(consolidated[RECOVERED], [2]int64{recovered, epoch})
-		consolidated[DEATHS] = append(consolidated[DEATHS], [2]int64{deaths, epoch})
-		consolidated[ACTIVE] = append(consolidated[ACTIVE], [2]int64{confirmed - recovered - deaths, epoch})
+		result = append(result, CacheEntry{
+			Timestamp: timestamp,
+			Confirmed: confirmed,
+			Recovered: recovered,
+			Deaths:    deaths,
+			Active:    confirmed - recovered - deaths,
+		})
 	}
-
-	return consolidated
+	return
 }
 
 // GetTotalDeltas calculates deltas of cases returned by GetTotalCases
-// Output is structured for easy export to HTTP Response (JSON)
-func GetTotalDeltas(rows [][2]int64) [][2]int64 {
-	deltas := make([][2]int64, 0)
-
-	var value int64
-	value = 0
-	for _, row := range rows {
-		deltas = append(deltas, [2]int64{row[0] - value, row[1]})
-		value = row[0]
+func GetTotalDeltas(entries []CacheEntry) (result []CacheEntry) {
+	current := CacheEntry{}
+	for _, entry := range entries {
+		result = append(result, CacheEntry{
+			Timestamp: entry.Timestamp,
+			Confirmed: entry.Confirmed - current.Confirmed,
+			Recovered: entry.Recovered - current.Recovered,
+			Deaths:    entry.Deaths - current.Deaths,
+			Active:    entry.Active - current.Active,
+		})
+		current = entry
 	}
-
-	return deltas
+	return
 }
 
 // Helper code for unique.Sort()

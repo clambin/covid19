@@ -1,26 +1,24 @@
 package covidhandler
 
 import (
+	"covid19/internal/covidcache"
 	"errors"
-	"time"
-
 	log "github.com/sirupsen/logrus"
 
-	"covid19/internal/coviddb"
 	"covid19/pkg/grafana/apiserver"
 )
 
 // APIHandler implements business logic for APIServer
 type APIHandler struct {
-	cache *coviddb.Cache
+	cache *covidcache.Cache
 }
 
 // Create a CovidAPIHandler object
-func Create(dbh coviddb.DB) (*APIHandler, error) {
-	if dbh == nil {
+func Create(cache *covidcache.Cache) (*APIHandler, error) {
+	if cache == nil {
 		return nil, errors.New("no database specified")
 	}
-	return &APIHandler{cache: coviddb.NewCache(dbh, 60*time.Second)}, nil
+	return &APIHandler{cache: cache}, nil
 }
 
 var (
@@ -42,39 +40,54 @@ func (apiHandler *APIHandler) Search() []string {
 }
 
 // Query the DB and return the requested targets
-func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) ([]apiserver.APIQueryResponse, error) {
-	entries, err := apiHandler.cache.List(request.Range.To)
+func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (response []apiserver.APIQueryResponse, err error) {
+	totals := apiHandler.cache.GetTotals(request.Range.To)
+	deltas := apiHandler.cache.GetDeltas(request.Range.To)
 
-	return buildTargets(entries, request.Targets), err
-}
-
-// build the requested targets
-func buildTargets(entries []coviddb.CountryEntry, targets []struct{ Target string }) []apiserver.APIQueryResponse {
-	seriesList := make([]apiserver.APIQueryResponse, 0)
-	totalCases := GetTotalCases(entries)
-
-	for _, target := range targets {
+	for _, target := range request.Targets {
 		switch target.Target {
 		case "confirmed":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: totalCases[CONFIRMED]})
+			response = append(response, buildResponsePart(totals, target.Target, "confirmed"))
 		case "confirmed-delta":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: GetTotalDeltas(totalCases[CONFIRMED])})
+			response = append(response, buildResponsePart(deltas, target.Target, "confirmed"))
 		case "recovered":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: totalCases[RECOVERED]})
+			response = append(response, buildResponsePart(totals, target.Target, "recovered"))
 		case "recovered-delta":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: GetTotalDeltas(totalCases[RECOVERED])})
+			response = append(response, buildResponsePart(deltas, target.Target, "recovered"))
 		case "death":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: totalCases[DEATHS]})
+			response = append(response, buildResponsePart(totals, target.Target, "death"))
 		case "death-delta":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: GetTotalDeltas(totalCases[DEATHS])})
+			response = append(response, buildResponsePart(deltas, target.Target, "death"))
 		case "active":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: totalCases[ACTIVE]})
+			response = append(response, buildResponsePart(totals, target.Target, "active"))
 		case "active-delta":
-			seriesList = append(seriesList, apiserver.APIQueryResponse{Target: target.Target, DataPoints: GetTotalDeltas(totalCases[ACTIVE])})
+			response = append(response, buildResponsePart(deltas, target.Target, "active"))
 		default:
 			log.Warningf("dropping unsupported target: %s", target.Target)
 		}
 	}
+	return
+}
 
-	return seriesList
+func buildResponsePart(entries []covidcache.CacheEntry, target string, attribute string) (response apiserver.APIQueryResponse) {
+	var timestamp, value int64
+
+	response.Target = target
+	response.DataPoints = make([][2]int64, 0)
+	for _, entry := range entries {
+		timestamp = entry.Timestamp.UnixNano() / 1000000
+		value = 0
+		switch attribute {
+		case "confirmed":
+			value = entry.Confirmed
+		case "recovered":
+			value = entry.Recovered
+		case "death":
+			value = entry.Deaths
+		case "active":
+			value = entry.Active
+		}
+		response.DataPoints = append(response.DataPoints, [2]int64{value, timestamp})
+	}
+	return
 }

@@ -1,6 +1,7 @@
 package covidhandler_test
 
 import (
+	"covid19/internal/covidcache"
 	"testing"
 	"time"
 
@@ -44,7 +45,9 @@ func TestHandlerHandler(t *testing.T) {
 			Deaths:    1,
 		},
 	})
-	handler, _ := covidhandler.Create(dbh)
+	cache := &covidcache.Cache{DB: dbh}
+	_ = cache.Update()
+	handler, _ := covidhandler.Create(cache)
 
 	// Test Search
 	targets := handler.Search()
@@ -129,7 +132,9 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 	dbh := mockdb.Create(entries)
-	handler, _ := covidhandler.Create(dbh)
+	cache := &covidcache.Cache{DB: dbh}
+	_ = cache.Update()
+	handler, _ := covidhandler.Create(cache)
 
 	request := apiserver.APIQueryRequest{
 		Range: struct {
@@ -151,6 +156,8 @@ func BenchmarkHandlerQuery(b *testing.B) {
 
 	// Run the benchmark
 	b.ResetTimer()
-	_, err := handler.Query(&request)
-	assert.Nil(b, err)
+	for i := 0; i < 1000; i++ {
+		_, err := handler.Query(&request)
+		assert.Nil(b, err)
+	}
 }
