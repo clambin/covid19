@@ -48,6 +48,12 @@ func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB, cache *cov
 		}
 	}
 
+	if probe.cache != nil {
+		if err = probe.cache.Update(); err != nil {
+			log.WithField("err", err).Error("failed to create Grafana API Cache")
+		}
+	}
+
 	return &probe
 }
 
