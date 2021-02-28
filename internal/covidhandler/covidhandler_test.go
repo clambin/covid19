@@ -55,13 +55,11 @@ func TestHandlerHandler(t *testing.T) {
 
 	// Test Query
 	request := apiserver.APIQueryRequest{
-		Range: struct {
-			From time.Time
-			To   time.Time
-		}{
+		Range: apiserver.APIQueryRequestRange{
 			From: time.Now(),
-			To:   time.Now()},
-		Targets: []struct{ Target string }{
+			To:   time.Now(),
+		},
+		Targets: []apiserver.APIQueryRequestTarget{
 			{Target: "confirmed"},
 			{Target: "confirmed-delta"},
 			{Target: "death"},
@@ -137,13 +135,11 @@ func BenchmarkHandlerQuery(b *testing.B) {
 	handler, _ := covidhandler.Create(cache)
 
 	request := apiserver.APIQueryRequest{
-		Range: struct {
-			From time.Time
-			To   time.Time
-		}{
+		Range: apiserver.APIQueryRequestRange{
 			From: time.Now(),
-			To:   time.Now()},
-		Targets: []struct{ Target string }{
+			To:   time.Now(),
+		},
+		Targets: []apiserver.APIQueryRequestTarget{
 			{Target: "confirmed"},
 			{Target: "confirmed-delta"},
 			{Target: "recovered"},

@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"time"
-
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 // APIServer implements a generic frameworks for the Grafana simpleJson API datasource
@@ -36,12 +35,20 @@ type APIHandler interface {
 
 // APIQueryRequest contains the request parameters to the API's 'query' method
 type APIQueryRequest struct {
-	Range struct {
-		From time.Time
-		To   time.Time
-		// Raw  map[string]string
-	}
-	Targets []struct{ Target string }
+	Range         APIQueryRequestRange    `json:"range"`
+	Interval      string                  `json:"interval"`
+	MaxDataPoints uint64                  `json:"maxDataPoints"`
+	Targets       []APIQueryRequestTarget `json:"targets"`
+}
+
+type APIQueryRequestRange struct {
+	From time.Time `json:"from"`
+	To   time.Time `json:"to"`
+}
+
+type APIQueryRequestTarget struct {
+	Target string `json:"target"`
+	Type   string `json:"type"`
 }
 
 // APIQueryResponse contains the response of the API's 'query' method
@@ -73,7 +80,6 @@ func (apiServer *APIServer) hello(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (apiServer *APIServer) search(w http.ResponseWriter, _ *http.Request) {
-	log.Info("/search")
 	output := apiServer.apiHandler.Search()
 	log.WithField("output", output).Debug("/search")
 	targetsJSON, _ := json.Marshal(output)
@@ -93,29 +99,38 @@ func parseRequest(body io.Reader) (*APIQueryRequest, error) {
 }
 
 func (apiServer *APIServer) query(w http.ResponseWriter, req *http.Request) {
-	log.Info("/query")
-
+	var (
+		err        error
+		parameters *APIQueryRequest
+		response   []APIQueryResponse
+	)
 	defer req.Body.Close()
-	parameters, err := parseRequest(req.Body)
 
-	if err != nil {
+	if parameters, err = parseRequest(req.Body); err == nil {
+		if response, err = apiServer.apiHandler.Query(parameters); err == nil {
+			maxPoints := 0
+			for _, item := range response {
+				if len(item.DataPoints) > maxPoints {
+					maxPoints = len(item.DataPoints)
+				}
+			}
+			log.WithFields(log.Fields{
+				"maxDataPoints":    parameters.MaxDataPoints,
+				"interval":         parameters.Interval,
+				"actualDataPoints": maxPoints,
+			}).Debug("/query")
+			w.WriteHeader(http.StatusOK)
+			targetsJSON, _ := json.Marshal(response)
+			w.Write(targetsJSON)
+		} else {
+			log.WithField("err", err).Warning("Internal Server Error")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
 		log.WithField("err", err).Warning("error parsing request")
 		w.WriteHeader(http.StatusBadRequest)
-		return
 	}
 
-	output, err := apiServer.apiHandler.Query(parameters)
-
-	if err != nil {
-		log.WithField("err", err).Warning("Internal Server Error")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	log.WithField("output", output).Debug("/query")
-	w.WriteHeader(http.StatusOK)
-	targetsJSON, _ := json.Marshal(output)
-	w.Write(targetsJSON)
 }
 
 // Prometheus metrics
