@@ -4,8 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - develop
-      - refactor
+      - bettercache
   pull_request_target:
 
 jobs:

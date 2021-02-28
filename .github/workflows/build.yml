@@ -4,8 +4,7 @@ on:
   push:
     branches:
     - master
-    - develop
-    - refactor
+    - bettercache
 
 jobs:
   test:
