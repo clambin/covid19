@@ -83,8 +83,8 @@ func buildResponsePart(entries []covidcache.CacheEntry, target string, attribute
 	var timestamp, value int64
 
 	response.Target = target
-	response.DataPoints = make([][2]int64, 0)
-	for _, entry := range entries {
+	response.DataPoints = make([][2]int64, len(entries))
+	for index, entry := range entries {
 		timestamp = entry.Timestamp.UnixNano() / 1000000
 		value = 0
 		switch attribute {
@@ -97,7 +97,7 @@ func buildResponsePart(entries []covidcache.CacheEntry, target string, attribute
 		case "active":
 			value = entry.Active
 		}
-		response.DataPoints = append(response.DataPoints, [2]int64{value, timestamp})
+		response.DataPoints[index] = [2]int64{value, timestamp}
 	}
 	return
 }
