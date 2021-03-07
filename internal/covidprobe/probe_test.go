@@ -51,7 +51,7 @@ var (
 
 func TestProbe(t *testing.T) {
 	dbh := mockdb.Create(seedDB)
-	cache := &covidcache.Cache{DB: dbh}
+	cache := covidcache.New(dbh)
 	cfg := configuration.MonitorConfiguration{
 		Enabled: true,
 		Notifications: configuration.NotificationsConfiguration{
@@ -62,6 +62,7 @@ func TestProbe(t *testing.T) {
 			},
 		},
 	}
+	go cache.Run()
 	p := covidprobe.NewProbe(&cfg, dbh, cache)
 
 	// NotifyCache should contain the latest entry for each (valid) country we want to send notifications for

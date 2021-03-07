@@ -85,11 +85,13 @@ func startMonitor(cfg *configuration.Configuration, createCache bool) (cache *co
 	)
 
 	if createCache {
-		cache = &covidcache.Cache{DB: covidDB}
+		cache = covidcache.New(covidDB)
+		go cache.Run()
 	}
 	covidProbe := covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
 	populationProbe := popprobe.Create(cfg.Monitor.RapidAPIKey.Value, popDB)
 
+	// TODO: only update population once a day?
 	go func() {
 		var err error
 

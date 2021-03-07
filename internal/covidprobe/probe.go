@@ -48,12 +48,6 @@ func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB, cache *cov
 		}
 	}
 
-	if probe.cache != nil {
-		if err = probe.cache.Update(); err != nil {
-			log.WithField("err", err).Error("failed to create Grafana API Cache")
-		}
-	}
-
 	return &probe
 }
 
@@ -117,9 +111,7 @@ func (probe *Probe) Run() (err error) {
 			}
 
 			if probe.cache != nil {
-				if err = probe.cache.Update(); err != nil {
-					log.WithField("err", err).Fatal("failed to update totals cache")
-				}
+				probe.cache.Refresh <- true
 			}
 
 			if err = probe.sendNotifications(notifications); err != nil {

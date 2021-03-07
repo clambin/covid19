@@ -45,8 +45,9 @@ func TestHandlerHandler(t *testing.T) {
 			Deaths:    1,
 		},
 	})
-	cache := &covidcache.Cache{DB: dbh}
-	_ = cache.Update()
+	cache := covidcache.New(dbh)
+	go cache.Run()
+
 	handler, _ := covidhandler.Create(cache)
 
 	// Test Search
@@ -129,9 +130,8 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		}
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
-	dbh := mockdb.Create(entries)
-	cache := &covidcache.Cache{DB: dbh}
-	_ = cache.Update()
+	cache := covidcache.New(mockdb.Create(entries))
+	go cache.Run()
 	handler, _ := covidhandler.Create(cache)
 
 	request := apiserver.APIQueryRequest{

@@ -41,8 +41,18 @@ func (apiHandler *APIHandler) Search() []string {
 
 // Query the DB and return the requested targets
 func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (response []apiserver.APIQueryResponse, err error) {
-	totals := apiHandler.cache.GetTotals(request.Range.To)
-	deltas := apiHandler.cache.GetDeltas(request.Range.To)
+	responseChannel := make(chan covidcache.Response)
+	defer close(responseChannel)
+
+	apiHandler.cache.Request <- covidcache.Request{
+		Response: responseChannel,
+		End:      request.Range.To,
+	}
+
+	resp := <-responseChannel
+
+	totals := resp.Totals
+	deltas := resp.Deltas
 
 	for _, target := range request.Targets {
 		switch target.Target {
