@@ -62,7 +62,6 @@ func TestProbe(t *testing.T) {
 			},
 		},
 	}
-	go cache.Run()
 	p := covidprobe.NewProbe(&cfg, dbh, cache)
 
 	// NotifyCache should contain the latest entry for each (valid) country we want to send notifications for
@@ -80,6 +79,7 @@ func TestProbe(t *testing.T) {
 		"NotACountry": {LastUpdate: lastUpdate, Confirmed: 0, Recovered: 0, Deaths: 0},
 	})
 
+	go cache.Run()
 	err := p.Run()
 
 	assert.NotNil(t, err)
