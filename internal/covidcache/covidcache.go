@@ -59,10 +59,7 @@ func (cache *Cache) Run() {
 				log.WithField("err", err).Warning("failed to refresh cache")
 			}
 		case req := <-cache.Request:
-			req.Response <- struct {
-				Totals []CacheEntry
-				Deltas []CacheEntry
-			}{
+			req.Response <- Response{
 				Totals: cache.getTotals(req.End),
 				Deltas: cache.getDeltas(req.End),
 			}
