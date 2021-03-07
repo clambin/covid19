@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -11,6 +12,7 @@ import (
 // DB mockapi database used for unit test tools
 type DB struct {
 	data []coviddb.CountryEntry
+	lock sync.RWMutex
 }
 
 // Create a mockapi database
@@ -20,6 +22,8 @@ func Create(data []coviddb.CountryEntry) *DB {
 
 // List the records in the DB up to end date
 func (dbh *DB) List(endDate time.Time) ([]coviddb.CountryEntry, error) {
+	dbh.lock.RLock()
+	defer dbh.lock.RUnlock()
 	entries := make([]coviddb.CountryEntry, 0)
 
 	for _, entry := range dbh.data {
@@ -35,6 +39,8 @@ func (dbh *DB) List(endDate time.Time) ([]coviddb.CountryEntry, error) {
 
 // ListLatestByCountry lists the last date per country
 func (dbh *DB) ListLatestByCountry() (map[string]time.Time, error) {
+	dbh.lock.RLock()
+	defer dbh.lock.RUnlock()
 	entries := make(map[string]time.Time, 0)
 
 	for _, entry := range dbh.data {
@@ -49,6 +55,8 @@ func (dbh *DB) ListLatestByCountry() (map[string]time.Time, error) {
 
 // GetFirstEntry returns the timestamp of the first entry
 func (dbh *DB) GetFirstEntry() (time.Time, error) {
+	dbh.lock.RLock()
+	defer dbh.lock.RUnlock()
 	first := time.Time{}
 	for index, entry := range dbh.data {
 		if index == 0 || entry.Timestamp.Before(first) {
@@ -59,6 +67,8 @@ func (dbh *DB) GetFirstEntry() (time.Time, error) {
 }
 
 func (dbh *DB) GetLastBeforeDate(countryName string, before time.Time) (*coviddb.CountryEntry, error) {
+	dbh.lock.RLock()
+	defer dbh.lock.RUnlock()
 	result := coviddb.CountryEntry{}
 	for _, entry := range dbh.data {
 		if entry.Name == countryName && entry.Timestamp.Before(before) && entry.Timestamp.After(result.Timestamp) {
@@ -79,6 +89,8 @@ func (dbh *DB) GetLastBeforeDate(countryName string, before time.Time) (*coviddb
 
 // Add inserts all specified records in the covid19 database table
 func (dbh *DB) Add(entries []coviddb.CountryEntry) error {
+	dbh.lock.Lock()
+	defer dbh.lock.Unlock()
 	for _, entry := range entries {
 		dbh.data = append(dbh.data, entry)
 	}

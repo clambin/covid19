@@ -52,6 +52,7 @@ var (
 func TestProbe(t *testing.T) {
 	dbh := mockdb.Create(seedDB)
 	cache := covidcache.New(dbh)
+	go cache.Run()
 	cfg := configuration.MonitorConfiguration{
 		Enabled: true,
 		Notifications: configuration.NotificationsConfiguration{
@@ -79,7 +80,6 @@ func TestProbe(t *testing.T) {
 		"NotACountry": {LastUpdate: lastUpdate, Confirmed: 0, Recovered: 0, Deaths: 0},
 	})
 
-	go cache.Run()
 	err := p.Run()
 
 	assert.NotNil(t, err)
