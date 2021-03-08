@@ -66,7 +66,7 @@ monitor:
   rapidAPIKey:
     value: "long-rapid-api-key"
     # alternatively, specify an environment variable that holds the API Key:
-    envVar: "KEY_ENV_VAR_NAME"
+    # envVar: "KEY_ENV_VAR_NAME"
   # covid19 can be configured to send a notification when new data is found for a set of countries
   notifications:
     # Turn on notifications. Default is true
@@ -75,7 +75,7 @@ monitor:
     url:
       value: https://hooks.slack.com/services/token1/token2/token3
       # alternatively, specify an environment variable that holds the API Key:
-      envVar: "URL_ENV_VAR_NAME"
+      # envVar: "URL_ENV_VAR_NAME"
     # List of country names for which to send an event
     countries:
       - Belgium
