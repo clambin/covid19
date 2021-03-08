@@ -84,6 +84,7 @@ func LoadConfiguration(content []byte) (*Configuration, error) {
 	err := yaml.Unmarshal(content, &configuration)
 
 	if err == nil {
+		// make postgres password a ValueOrEnvVar too
 		configuration.Monitor.RapidAPIKey.Set()
 		configuration.Monitor.Notifications.URL.Set()
 	}

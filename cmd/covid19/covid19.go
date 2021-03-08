@@ -27,6 +27,7 @@ func main() {
 		configFileName string
 	)
 
+	log.WithField("version", version.BuildVersion).Info("covid19 monitor starting")
 	a := kingpin.New(filepath.Base(os.Args[0]), "covid19 monitor")
 
 	a.Version(version.BuildVersion)
@@ -48,8 +49,6 @@ func main() {
 	if debug || cfg.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
-
-	log.WithField("version", version.BuildVersion).Info("covid19 monitor starting")
 
 	var cache *covidcache.Cache
 
