@@ -1,13 +1,11 @@
 package probe_test
 
 import (
-	"testing"
-
+	mockDB "github.com/clambin/covid19/internal/population/db/mock"
+	"github.com/clambin/covid19/internal/population/probe"
+	"github.com/clambin/covid19/internal/population/probe/mockapi"
 	"github.com/stretchr/testify/assert"
-
-	mockDB "covid19/internal/population/db/mock"
-	"covid19/internal/population/probe"
-	"covid19/internal/population/probe/mockapi"
+	"testing"
 )
 
 func TestPopulationProbe(t *testing.T) {

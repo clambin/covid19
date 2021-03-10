@@ -1,16 +1,14 @@
 package covidhandler_test
 
 import (
-	"covid19/internal/covidcache"
+	"github.com/clambin/covid19/internal/covidcache"
+	"github.com/clambin/covid19/internal/coviddb"
+	mockdb "github.com/clambin/covid19/internal/coviddb/mock"
+	"github.com/clambin/covid19/internal/covidhandler"
+	"github.com/clambin/covid19/pkg/grafana/apiserver"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-
-	"covid19/internal/coviddb"
-	mockdb "covid19/internal/coviddb/mock"
-	"covid19/internal/covidhandler"
-	"covid19/pkg/grafana/apiserver"
 )
 
 func TestHandlerHandler(t *testing.T) {

@@ -1,15 +1,13 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
-
+	"github.com/clambin/covid19/internal/backfill"
+	"github.com/clambin/covid19/internal/coviddb"
+	"github.com/clambin/covid19/internal/version"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
-
-	"covid19/internal/backfill"
-	"covid19/internal/coviddb"
-	"covid19/internal/version"
+	"os"
+	"path/filepath"
 )
 
 func main() {

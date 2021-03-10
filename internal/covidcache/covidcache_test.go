@@ -1,9 +1,9 @@
 package covidcache_test
 
 import (
-	"covid19/internal/covidcache"
-	"covid19/internal/coviddb"
-	mockdb "covid19/internal/coviddb/mock"
+	"github.com/clambin/covid19/internal/covidcache"
+	"github.com/clambin/covid19/internal/coviddb"
+	mockdb "github.com/clambin/covid19/internal/coviddb/mock"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

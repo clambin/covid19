@@ -1,13 +1,11 @@
 package db_test
 
 import (
+	"github.com/clambin/covid19/internal/population/db"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"covid19/internal/population/db"
 )
 
 func getDBEnv() (map[string]string, bool) {

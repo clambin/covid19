@@ -1,12 +1,10 @@
 package mock
 
 import (
+	"github.com/clambin/covid19/internal/coviddb"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
-
-	log "github.com/sirupsen/logrus"
-
-	"covid19/internal/coviddb"
 )
 
 // DB mockapi database used for unit test tools

@@ -3,13 +3,12 @@ package apiserver_test
 import (
 	"bytes"
 	"errors"
+	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
-
-	"covid19/pkg/grafana/apiserver"
 )
 
 func TestAPIServer_Full(t *testing.T) {

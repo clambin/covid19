@@ -2,14 +2,12 @@ package probe_test
 
 import (
 	"bytes"
+	"github.com/clambin/covid19/internal/population/probe"
+	"github.com/clambin/gotools/httpstub"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"testing"
-
-	"github.com/clambin/gotools/httpstub"
-	"github.com/stretchr/testify/assert"
-
-	"covid19/internal/population/probe"
 )
 
 func TestGetPopulation(t *testing.T) {

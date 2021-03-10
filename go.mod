@@ -1,4 +1,4 @@
-module covid19
+module github.com/clambin/covid19
 
 go 1.15
 

@@ -1,11 +1,10 @@
 package covidhandler
 
 import (
-	"covid19/internal/covidcache"
 	"errors"
+	"github.com/clambin/covid19/internal/covidcache"
+	"github.com/clambin/covid19/pkg/grafana/apiserver"
 	log "github.com/sirupsen/logrus"
-
-	"covid19/pkg/grafana/apiserver"
 )
 
 // APIHandler implements business logic for APIServer

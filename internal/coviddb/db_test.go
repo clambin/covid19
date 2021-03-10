@@ -1,14 +1,12 @@
 package coviddb_test
 
 import (
+	"github.com/clambin/covid19/internal/coviddb"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-
-	"covid19/internal/coviddb"
 )
 
 func getDBEnv() (map[string]string, bool) {

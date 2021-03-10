@@ -1,7 +1,7 @@
 package configuration_test
 
 import (
-	"covid19/internal/configuration"
+	"github.com/clambin/covid19/internal/configuration"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"

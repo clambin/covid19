@@ -1,12 +1,12 @@
 package covidprobe_test
 
 import (
-	"covid19/internal/configuration"
-	"covid19/internal/covidcache"
-	"covid19/internal/coviddb"
-	mockdb "covid19/internal/coviddb/mock"
-	"covid19/internal/covidprobe"
-	"covid19/internal/covidprobe/mockapi"
+	"github.com/clambin/covid19/internal/configuration"
+	"github.com/clambin/covid19/internal/covidcache"
+	"github.com/clambin/covid19/internal/coviddb"
+	mockdb "github.com/clambin/covid19/internal/coviddb/mock"
+	"github.com/clambin/covid19/internal/covidprobe"
+	"github.com/clambin/covid19/internal/covidprobe/mockapi"
 	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
 	"testing"

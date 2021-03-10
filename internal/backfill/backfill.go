@@ -2,12 +2,10 @@ package backfill
 
 import (
 	"encoding/json"
+	"github.com/clambin/covid19/internal/coviddb"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
-
-	log "github.com/sirupsen/logrus"
-
-	"covid19/internal/coviddb"
 )
 
 // Backfiller retrieves historic COVID19 data and adds it to the database

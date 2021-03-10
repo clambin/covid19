@@ -1,7 +1,7 @@
 package probe
 
 import (
-	"covid19/internal/population/db"
+	"github.com/clambin/covid19/internal/population/db"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -1,7 +1,7 @@
 package covidcache
 
 import (
-	"covid19/internal/coviddb"
+	"github.com/clambin/covid19/internal/coviddb"
 	"github.com/mpvl/unique"
 	"time"
 )

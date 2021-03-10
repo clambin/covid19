@@ -2,19 +2,17 @@ package backfill_test
 
 import (
 	"bytes"
+	"github.com/clambin/covid19/internal/backfill"
+	"github.com/clambin/covid19/internal/coviddb"
+	"github.com/clambin/covid19/internal/coviddb/mock"
+	"github.com/clambin/gotools/httpstub"
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"testing"
 	"time"
-
-	"github.com/clambin/gotools/httpstub"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-
-	"covid19/internal/backfill"
-	"covid19/internal/coviddb"
-	"covid19/internal/coviddb/mock"
 )
 
 func TestBackFiller(t *testing.T) {
