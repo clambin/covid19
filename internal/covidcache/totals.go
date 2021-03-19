@@ -2,7 +2,7 @@ package covidcache
 
 import (
 	"github.com/clambin/covid19/internal/coviddb"
-	"github.com/mpvl/unique"
+	"sort"
 	"time"
 )
 
@@ -20,15 +20,19 @@ func GetTotalCases(rows []coviddb.CountryEntry) (result []CacheEntry) {
 
 	// Group data by timestamp
 	timeMap := make(map[time.Time][]coviddb.CountryEntry)
-	timestamps := make([]time.Time, 0)
 	for _, row := range rows {
 		if timeMap[row.Timestamp] == nil {
 			timeMap[row.Timestamp] = make([]coviddb.CountryEntry, 0)
 		}
 		timeMap[row.Timestamp] = append(timeMap[row.Timestamp], row)
-		timestamps = append(timestamps, row.Timestamp)
 	}
-	unique.Sort(timestampSlice{&timestamps})
+
+	// Get all unique timestamps
+	timestamps := make([]time.Time, 0, len(timeMap))
+	for timestamp := range timeMap {
+		timestamps = append(timestamps, timestamp)
+	}
+	sort.Slice(timestamps, func(i, j int) bool { return timestamps[i].Before(timestamps[j]) })
 
 	// Go through each timestamp, record running total for each country & compute total cases
 	countryMap := make(map[string]covidData)
@@ -67,23 +71,4 @@ func GetTotalDeltas(entries []CacheEntry) (result []CacheEntry) {
 		current = entry
 	}
 	return
-}
-
-// Helper code for unique.Sort()
-type timestampSlice struct{ P *[]time.Time }
-
-func (p timestampSlice) Len() int {
-	return len(*p.P)
-}
-
-func (p timestampSlice) Less(i, j int) bool {
-	return (*p.P)[i].Before((*p.P)[j])
-}
-
-func (p timestampSlice) Swap(i, j int) {
-	(*p.P)[i], (*p.P)[j] = (*p.P)[j], (*p.P)[i]
-}
-
-func (p timestampSlice) Truncate(n int) {
-	*p.P = (*p.P)[:n]
 }
