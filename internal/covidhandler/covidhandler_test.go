@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/covid19/internal/coviddb"
 	mockdb "github.com/clambin/covid19/internal/coviddb/mock"
 	"github.com/clambin/covid19/internal/covidhandler"
-	"github.com/clambin/covid19/pkg/grafana/apiserver"
+	grafana_json "github.com/clambin/grafana-json"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -48,17 +48,19 @@ func TestHandlerHandler(t *testing.T) {
 
 	handler, _ := covidhandler.Create(cache)
 
+	// targets
+
 	// Test Search
 	targets := handler.Search()
-	assert.Equal(t, []string{"active", "active-delta", "confirmed", "confirmed-delta", "death", "death-delta", "recovered", "recovered-delta"}, targets)
+	assert.Equal(t, covidhandler.Targets, targets)
 
 	// Test Query
-	request := apiserver.APIQueryRequest{
-		Range: apiserver.APIQueryRequestRange{
+	request := grafana_json.QueryRequest{
+		Range: grafana_json.QueryRequestRange{
 			From: time.Now(),
 			To:   time.Now(),
 		},
-		Targets: []apiserver.APIQueryRequestTarget{
+		Targets: []grafana_json.QueryRequestTarget{
 			{Target: "confirmed"},
 			{Target: "confirmed-delta"},
 			{Target: "death"},
@@ -68,34 +70,31 @@ func TestHandlerHandler(t *testing.T) {
 			{Target: "active"},
 			{Target: "active-delta"},
 			{Target: "invalid"},
-		}}
-
-	testCases := map[string][][2]int64{
-		"confirmed":       {[2]int64{1, 1604188800000}, [2]int64{6, 1604275200000}, [2]int64{13, 1604448000000}},
-		"confirmed-delta": {[2]int64{1, 1604188800000}, [2]int64{5, 1604275200000}, [2]int64{7, 1604448000000}},
-		"death":           {[2]int64{0, 1604188800000}, [2]int64{0, 1604275200000}, [2]int64{1, 1604448000000}},
-		"death-delta":     {[2]int64{0, 1604188800000}, [2]int64{0, 1604275200000}, [2]int64{1, 1604448000000}},
-		"recovered":       {[2]int64{0, 1604188800000}, [2]int64{1, 1604275200000}, [2]int64{6, 1604448000000}},
-		"recovered-delta": {[2]int64{0, 1604188800000}, [2]int64{1, 1604275200000}, [2]int64{5, 1604448000000}},
-		"active":          {[2]int64{1, 1604188800000}, [2]int64{5, 1604275200000}, [2]int64{6, 1604448000000}},
-		"active-delta":    {[2]int64{1, 1604188800000}, [2]int64{4, 1604275200000}, [2]int64{1, 1604448000000}},
+		},
 	}
 
-	responses, err := handler.Query(&request)
-	assert.Nil(t, err)
-	assert.Equal(t, len(testCases), len(responses))
-
-	indexes := make(map[string]int, 0)
-	for index, response := range responses {
-		indexes[response.Target] = index
+	testCases := map[string][]int64{
+		"confirmed":       {1, 6, 13},
+		"confirmed-delta": {1, 5, 7},
+		"death":           {0, 0, 1},
+		"death-delta":     {0, 0, 1},
+		"recovered":       {0, 1, 6},
+		"recovered-delta": {0, 1, 5},
+		"active":          {1, 5, 6},
+		"active-delta":    {1, 4, 1},
 	}
-	assert.Equal(t, len(responses), len(indexes))
 
-	for target, expected := range testCases {
-		index, ok := indexes[target]
-		assert.True(t, ok)
-		assert.Equal(t, target, responses[index].Target)
-		assert.Equal(t, expected, responses[index].DataPoints, target)
+	for target, testCase := range testCases {
+		responses, err := handler.Query(target, &request)
+
+		if assert.Nil(t, err) {
+			assert.Equal(t, len(testCase), len(responses.DataPoints))
+
+			for index, entry := range testCase {
+				assert.Equal(t, entry, responses.DataPoints[index].Value)
+			}
+		}
+
 	}
 }
 
@@ -129,29 +128,32 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
 	cache := covidcache.New(mockdb.Create(entries))
-	go cache.Run()
 	handler, _ := covidhandler.Create(cache)
 
-	request := apiserver.APIQueryRequest{
-		Range: apiserver.APIQueryRequestRange{
+	request := grafana_json.QueryRequest{
+		Range: grafana_json.QueryRequestRange{
 			From: time.Now(),
 			To:   time.Now(),
 		},
-		Targets: []apiserver.APIQueryRequestTarget{
+		Targets: []grafana_json.QueryRequestTarget{
 			{Target: "confirmed"},
 			{Target: "confirmed-delta"},
-			{Target: "recovered"},
-			{Target: "recovered-delta"},
 			{Target: "death"},
 			{Target: "death-delta"},
+			{Target: "recovered"},
+			{Target: "recovered-delta"},
 			{Target: "active"},
 			{Target: "active-delta"},
-		}}
+			{Target: "invalid"},
+		},
+	}
+
+	b.ResetTimer()
 
 	// Run the benchmark
-	b.ResetTimer()
-	for i := 0; i < 1000; i++ {
-		_, err := handler.Query(&request)
+	go cache.Run()
+	for _, target := range covidhandler.Targets {
+		_, err := handler.Query(target, &request)
 		assert.Nil(b, err)
 	}
 }

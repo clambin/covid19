@@ -10,7 +10,7 @@ import (
 	popdb "github.com/clambin/covid19/internal/population/db"
 	popprobe "github.com/clambin/covid19/internal/population/probe"
 	"github.com/clambin/covid19/internal/version"
-	"github.com/clambin/covid19/pkg/grafana/apiserver"
+	"github.com/clambin/grafana-json"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -111,6 +111,6 @@ func startMonitor(cfg *configuration.Configuration, createCache bool) (cache *co
 
 func runGrafanaServer(cfg *configuration.Configuration, cache *covidcache.Cache) {
 	handler, _ := covidhandler.Create(cache)
-	server := apiserver.Create(handler, cfg.Port)
+	server := grafana_json.Create(handler, cfg.Port)
 	_ = server.Run()
 }

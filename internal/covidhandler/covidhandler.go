@@ -2,26 +2,28 @@ package covidhandler
 
 import (
 	"errors"
+	"fmt"
 	"github.com/clambin/covid19/internal/covidcache"
-	"github.com/clambin/covid19/pkg/grafana/apiserver"
+	"github.com/clambin/grafana-json"
 	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
-// APIHandler implements business logic for APIServer
-type APIHandler struct {
+// Handler implements business logic for APIServer
+type Handler struct {
 	cache *covidcache.Cache
 }
 
 // Create a CovidAPIHandler object
-func Create(cache *covidcache.Cache) (*APIHandler, error) {
+func Create(cache *covidcache.Cache) (*Handler, error) {
 	if cache == nil {
 		return nil, errors.New("no database specified")
 	}
-	return &APIHandler{cache: cache}, nil
+	return &Handler{cache: cache}, nil
 }
 
 var (
-	targets = []string{
+	Targets = []string{
 		"active",
 		"active-delta",
 		"confirmed",
@@ -34,59 +36,37 @@ var (
 )
 
 // Search returns all supported targets
-func (apiHandler *APIHandler) Search() []string {
-	return targets
+func (handler *Handler) Search() []string {
+	return Targets
 }
 
 // Query the DB and return the requested targets
-func (apiHandler *APIHandler) Query(request *apiserver.APIQueryRequest) (response []apiserver.APIQueryResponse, err error) {
+func (handler *Handler) Query(target string, request *grafana_json.QueryRequest) (response *grafana_json.QueryResponse, err error) {
 	responseChannel := make(chan covidcache.Response)
 	defer close(responseChannel)
 
-	apiHandler.cache.Request <- covidcache.Request{
+	handler.cache.Request <- covidcache.Request{
 		Response: responseChannel,
 		End:      request.Range.To,
 	}
 
 	resp := <-responseChannel
 
-	totals := resp.Totals
-	deltas := resp.Deltas
-
-	for _, target := range request.Targets {
-		switch target.Target {
-		case "confirmed":
-			response = append(response, buildResponsePart(totals, target.Target, "confirmed"))
-		case "confirmed-delta":
-			response = append(response, buildResponsePart(deltas, target.Target, "confirmed"))
-		case "recovered":
-			response = append(response, buildResponsePart(totals, target.Target, "recovered"))
-		case "recovered-delta":
-			response = append(response, buildResponsePart(deltas, target.Target, "recovered"))
-		case "death":
-			response = append(response, buildResponsePart(totals, target.Target, "death"))
-		case "death-delta":
-			response = append(response, buildResponsePart(deltas, target.Target, "death"))
-		case "active":
-			response = append(response, buildResponsePart(totals, target.Target, "active"))
-		case "active-delta":
-			response = append(response, buildResponsePart(deltas, target.Target, "active"))
-		default:
-			log.Warningf("dropping unsupported target: %s", target.Target)
-		}
+	data := resp.Totals
+	subTarget := target
+	if strings.HasSuffix(target, "-delta") {
+		data = resp.Deltas
+		subTarget = strings.TrimSuffix(target, "-delta")
 	}
-	return
-}
 
-func buildResponsePart(entries []covidcache.CacheEntry, target string, attribute string) (response apiserver.APIQueryResponse) {
-	var timestamp, value int64
-
+	response = new(grafana_json.QueryResponse)
 	response.Target = target
-	response.DataPoints = make([][2]int64, len(entries))
-	for index, entry := range entries {
-		timestamp = entry.Timestamp.UnixNano() / 1000000
-		value = 0
-		switch attribute {
+	response.DataPoints = make([]grafana_json.QueryResponseDataPoint, len(data))
+
+loop:
+	for index, entry := range data {
+		var value int64
+		switch subTarget {
 		case "confirmed":
 			value = entry.Confirmed
 		case "recovered":
@@ -95,8 +75,20 @@ func buildResponsePart(entries []covidcache.CacheEntry, target string, attribute
 			value = entry.Deaths
 		case "active":
 			value = entry.Active
+		default:
+			log.Warningf("dropping unsupported target: %s", target)
+			break loop
 		}
-		response.DataPoints[index] = [2]int64{value, timestamp}
+
+		response.DataPoints[index] = grafana_json.QueryResponseDataPoint{
+			Timestamp: entry.Timestamp,
+			Value:     value,
+		}
 	}
+	return
+}
+
+func (handler *Handler) QueryTable(target string, _ *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse, err error) {
+	err = fmt.Errorf("%s does not implement table query", target)
 	return
 }
