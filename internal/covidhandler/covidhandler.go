@@ -7,6 +7,7 @@ import (
 	"github.com/clambin/grafana-json"
 	log "github.com/sirupsen/logrus"
 	"strings"
+	"time"
 )
 
 // Handler implements business logic for APIServer
@@ -44,6 +45,8 @@ func (handler *Handler) Search() []string {
 
 // Query the DB and return the requested targets
 func (handler *Handler) Query(target string, request *grafana_json.QueryRequest) (response *grafana_json.QueryResponse, err error) {
+	start := time.Now()
+
 	responseChannel := make(chan covidcache.Response)
 	defer close(responseChannel)
 
@@ -88,10 +91,18 @@ loop:
 			Value:     value,
 		}
 	}
+
+	log.WithFields(log.Fields{
+		"target": target,
+		"time":   time.Now().Sub(start).String(),
+	}).Info("query timeserie")
+
 	return
 }
 
 func (handler *Handler) QueryTable(target string, req *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse, err error) {
+	start := time.Now()
+
 	switch target {
 	case "daily":
 		response = handler.buildDaily(req)
@@ -100,6 +111,12 @@ func (handler *Handler) QueryTable(target string, req *grafana_json.QueryRequest
 	default:
 		err = fmt.Errorf("%s does not implement table query", target)
 	}
+
+	log.WithFields(log.Fields{
+		"target": target,
+		"time":   time.Now().Sub(start).String(),
+	}).Info("query table")
+
 	return
 }
 
@@ -169,8 +186,8 @@ func (handler *Handler) buildCumulative(request *grafana_json.QueryRequest) (res
 	response.Columns = []grafana_json.QueryTableResponseColumn{
 		{Text: "timestamp", Data: timestamps},
 		{Text: "active", Data: active},
-		{Text: "recovered", Data: recovered},
 		{Text: "deaths", Data: deaths},
+		{Text: "recovered", Data: recovered},
 	}
 	return
 }
