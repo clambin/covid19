@@ -21,11 +21,11 @@ type Cache struct {
 type Request struct {
 	Response chan Response
 	End      time.Time
+	Delta    bool
 }
 
 type Response struct {
-	Totals []CacheEntry
-	Deltas []CacheEntry
+	Series []CacheEntry
 }
 
 // CacheEntry holds one date's data
@@ -59,9 +59,15 @@ func (cache *Cache) Run() {
 				log.WithField("err", err).Warning("failed to refresh cache")
 			}
 		case req := <-cache.Request:
+			var series []CacheEntry
+			switch req.Delta {
+			case false:
+				series = cache.getTotals(req.End)
+			case true:
+				series = cache.getDeltas(req.End)
+			}
 			req.Response <- Response{
-				Totals: cache.getTotals(req.End),
-				Deltas: cache.getDeltas(req.End),
+				Series: series,
 			}
 		}
 	}

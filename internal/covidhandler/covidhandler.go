@@ -45,26 +45,27 @@ func (handler *Handler) Query(target string, request *grafana_json.QueryRequest)
 	responseChannel := make(chan covidcache.Response)
 	defer close(responseChannel)
 
+	deltas := false
+	subTarget := target
+	if strings.HasSuffix(target, "-delta") {
+		deltas = true
+		subTarget = strings.TrimSuffix(target, "-delta")
+	}
+
 	handler.cache.Request <- covidcache.Request{
 		Response: responseChannel,
 		End:      request.Range.To,
+		Delta:    deltas,
 	}
 
 	resp := <-responseChannel
 
-	data := resp.Totals
-	subTarget := target
-	if strings.HasSuffix(target, "-delta") {
-		data = resp.Deltas
-		subTarget = strings.TrimSuffix(target, "-delta")
-	}
-
 	response = new(grafana_json.QueryResponse)
 	response.Target = target
-	response.DataPoints = make([]grafana_json.QueryResponseDataPoint, len(data))
+	response.DataPoints = make([]grafana_json.QueryResponseDataPoint, len(resp.Series))
 
 loop:
-	for index, entry := range data {
+	for index, entry := range resp.Series {
 		var value int64
 		switch subTarget {
 		case "confirmed":
