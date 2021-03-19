@@ -152,8 +152,11 @@ func BenchmarkHandlerQuery(b *testing.B) {
 
 	// Run the benchmark
 	go cache.Run()
-	for _, target := range covidhandler.Targets {
-		_, err := handler.Query(target, &request)
-		assert.Nil(b, err)
+	for i := 0; i < 10; i++ {
+		for _, target := range covidhandler.Targets {
+			_, err := handler.Query(target, &request)
+			assert.Nil(b, err)
+		}
 	}
+
 }
