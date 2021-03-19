@@ -32,6 +32,8 @@ var (
 		"death-delta",
 		"recovered",
 		"recovered-delta",
+		"daily",
+		"cumulative",
 	}
 )
 
@@ -89,7 +91,86 @@ loop:
 	return
 }
 
-func (handler *Handler) QueryTable(target string, _ *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse, err error) {
-	err = fmt.Errorf("%s does not implement table query", target)
+func (handler *Handler) QueryTable(target string, req *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse, err error) {
+	switch target {
+	case "daily":
+		response = handler.buildDaily(req)
+	case "cumulative":
+		response = handler.buildCumulative(req)
+	default:
+		err = fmt.Errorf("%s does not implement table query", target)
+	}
+	return
+}
+
+func (handler *Handler) buildDaily(request *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse) {
+	responseChannel := make(chan covidcache.Response)
+	defer close(responseChannel)
+
+	handler.cache.Request <- covidcache.Request{
+		Response: responseChannel,
+		End:      request.Range.To,
+		Delta:    true,
+	}
+
+	resp := <-responseChannel
+
+	dataLen := len(resp.Series)
+	response = new(grafana_json.QueryTableResponse)
+	timestamps := make(grafana_json.QueryTableResponseTimeColumn, 0, dataLen)
+	confirmed := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
+	recovered := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
+	deaths := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
+
+	for _, entry := range resp.Series {
+		timestamps = append(timestamps, entry.Timestamp)
+		confirmed = append(confirmed, float64(entry.Confirmed))
+		recovered = append(recovered, float64(entry.Recovered))
+		deaths = append(deaths, float64(entry.Deaths))
+	}
+
+	response = new(grafana_json.QueryTableResponse)
+	response.Columns = []grafana_json.QueryTableResponseColumn{
+		{Text: "timestamp", Data: timestamps},
+		{Text: "confirmed", Data: confirmed},
+		{Text: "recovered", Data: recovered},
+		{Text: "deaths", Data: deaths},
+	}
+	return
+}
+
+func (handler *Handler) buildCumulative(request *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse) {
+	responseChannel := make(chan covidcache.Response)
+	defer close(responseChannel)
+
+	handler.cache.Request <- covidcache.Request{
+		Response: responseChannel,
+		End:      request.Range.To,
+		Delta:    false,
+	}
+
+	resp := <-responseChannel
+
+	dataLen := len(resp.Series)
+	response = new(grafana_json.QueryTableResponse)
+	timestamps := make(grafana_json.QueryTableResponseTimeColumn, 0, dataLen)
+	active := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
+	recovered := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
+	deaths := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
+
+	for _, entry := range resp.Series {
+		timestamps = append(timestamps, entry.Timestamp)
+		active = append(active, float64(entry.Confirmed-entry.Recovered-entry.Deaths))
+		recovered = append(recovered, float64(entry.Recovered))
+		deaths = append(deaths, float64(entry.Deaths))
+	}
+
+	response = new(grafana_json.QueryTableResponse)
+	response.Columns = []grafana_json.QueryTableResponseColumn{
+		{Text: "timestamp", Data: timestamps},
+		{Text: "active", Data: active},
+		{Text: "recovered", Data: recovered},
+		{Text: "deaths", Data: deaths},
+	}
 	return
 }
