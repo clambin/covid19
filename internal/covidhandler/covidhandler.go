@@ -112,9 +112,19 @@ func (handler *Handler) QueryTable(target string, req *grafana_json.QueryRequest
 		err = fmt.Errorf("%s does not implement table query", target)
 	}
 
+	var dataLen int
+	if response != nil && len(response.Columns) > 0 {
+		switch data := response.Columns[0].Data.(type) {
+		case grafana_json.QueryTableResponseTimeColumn:
+			dataLen = len(data)
+		}
+	}
+
 	log.WithFields(log.Fields{
 		"target": target,
 		"time":   time.Now().Sub(start).String(),
+		"max":    req.MaxDataPoints,
+		"actual": dataLen,
 	}).Info("query table")
 
 	return
