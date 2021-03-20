@@ -122,7 +122,7 @@ func (handler *Handler) QueryTable(target string, req *grafana_json.QueryRequest
 
 	log.WithFields(log.Fields{
 		"target": target,
-		"time":   time.Now().Sub(start).String(),
+		"time":   time.Now().Sub(start),
 		"max":    req.MaxDataPoints,
 		"actual": dataLen,
 	}).Info("query table")

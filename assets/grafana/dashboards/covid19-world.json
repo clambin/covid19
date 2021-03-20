@@ -87,11 +87,7 @@
         },
         {
             "aliasColors": {
-                "Active": "light-blue",
-                "Deaths": "light-red",
-                "Recovered": "light-green",
-                "active": "light-green",
-                "death": "light-red",
+                "deaths": "light-red",
                 "recovered": "light-blue"
             },
             "bars": false,
@@ -100,12 +96,18 @@
             "datasource": "covid19api",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {},
+                    "custom": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": []
+                    },
+                    "unit": "short"
                 },
                 "overrides": []
             },
             "fill": 1,
-            "fillGradient": 3,
+            "fillGradient": 0,
             "gridPos": {
                 "h": 8,
                 "w": 12,
@@ -113,7 +115,7 @@
                 "y": 0
             },
             "hiddenSeries": false,
-            "id": 31,
+            "id": 42,
             "legend": {
                 "avg": false,
                 "current": false,
@@ -125,12 +127,12 @@
             },
             "lines": true,
             "linewidth": 1,
-            "nullPointMode": "connected",
+            "nullPointMode": "null",
             "options": {
                 "alertThreshold": true
             },
             "percentage": true,
-            "pluginVersion": "7.4.0",
+            "pluginVersion": "7.4.5",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -140,19 +142,10 @@
             "steppedLine": false,
             "targets": [
                 {
+                    "queryType": "randomWalk",
                     "refId": "A",
-                    "target": "active",
-                    "type": "timeserie"
-                },
-                {
-                    "refId": "C",
-                    "target": "death",
-                    "type": "timeserie"
-                },
-                {
-                    "refId": "B",
-                    "target": "recovered",
-                    "type": "timeserie"
+                    "target": "cumulative",
+                    "type": "table"
                 }
             ],
             "thresholds": [],
@@ -175,16 +168,16 @@
             },
             "yaxes": [
                 {
-                    "$$hashKey": "object:662",
+                    "$$hashKey": "object:604",
                     "format": "short",
                     "label": null,
                     "logBase": 1,
                     "max": null,
-                    "min": "0",
+                    "min": null,
                     "show": true
                 },
                 {
-                    "$$hashKey": "object:663",
+                    "$$hashKey": "object:605",
                     "format": "short",
                     "label": null,
                     "logBase": 1,
@@ -199,234 +192,238 @@
             }
         },
         {
-            "aliasColors": {
-                "Active": "light-blue",
-                "Deaths": "light-red",
-                "Recovered": "light-green",
-                "active": "light-green",
-                "active-delta": "light-green",
-                "confirmed-delta": "light-yellow",
-                "death": "light-yellow",
-                "death-delta": "light-red",
-                "recovered": "light-blue",
-                "recovered-delta": "light-blue"
-            },
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
             "datasource": "covid19api",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "graph": false,
+                            "legend": false,
+                            "tooltip": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": true
+                    },
+                    "mappings": [],
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "deaths"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "confirmed"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-yellow",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
-            "fill": 1,
-            "fillGradient": 3,
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 0,
                 "y": 8
             },
-            "hiddenSeries": false,
-            "id": 34,
-            "legend": {
-                "avg": false,
-                "current": true,
-                "max": false,
-                "min": false,
-                "show": true,
-                "total": false,
-                "values": true
-            },
-            "lines": true,
-            "linewidth": 1,
-            "nullPointMode": "connected",
+            "id": 38,
             "options": {
-                "alertThreshold": true
+                "graph": {},
+                "legend": {
+                    "calcs": [
+                        "last"
+                    ],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltipOptions": {
+                    "mode": "multi"
+                }
             },
-            "percentage": true,
-            "pluginVersion": "7.4.0",
-            "pointradius": 2,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": false,
-            "steppedLine": false,
+            "pluginVersion": "7.4.5",
             "targets": [
                 {
+                    "queryType": "randomWalk",
                     "refId": "A",
-                    "target": "death-delta",
-                    "type": "timeserie"
-                },
-                {
-                    "refId": "B",
-                    "target": "recovered-delta",
-                    "type": "timeserie"
-                },
-                {
-                    "refId": "C",
-                    "target": "confirmed-delta",
-                    "type": "timeserie"
+                    "target": "daily",
+                    "type": "table"
                 }
             ],
-            "thresholds": [],
-            "timeFrom": null,
-            "timeRegions": [],
-            "timeShift": null,
             "title": "New cases / day",
-            "tooltip": {
-                "shared": true,
-                "sort": 2,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "$$hashKey": "object:662",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": "0",
-                    "show": true
-                },
-                {
-                    "$$hashKey": "object:663",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": false
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
+            "type": "timeseries"
         },
         {
-            "aliasColors": {
-                "Active": "light-blue",
-                "Deaths": "light-red",
-                "Recovered": "light-green",
-                "active": "light-green",
-                "death": "light-red",
-                "recovered": "light-blue"
-            },
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
             "datasource": "covid19api",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 39,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "graph": false,
+                            "legend": false,
+                            "tooltip": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": true
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "deaths"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
-            "fill": 1,
-            "fillGradient": 3,
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 12,
                 "y": 8
             },
-            "hiddenSeries": false,
-            "id": 33,
-            "legend": {
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "show": true,
-                "total": false,
-                "values": false
-            },
-            "lines": true,
-            "linewidth": 1,
-            "nullPointMode": "connected",
+            "id": 40,
             "options": {
-                "alertThreshold": true
+                "graph": {},
+                "legend": {
+                    "calcs": [
+                        "last"
+                    ],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltipOptions": {
+                    "mode": "single"
+                }
             },
-            "percentage": true,
-            "pluginVersion": "7.4.0",
-            "pointradius": 2,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": false,
-            "steppedLine": false,
+            "pluginVersion": "7.4.5",
             "targets": [
                 {
+                    "queryType": "randomWalk",
                     "refId": "A",
-                    "target": "death",
-                    "type": "timeserie"
-                },
-                {
-                    "refId": "B",
-                    "target": "recovered",
-                    "type": "timeserie"
-                },
-                {
-                    "refId": "C",
-                    "target": "active",
-                    "type": "timeserie"
+                    "target": "cumulative",
+                    "type": "table"
                 }
             ],
-            "thresholds": [],
-            "timeFrom": null,
-            "timeRegions": [],
-            "timeShift": null,
             "title": "Total cases",
-            "tooltip": {
-                "shared": true,
-                "sort": 2,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "$$hashKey": "object:662",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": "0",
-                    "show": true
-                },
-                {
-                    "$$hashKey": "object:663",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": false
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
+            "type": "timeseries"
         },
         {
             "collapsed": false,
@@ -1195,7 +1192,7 @@
             "valueName": "current"
         }
     ],
-    "refresh": false,
+    "refresh": "15m",
     "schemaVersion": 27,
     "style": "dark",
     "tags": [],
@@ -1223,5 +1220,5 @@
     "timezone": "",
     "title": "Covid19 - World",
     "uid": "_XF1ESzgz",
-    "version": 14
+    "version": 15
 }
