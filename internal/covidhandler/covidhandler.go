@@ -11,16 +11,25 @@ import (
 )
 
 // Handler implements business logic for APIServer
-type Handler struct {
-	cache *covidcache.Cache
+type CovidHandler struct {
+	Handler grafana_json.Handler
+	cache   *covidcache.Cache
 }
 
 // Create a CovidAPIHandler object
-func Create(cache *covidcache.Cache) (*Handler, error) {
+func Create(cache *covidcache.Cache) (*CovidHandler, error) {
 	if cache == nil {
 		return nil, errors.New("no database specified")
 	}
-	return &Handler{cache: cache}, nil
+	h := CovidHandler{cache: cache}
+
+	h.Handler = grafana_json.Handler{
+		Search:     h.Search,
+		Query:      h.Query,
+		TableQuery: h.TableQuery,
+	}
+
+	return &h, nil
 }
 
 var (
@@ -39,12 +48,12 @@ var (
 )
 
 // Search returns all supported targets
-func (handler *Handler) Search() []string {
+func (handler *CovidHandler) Search() []string {
 	return Targets
 }
 
 // Query the DB and return the requested targets
-func (handler *Handler) Query(target string, request *grafana_json.QueryRequest) (response *grafana_json.QueryResponse, err error) {
+func (handler *CovidHandler) Query(target string, args *grafana_json.TimeSeriesQueryArgs) (response *grafana_json.QueryResponse, err error) {
 	start := time.Now()
 
 	responseChannel := make(chan covidcache.Response)
@@ -59,7 +68,7 @@ func (handler *Handler) Query(target string, request *grafana_json.QueryRequest)
 
 	handler.cache.Request <- covidcache.Request{
 		Response: responseChannel,
-		End:      request.Range.To,
+		End:      args.Range.To,
 		Delta:    deltas,
 	}
 
@@ -100,14 +109,14 @@ loop:
 	return
 }
 
-func (handler *Handler) QueryTable(target string, req *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse, err error) {
+func (handler *CovidHandler) TableQuery(target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
 	start := time.Now()
 
 	switch target {
 	case "daily":
-		response = handler.buildDaily(req)
+		response = handler.buildDaily(args)
 	case "cumulative":
-		response = handler.buildCumulative(req)
+		response = handler.buildCumulative(args)
 	default:
 		err = fmt.Errorf("%s does not implement table query", target)
 	}
@@ -115,7 +124,7 @@ func (handler *Handler) QueryTable(target string, req *grafana_json.QueryRequest
 	var dataLen int
 	if response != nil && len(response.Columns) > 0 {
 		switch data := response.Columns[0].Data.(type) {
-		case grafana_json.QueryTableResponseTimeColumn:
+		case grafana_json.TableQueryResponseTimeColumn:
 			dataLen = len(data)
 		}
 	}
@@ -123,31 +132,30 @@ func (handler *Handler) QueryTable(target string, req *grafana_json.QueryRequest
 	log.WithFields(log.Fields{
 		"target": target,
 		"time":   time.Now().Sub(start),
-		"max":    req.MaxDataPoints,
 		"actual": dataLen,
 	}).Info("query table")
 
 	return
 }
 
-func (handler *Handler) buildDaily(request *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse) {
+func (handler *CovidHandler) buildDaily(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse) {
 	responseChannel := make(chan covidcache.Response)
 	defer close(responseChannel)
 
 	handler.cache.Request <- covidcache.Request{
 		Response: responseChannel,
-		End:      request.Range.To,
+		End:      args.Range.To,
 		Delta:    true,
 	}
 
 	resp := <-responseChannel
 
 	dataLen := len(resp.Series)
-	response = new(grafana_json.QueryTableResponse)
-	timestamps := make(grafana_json.QueryTableResponseTimeColumn, 0, dataLen)
-	confirmed := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
-	recovered := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
-	deaths := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
+	response = new(grafana_json.TableQueryResponse)
+	timestamps := make(grafana_json.TableQueryResponseTimeColumn, 0, dataLen)
+	confirmed := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
+	recovered := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
+	deaths := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
 
 	for _, entry := range resp.Series {
 		timestamps = append(timestamps, entry.Timestamp)
@@ -156,8 +164,8 @@ func (handler *Handler) buildDaily(request *grafana_json.QueryRequest) (response
 		deaths = append(deaths, float64(entry.Deaths))
 	}
 
-	response = new(grafana_json.QueryTableResponse)
-	response.Columns = []grafana_json.QueryTableResponseColumn{
+	response = new(grafana_json.TableQueryResponse)
+	response.Columns = []grafana_json.TableQueryResponseColumn{
 		{Text: "timestamp", Data: timestamps},
 		{Text: "confirmed", Data: confirmed},
 		{Text: "recovered", Data: recovered},
@@ -166,24 +174,24 @@ func (handler *Handler) buildDaily(request *grafana_json.QueryRequest) (response
 	return
 }
 
-func (handler *Handler) buildCumulative(request *grafana_json.QueryRequest) (response *grafana_json.QueryTableResponse) {
+func (handler *CovidHandler) buildCumulative(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse) {
 	responseChannel := make(chan covidcache.Response)
 	defer close(responseChannel)
 
 	handler.cache.Request <- covidcache.Request{
 		Response: responseChannel,
-		End:      request.Range.To,
+		End:      args.Range.To,
 		Delta:    false,
 	}
 
 	resp := <-responseChannel
 
 	dataLen := len(resp.Series)
-	response = new(grafana_json.QueryTableResponse)
-	timestamps := make(grafana_json.QueryTableResponseTimeColumn, 0, dataLen)
-	active := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
-	recovered := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
-	deaths := make(grafana_json.QueryTableResponseNumberColumn, 0, dataLen)
+	response = new(grafana_json.TableQueryResponse)
+	timestamps := make(grafana_json.TableQueryResponseTimeColumn, 0, dataLen)
+	active := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
+	recovered := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
+	deaths := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
 
 	for _, entry := range resp.Series {
 		timestamps = append(timestamps, entry.Timestamp)
@@ -192,8 +200,8 @@ func (handler *Handler) buildCumulative(request *grafana_json.QueryRequest) (res
 		deaths = append(deaths, float64(entry.Deaths))
 	}
 
-	response = new(grafana_json.QueryTableResponse)
-	response.Columns = []grafana_json.QueryTableResponseColumn{
+	response = new(grafana_json.TableQueryResponse)
+	response.Columns = []grafana_json.TableQueryResponseColumn{
 		{Text: "timestamp", Data: timestamps},
 		{Text: "active", Data: active},
 		{Text: "deaths", Data: deaths},

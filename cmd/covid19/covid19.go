@@ -111,6 +111,6 @@ func startMonitor(cfg *configuration.Configuration, createCache bool) (cache *co
 
 func runGrafanaServer(cfg *configuration.Configuration, cache *covidcache.Cache) {
 	handler, _ := covidhandler.Create(cache)
-	server := grafana_json.Create(handler, cfg.Port)
+	server := grafana_json.Create(handler.Handler, cfg.Port)
 	_ = server.Run()
 }

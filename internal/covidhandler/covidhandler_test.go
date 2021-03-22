@@ -55,21 +55,12 @@ func TestHandlerHandler(t *testing.T) {
 	assert.Equal(t, covidhandler.Targets, targets)
 
 	// Test Query
-	request := grafana_json.QueryRequest{
-		Range: grafana_json.QueryRequestRange{
-			From: time.Now(),
-			To:   time.Now(),
-		},
-		Targets: []grafana_json.QueryRequestTarget{
-			{Target: "confirmed"},
-			{Target: "confirmed-delta"},
-			{Target: "death"},
-			{Target: "death-delta"},
-			{Target: "recovered"},
-			{Target: "recovered-delta"},
-			{Target: "active"},
-			{Target: "active-delta"},
-			{Target: "invalid"},
+	args := grafana_json.TimeSeriesQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{
+				From: time.Now(),
+				To:   time.Now(),
+			},
 		},
 	}
 
@@ -85,7 +76,7 @@ func TestHandlerHandler(t *testing.T) {
 	}
 
 	for target, testCase := range testCases {
-		responses, err := handler.Query(target, &request)
+		responses, err := handler.Query(target, &args)
 
 		if assert.Nil(t, err) {
 			assert.Equal(t, len(testCase), len(responses.DataPoints))
@@ -130,21 +121,12 @@ func BenchmarkHandlerQuery(b *testing.B) {
 	cache := covidcache.New(mockdb.Create(entries))
 	handler, _ := covidhandler.Create(cache)
 
-	request := grafana_json.QueryRequest{
-		Range: grafana_json.QueryRequestRange{
-			From: time.Now(),
-			To:   time.Now(),
-		},
-		Targets: []grafana_json.QueryRequestTarget{
-			{Target: "confirmed"},
-			{Target: "confirmed-delta"},
-			{Target: "death"},
-			{Target: "death-delta"},
-			{Target: "recovered"},
-			{Target: "recovered-delta"},
-			{Target: "active"},
-			{Target: "active-delta"},
-			{Target: "invalid"},
+	args := grafana_json.TimeSeriesQueryArgs{
+		CommonQueryArgs: grafana_json.CommonQueryArgs{
+			Range: grafana_json.QueryRequestRange{
+				From: time.Now(),
+				To:   time.Now(),
+			},
 		},
 	}
 
@@ -154,7 +136,7 @@ func BenchmarkHandlerQuery(b *testing.B) {
 	go cache.Run()
 	for i := 0; i < 10; i++ {
 		for _, target := range covidhandler.Targets {
-			_, err := handler.Query(target, &request)
+			_, err := handler.Query(target, &args)
 			assert.Nil(b, err)
 		}
 	}
