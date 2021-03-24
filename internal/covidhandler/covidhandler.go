@@ -12,8 +12,7 @@ import (
 
 // Handler implements business logic for APIServer
 type CovidHandler struct {
-	Handler grafana_json.Handler
-	cache   *covidcache.Cache
+	cache *covidcache.Cache
 }
 
 // Create a CovidAPIHandler object
@@ -21,15 +20,8 @@ func Create(cache *covidcache.Cache) (*CovidHandler, error) {
 	if cache == nil {
 		return nil, errors.New("no database specified")
 	}
-	h := CovidHandler{cache: cache}
 
-	h.Handler = grafana_json.Handler{
-		Search:     h.Search,
-		Query:      h.Query,
-		TableQuery: h.TableQuery,
-	}
-
-	return &h, nil
+	return &CovidHandler{cache: cache}, nil
 }
 
 var (
@@ -46,6 +38,15 @@ var (
 		"cumulative",
 	}
 )
+
+// Endpoints tells the server which endpoints we have implemented
+func (handler *CovidHandler) Endpoints() grafana_json.Endpoints {
+	return grafana_json.Endpoints{
+		Search:     handler.Search,
+		Query:      handler.Query,
+		TableQuery: handler.TableQuery,
+	}
+}
 
 // Search returns all supported targets
 func (handler *CovidHandler) Search() []string {

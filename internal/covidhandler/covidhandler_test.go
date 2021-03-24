@@ -51,7 +51,7 @@ func TestHandlerHandler(t *testing.T) {
 	// targets
 
 	// Test Search
-	targets := handler.Search()
+	targets := handler.Endpoints().Search()
 	assert.Equal(t, covidhandler.Targets, targets)
 
 	// Test Query
@@ -76,7 +76,7 @@ func TestHandlerHandler(t *testing.T) {
 	}
 
 	for target, testCase := range testCases {
-		responses, err := handler.Query(target, &args)
+		responses, err := handler.Endpoints().Query(target, &args)
 
 		if assert.Nil(t, err) {
 			assert.Equal(t, len(testCase), len(responses.DataPoints))
@@ -136,7 +136,7 @@ func BenchmarkHandlerQuery(b *testing.B) {
 	go cache.Run()
 	for i := 0; i < 10; i++ {
 		for _, target := range covidhandler.Targets {
-			_, err := handler.Query(target, &args)
+			_, err := handler.Endpoints().Query(target, &args)
 			assert.Nil(b, err)
 		}
 	}
