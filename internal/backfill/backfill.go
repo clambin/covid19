@@ -50,7 +50,7 @@ func (backFiller *Backfiller) Run() error {
 				if entries, err = backFiller.getHistoricalData(slug); err == nil {
 					for _, entry := range entries {
 						log.Debugf("Entry date: %s", entry.Date.String())
-						if entry.Date.Before(first) {
+						if first.IsZero() || entry.Date.Before(first) {
 							records = append(records, coviddb.CountryEntry{
 								Timestamp: entry.Date,
 								Code:      details.Code,
