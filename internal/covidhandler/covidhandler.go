@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// Handler implements business logic for APIServer
+// CovidHandler implements business logic for APIServer
 type CovidHandler struct {
 	cache *covidcache.Cache
 }
