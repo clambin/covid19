@@ -5,10 +5,10 @@ go 1.16
 require (
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/clambin/gotools v0.2.1
-	github.com/clambin/grafana-json v0.3.0
-	github.com/containrrr/shoutrrr v0.4.2
+	github.com/clambin/grafana-json v0.4.0
+	github.com/containrrr/shoutrrr v0.4.4
 	github.com/google/uuid v1.2.0 // indirect
-	github.com/lib/pq v1.10.0
+	github.com/lib/pq v1.10.1
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/prometheus/client_golang v1.10.0
 	github.com/sirupsen/logrus v1.8.1
