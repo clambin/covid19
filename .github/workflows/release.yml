@@ -24,7 +24,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: actions/setup-go@v2
         with:
           go-version: 1.16
@@ -49,7 +49,7 @@ jobs:
         platform: [ linux ]
         arch: [ amd64, arm, arm64 ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: actions/setup-go@v2
         with:
           go-version: 1.16
@@ -76,7 +76,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: actions/download-artifact@v2
         with:
           name: covid19-linux-arm
@@ -106,7 +106,7 @@ jobs:
             type=sha
             type=semver,pattern={{version}}
       - name: docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v2.4.0
         with:
           context: .
           file: ./build/Dockerfile
@@ -118,7 +118,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: actions/download-artifact@v2
         with:
           path: ./artifacts
