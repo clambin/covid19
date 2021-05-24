@@ -97,16 +97,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: docker metadata
+      - uses: docker/metadata-action@v3.2.0
         id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v3.1.0
         with:
           images: clambin/covid19
           tags: |
             type=sha
             type=semver,pattern={{version}}
-      - name: docker image
-        uses: docker/build-push-action@v2.4.0
+      - uses: docker/build-push-action@v2.4.0
         with:
           context: .
           file: ./build/Dockerfile
