@@ -36,11 +36,11 @@ func serverStub(req *http.Request) *http.Response {
 	var response string
 	if req.URL.Path == "/population" {
 		switch req.URL.RawQuery {
-		case "country=Belgium":
+		case "country_name=Belgium":
 			response = fmt.Sprintf(goodResponse, "Belgium", 20)
-		case "country=United+States":
+		case "country_name=United+States":
 			response = fmt.Sprintf(goodResponse, "United States", 40)
-		case "country=Faroe+Islands":
+		case "country_name=Faroe+Islands":
 			response = fmt.Sprintf(goodResponse, "Faroe Islands", 5)
 		}
 	}

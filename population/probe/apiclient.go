@@ -3,6 +3,7 @@ package probe
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 )
@@ -91,7 +92,7 @@ type populationResponseBody struct {
 
 // getStats retrieves today's covid19 country stats from rapidapi.com
 func (client *RapidAPIClient) getStats(country string) (stats populationResponse, err error) {
-	myURL := "https://" + rapidAPIHost + "/population?country=" + url.QueryEscape(country)
+	myURL := "https://" + rapidAPIHost + "/population?country_name=" + url.QueryEscape(country)
 
 	var req *http.Request
 	req, _ = http.NewRequest(http.MethodGet, myURL, nil)
@@ -100,6 +101,9 @@ func (client *RapidAPIClient) getStats(country string) (stats populationResponse
 
 	var resp *http.Response
 	resp, err = client.HTTPClient.Do(req)
+
+	log.WithError(err).Debugf("called %s", myURL)
+
 	if err == nil {
 		if resp.StatusCode == http.StatusOK {
 			decoder := json.NewDecoder(resp.Body)
