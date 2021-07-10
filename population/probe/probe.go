@@ -1,8 +1,8 @@
 package probe
 
 import (
-	coviddb2 "github.com/clambin/covid19/coviddb"
-	db2 "github.com/clambin/covid19/population/db"
+	"github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/population/db"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -10,23 +10,23 @@ import (
 // Probe handle
 type Probe struct {
 	APIClient APIClient
-	popdb     db2.DB
-	coviddb   coviddb2.DB
+	popDB     db.DB
+	covidDB   coviddb.DB
 }
 
 // Create a new Probe handle
-func Create(apiKey string, popdb db2.DB, coviddb coviddb2.DB) *Probe {
+func Create(apiKey string, popdb db.DB, coviddb coviddb.DB) *Probe {
 	return &Probe{
 		APIClient: NewAPIClient(apiKey),
-		popdb:     popdb,
-		coviddb:   coviddb,
+		popDB:     popdb,
+		covidDB:   coviddb,
 	}
 }
 
 // Run gets latest data and updates the database
 func (probe *Probe) Run() (err error) {
 	var codes []string
-	codes, err = probe.coviddb.GetAllCountryCodes()
+	codes, err = probe.covidDB.GetAllCountryCodes()
 
 	if err != nil {
 		return
@@ -39,10 +39,12 @@ func (probe *Probe) Run() (err error) {
 			log.WithField("code", code).Warning("unknown country code for population DB. skipping")
 			continue
 		}
+		log.WithFields(log.Fields{"country": country, "code": code}).Debug("looking up population")
 
 		population, err = probe.APIClient.GetPopulation(country)
 		if err == nil {
-			err = probe.popdb.Add(code, population)
+			log.WithField("population", population).Debug("found population")
+			err = probe.popDB.Add(code, population)
 		} else {
 			log.WithError(err).WithField("country", country).Warning("could not get population stats")
 			err = nil

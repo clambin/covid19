@@ -1,17 +1,17 @@
 package probe_test
 
 import (
-	coviddb2 "github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/coviddb"
 	"github.com/clambin/covid19/coviddb/mock"
 	mock2 "github.com/clambin/covid19/population/db/mock"
-	probe2 "github.com/clambin/covid19/population/probe"
+	"github.com/clambin/covid19/population/probe"
 	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestPopulationProbe(t *testing.T) {
-	covidEntries := []coviddb2.CountryEntry{
+	covidEntries := []coviddb.CountryEntry{
 		{
 			Code:      "BE",
 			Confirmed: 100,
@@ -28,8 +28,8 @@ func TestPopulationProbe(t *testing.T) {
 	covidDB := mock.Create(covidEntries)
 	popDB := mock2.Create(map[string]int64{})
 
-	p := probe2.Create("", popDB, covidDB)
-	p.APIClient = &probe2.RapidAPIClient{
+	p := probe.Create("", popDB, covidDB)
+	p.APIClient = &probe.RapidAPIClient{
 		HTTPClient: httpstub.NewTestClient(serverStub),
 		APIKey:     "1234",
 	}
