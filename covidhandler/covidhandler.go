@@ -3,7 +3,7 @@ package covidhandler
 import (
 	"errors"
 	"fmt"
-	"github.com/clambin/covid19/internal/covidcache"
+	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/grafana-json"
 	log "github.com/sirupsen/logrus"
 	"strings"

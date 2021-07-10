@@ -1,7 +1,7 @@
 package configuration_test
 
 import (
-	"github.com/clambin/covid19/internal/configuration"
+	"github.com/clambin/covid19/configuration"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
@@ -45,7 +45,9 @@ grafana:
 		panic(err)
 	}
 
-	defer os.Remove(f.Name())
+	defer func(filename string) {
+		_ = os.Remove(filename)
+	}(f.Name())
 	_, _ = f.Write([]byte(configString))
 	_ = f.Close()
 

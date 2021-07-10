@@ -1,9 +1,9 @@
 package covidcache_test
 
 import (
-	"github.com/clambin/covid19/internal/covidcache"
-	"github.com/clambin/covid19/internal/coviddb"
-	mockdb "github.com/clambin/covid19/internal/coviddb/mock"
+	"github.com/clambin/covid19/covidcache"
+	"github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/coviddb/mock"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -90,7 +90,7 @@ var (
 )
 
 func TestCovidCache(t *testing.T) {
-	cache := covidcache.New(mockdb.Create(testData))
+	cache := covidcache.New(mock.Create(testData))
 	responseChannel := make(chan covidcache.Response)
 	go cache.Run()
 

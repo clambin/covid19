@@ -1,7 +1,7 @@
 package mockapi
 
 import (
-	"github.com/clambin/covid19/internal/covidprobe"
+	"github.com/clambin/covid19/covidprobe"
 )
 
 // API handle

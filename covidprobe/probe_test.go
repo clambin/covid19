@@ -1,12 +1,12 @@
 package covidprobe_test
 
 import (
-	"github.com/clambin/covid19/internal/configuration"
-	"github.com/clambin/covid19/internal/covidcache"
-	"github.com/clambin/covid19/internal/coviddb"
-	mockdb "github.com/clambin/covid19/internal/coviddb/mock"
-	"github.com/clambin/covid19/internal/covidprobe"
-	"github.com/clambin/covid19/internal/covidprobe/mockapi"
+	configuration2 "github.com/clambin/covid19/configuration"
+	covidcache2 "github.com/clambin/covid19/covidcache"
+	coviddb2 "github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/coviddb/mock"
+	covidprobe2 "github.com/clambin/covid19/covidprobe"
+	mockapi2 "github.com/clambin/covid19/covidprobe/mockapi"
 	"github.com/clambin/gotools/metrics"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -16,7 +16,7 @@ import (
 var (
 	lastUpdate = time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC)
 
-	seedDB = []coviddb.CountryEntry{
+	seedDB = []coviddb2.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",
@@ -50,20 +50,20 @@ var (
 )
 
 func TestProbe(t *testing.T) {
-	dbh := mockdb.Create(seedDB)
-	cache := covidcache.New(dbh)
+	dbh := mock.Create(seedDB)
+	cache := covidcache2.New(dbh)
 	go cache.Run()
-	cfg := configuration.MonitorConfiguration{
+	cfg := configuration2.MonitorConfiguration{
 		Enabled: true,
-		Notifications: configuration.NotificationsConfiguration{
+		Notifications: configuration2.NotificationsConfiguration{
 			Enabled: true,
-			URL:     configuration.ValueOrEnvVar{Value: ""},
+			URL:     configuration2.ValueOrEnvVar{Value: ""},
 			Countries: []string{
 				"Belgium", "Sokovia", "France",
 			},
 		},
 	}
-	p := covidprobe.NewProbe(&cfg, dbh, cache)
+	p := covidprobe2.NewProbe(&cfg, dbh, cache)
 
 	// NotifyCache should contain the latest entry for each (valid) country we want to send notifications for
 	assert.Len(t, p.NotifyCache, 2)
@@ -74,7 +74,7 @@ func TestProbe(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, int64(0), record.Confirmed)
 
-	p.APIClient = mockapi.New(map[string]covidprobe.CountryStats{
+	p.APIClient = mockapi2.New(map[string]covidprobe2.CountryStats{
 		"Belgium":     {LastUpdate: lastUpdate, Confirmed: 40, Recovered: 10, Deaths: 1},
 		"US":          {LastUpdate: lastUpdate, Confirmed: 20, Recovered: 15, Deaths: 5},
 		"NotACountry": {LastUpdate: lastUpdate, Confirmed: 0, Recovered: 0, Deaths: 0},

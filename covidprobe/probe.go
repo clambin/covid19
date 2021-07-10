@@ -2,9 +2,9 @@ package covidprobe
 
 import (
 	"fmt"
-	"github.com/clambin/covid19/internal/configuration"
-	"github.com/clambin/covid19/internal/covidcache"
-	"github.com/clambin/covid19/internal/coviddb"
+	"github.com/clambin/covid19/configuration"
+	"github.com/clambin/covid19/covidcache"
+	"github.com/clambin/covid19/coviddb"
 	"github.com/clambin/gotools/metrics"
 	"github.com/containrrr/shoutrrr"
 	"github.com/containrrr/shoutrrr/pkg/router"

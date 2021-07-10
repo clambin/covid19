@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/clambin/covid19/internal/configuration"
-	"github.com/clambin/covid19/internal/covidcache"
-	"github.com/clambin/covid19/internal/coviddb"
-	"github.com/clambin/covid19/internal/covidhandler"
-	"github.com/clambin/covid19/internal/covidprobe"
-	popdb "github.com/clambin/covid19/internal/population/db"
-	popprobe "github.com/clambin/covid19/internal/population/probe"
-	"github.com/clambin/covid19/internal/version"
+	"github.com/clambin/covid19/configuration"
+	"github.com/clambin/covid19/covidcache"
+	"github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/covidhandler"
+	"github.com/clambin/covid19/covidprobe"
+	"github.com/clambin/covid19/population/db"
+	"github.com/clambin/covid19/population/probe"
+	"github.com/clambin/covid19/version"
 	"github.com/clambin/grafana-json"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -75,7 +75,7 @@ func startMonitor(cfg *configuration.Configuration, createCache bool) (cache *co
 		cfg.Postgres.Password,
 	)
 
-	popDB := popdb.NewPostgresDB(
+	popDB := db.NewPostgresDB(
 		cfg.Postgres.Host,
 		cfg.Postgres.Port,
 		cfg.Postgres.Database,
@@ -88,7 +88,7 @@ func startMonitor(cfg *configuration.Configuration, createCache bool) (cache *co
 		go cache.Run()
 	}
 	covidProbe := covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
-	populationProbe := popprobe.Create(cfg.Monitor.RapidAPIKey.Value, popDB, covidDB)
+	populationProbe := probe.Create(cfg.Monitor.RapidAPIKey.Value, popDB, covidDB)
 
 	// TODO: only update population once a day?
 	go func() {

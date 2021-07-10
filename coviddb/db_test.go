@@ -1,7 +1,7 @@
 package coviddb_test
 
 import (
-	"github.com/clambin/covid19/internal/coviddb"
+	"github.com/clambin/covid19/coviddb"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"

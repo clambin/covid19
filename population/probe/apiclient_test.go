@@ -3,7 +3,7 @@ package probe_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/clambin/covid19/internal/population/probe"
+	probe2 "github.com/clambin/covid19/population/probe"
 	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestGetPopulation(t *testing.T) {
-	apiClient := probe.RapidAPIClient{
+	apiClient := probe2.RapidAPIClient{
 		HTTPClient: httpstub.NewTestClient(serverStub),
 		APIKey:     "1234",
 	}

@@ -2,7 +2,7 @@ package covidprobe_test
 
 import (
 	"bytes"
-	"github.com/clambin/covid19/internal/covidprobe"
+	"github.com/clambin/covid19/covidprobe"
 	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"

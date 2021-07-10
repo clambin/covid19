@@ -1,18 +1,18 @@
 package covidhandler_test
 
 import (
-	"github.com/clambin/covid19/internal/covidcache"
-	"github.com/clambin/covid19/internal/coviddb"
-	mockdb "github.com/clambin/covid19/internal/coviddb/mock"
-	"github.com/clambin/covid19/internal/covidhandler"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/covid19/covidcache"
+	"github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/coviddb/mock"
+	"github.com/clambin/covid19/covidhandler"
+	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
 func TestHandlerHandler(t *testing.T) {
-	dbh := mockdb.Create([]coviddb.CountryEntry{
+	dbh := mock.Create([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "A",
@@ -55,9 +55,9 @@ func TestHandlerHandler(t *testing.T) {
 	assert.Equal(t, covidhandler.Targets, targets)
 
 	// Test Query
-	args := grafana_json.TimeSeriesQueryArgs{
-		CommonQueryArgs: grafana_json.CommonQueryArgs{
-			Range: grafana_json.QueryRequestRange{
+	args := grafanaJson.TimeSeriesQueryArgs{
+		CommonQueryArgs: grafanaJson.CommonQueryArgs{
+			Range: grafanaJson.QueryRequestRange{
 				From: time.Now(),
 				To:   time.Now(),
 			},
@@ -118,12 +118,12 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		}
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
-	cache := covidcache.New(mockdb.Create(entries))
+	cache := covidcache.New(mock.Create(entries))
 	handler, _ := covidhandler.Create(cache)
 
-	args := grafana_json.TimeSeriesQueryArgs{
-		CommonQueryArgs: grafana_json.CommonQueryArgs{
-			Range: grafana_json.QueryRequestRange{
+	args := grafanaJson.TimeSeriesQueryArgs{
+		CommonQueryArgs: grafanaJson.CommonQueryArgs{
+			Range: grafanaJson.QueryRequestRange{
 				From: time.Now(),
 				To:   time.Now(),
 			},

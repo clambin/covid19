@@ -1,7 +1,7 @@
 package covidcache
 
 import (
-	"github.com/clambin/covid19/internal/coviddb"
+	"github.com/clambin/covid19/coviddb"
 	log "github.com/sirupsen/logrus"
 	"time"
 )

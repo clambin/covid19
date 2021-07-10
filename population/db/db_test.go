@@ -1,7 +1,7 @@
 package db_test
 
 import (
-	"github.com/clambin/covid19/internal/population/db"
+	"github.com/clambin/covid19/population/db"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"

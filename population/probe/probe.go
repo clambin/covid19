@@ -1,8 +1,8 @@
 package probe
 
 import (
-	"github.com/clambin/covid19/internal/coviddb"
-	"github.com/clambin/covid19/internal/population/db"
+	coviddb2 "github.com/clambin/covid19/coviddb"
+	db2 "github.com/clambin/covid19/population/db"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -10,12 +10,12 @@ import (
 // Probe handle
 type Probe struct {
 	APIClient APIClient
-	popdb     db.DB
-	coviddb   coviddb.DB
+	popdb     db2.DB
+	coviddb   coviddb2.DB
 }
 
 // Create a new Probe handle
-func Create(apiKey string, popdb db.DB, coviddb coviddb.DB) *Probe {
+func Create(apiKey string, popdb db2.DB, coviddb coviddb2.DB) *Probe {
 	return &Probe{
 		APIClient: NewAPIClient(apiKey),
 		popdb:     popdb,
