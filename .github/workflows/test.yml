@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
       - master
+      - worldpopulation
   pull_request_target:
 
 jobs:

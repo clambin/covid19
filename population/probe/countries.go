@@ -26,7 +26,7 @@ var countryNames = map[string]string{
 	"IT": "Italy",
 	"TZ": "Tanzania",
 	"ZA": "South Africa",
-	// "???": "Myanmar",
+	"MM": "Myanmar",
 	"KE": "Kenya",
 	"KR": "South Korea",
 	"CO": "Colombia",
