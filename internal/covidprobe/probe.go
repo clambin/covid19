@@ -61,18 +61,15 @@ func (probe *Probe) initCache() error {
 		for _, country := range probe.notifications.Countries {
 			if code, ok := CountryCodes[country]; ok == true {
 				var entry *coviddb.CountryEntry
+				var found bool
 				// Could add a db.GetLatest() though latest should always be less than 'now' on startup
-				if entry, err = probe.db.GetLastBeforeDate(country, time.Now()); err == nil {
-					if entry != nil {
-						probe.NotifyCache[country] = *entry
-					} else {
-						probe.NotifyCache[country] = coviddb.CountryEntry{
-							Code: code,
-							Name: country,
-						}
-					}
+				if entry, found, err = probe.db.GetLastBeforeDate(country, time.Now()); err == nil && found {
+					probe.NotifyCache[country] = *entry
 				} else {
-					break
+					probe.NotifyCache[country] = coviddb.CountryEntry{
+						Code: code,
+						Name: country,
+					}
 				}
 			} else {
 				log.WithField("country", country).Warning("ignoring invalid country in notifications configuration")

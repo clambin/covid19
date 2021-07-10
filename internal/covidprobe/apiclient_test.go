@@ -32,6 +32,7 @@ func TestGetCountryStats(t *testing.T) {
 
 // loopback function
 func loopback(_ *http.Request) *http.Response {
+
 	return &http.Response{
 		StatusCode: 200,
 		Header:     make(http.Header),

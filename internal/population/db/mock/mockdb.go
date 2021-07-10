@@ -16,10 +16,8 @@ func (db *DB) List() (map[string]int64, error) {
 }
 
 // Add adds or updates new population figures
-func (db *DB) Add(entries map[string]int64) error {
-	for key, value := range entries {
-		db.data[key] = value
-	}
+func (db *DB) Add(code string, population int64) error {
+	db.data[code] = population
 
 	return nil
 }

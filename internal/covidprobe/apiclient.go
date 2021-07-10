@@ -2,19 +2,17 @@ package covidprobe
 
 import (
 	"encoding/json"
+	"github.com/clambin/gotools/rapidapi"
 	"net/http"
 	"time"
-	// log "github.com/sirupsen/logrus"
-
-	"github.com/clambin/gotools/rapidapi"
 )
 
-// API interface representing a Population API Client
+// APIClient interface representing a Population API Client
 type APIClient interface {
 	GetCountryStats() (map[string]CountryStats, error)
 }
 
-// APIClient API Client handle
+// RapidAPIClient Client handle
 type RapidAPIClient struct {
 	rapidapi.Client
 }

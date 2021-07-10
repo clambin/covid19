@@ -3,8 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
-	"strings"
 	// postgres driver
 	_ "github.com/lib/pq"
 
@@ -14,7 +12,7 @@ import (
 // DB interface representing a Population database table
 type DB interface {
 	List() (map[string]int64, error)
-	Add(map[string]int64) error
+	Add(string, int64) error
 }
 
 // PostgresDB implements DB in Postgres
@@ -42,12 +40,9 @@ func (db *PostgresDB) List() (map[string]int64, error) {
 
 	if err = db.initializeDB(); err == nil {
 		if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
-			defer dbh.Close()
-
 			rows, err = dbh.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
 
 			if err == nil {
-				defer rows.Close()
 				for rows.Next() {
 					var code string
 					var population int64
@@ -56,73 +51,68 @@ func (db *PostgresDB) List() (map[string]int64, error) {
 					}
 				}
 				log.Debugf("Found %d records", len(entries))
+				_ = rows.Close()
 			}
+			_ = dbh.Close()
 		}
 	}
 	return entries, err
 }
 
-func replaceSQL(old, searchPattern string) string {
-	tmpCount := strings.Count(old, searchPattern)
-	for m := 1; m <= tmpCount; m++ {
-		old = strings.Replace(old, searchPattern, "$"+strconv.Itoa(m), 1)
+// Add to population database table. If a record for the specified country code already exists, it will be updated
+func (db *PostgresDB) Add(code string, population int64) (err error) {
+	err = db.initializeDB()
+
+	if err != nil {
+		return
 	}
-	return old
-}
 
-// Add all specified records in the population database table
-func (db *PostgresDB) Add(entries map[string]int64) error {
-	var (
-		err error
-		dbh *sql.DB
-	)
+	var dbh *sql.DB
+	dbh, err = sql.Open("postgres", db.psqlInfo)
 
-	if err = db.initializeDB(); err == nil {
-		if dbh, err = sql.Open("postgres", db.psqlInfo); err == nil {
-			defer dbh.Close()
-
-			// Prepare the SQL statement
-			var values []interface{}
-			valueStr := ""
-			for code, population := range entries {
-				valueStr += "(?, ?),"
-				values = append(values, code, population)
-			}
-			valueStr = strings.TrimSuffix(valueStr, ",")
-			valueStr = replaceSQL(valueStr, "?")
-
-			sqlStr := "INSERT INTO population(country_code, population) VALUES " +
-				valueStr +
-				"ON CONFLICT (country_code) DO UPDATE SET population = EXCLUDED.population"
-
-			stmt, _ := dbh.Prepare(sqlStr)
-			_, err = stmt.Exec(values...)
-		}
+	if err != nil {
+		return
 	}
+
+	// Prepare the SQL statement
+	sqlStr := fmt.Sprintf("INSERT INTO population(country_code, population) VALUES ('%s', %d) "+
+		"ON CONFLICT (country_code) DO UPDATE SET population = EXCLUDED.population",
+		code, population)
+
+	var stmt *sql.Stmt
+	stmt, err = dbh.Prepare(sqlStr)
+	if err == nil {
+		_, err = stmt.Exec()
+	} else {
+		log.WithError(err).WithField("sql", sqlStr).Error("failed to insert")
+	}
+	_ = dbh.Close()
+
 	return err
 }
 
 // initializeDB creates the required tables
-func (db *PostgresDB) initializeDB() error {
+func (db *PostgresDB) initializeDB() (err error) {
 	if db.initialized {
 		return nil
 	}
 
-	dbh, err := sql.Open("postgres", db.psqlInfo)
+	var dbh *sql.DB
+	dbh, err = sql.Open("postgres", db.psqlInfo)
 
-	if err == nil {
-		defer dbh.Close()
-		_, err = dbh.Exec(`
-			CREATE TABLE IF NOT EXISTS population (
-				country_code TEXT PRIMARY KEY,
-				population NUMERIC
-			)
-		`)
-
-		if err == nil {
-			db.initialized = true
-		}
+	if err != nil {
+		return
 	}
+
+	_, err = dbh.Exec(`
+		CREATE TABLE IF NOT EXISTS population (
+			country_code TEXT PRIMARY KEY,
+			population NUMERIC
+		)
+	`)
+
+	db.initialized = err == nil
+	_ = dbh.Close()
 
 	return err
 }

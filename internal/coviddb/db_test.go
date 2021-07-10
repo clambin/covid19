@@ -35,13 +35,13 @@ func TestDB(t *testing.T) {
 	}
 
 	port, err := strconv.Atoi(values["pg_port"])
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	covidDB := coviddb.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
 	assert.NotNil(t, covidDB)
 
 	err = covidDB.RemoveDB()
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	now := time.Now().UTC().Truncate(time.Second)
 
@@ -57,16 +57,18 @@ func TestDB(t *testing.T) {
 	}
 
 	err = covidDB.Add(newEntries)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
-	latest, err := covidDB.ListLatestByCountry()
-	assert.Nil(t, err)
+	var latest map[string]time.Time
+	latest, err = covidDB.ListLatestByCountry()
+	assert.NoError(t, err)
 	latestTime, found := latest["???"]
 	assert.True(t, found)
 	assert.True(t, latestTime.Equal(now))
 
-	allEntries, err := covidDB.List(time.Now())
-	assert.Nil(t, err)
+	var allEntries []coviddb.CountryEntry
+	allEntries, err = covidDB.List(time.Now())
+	assert.NoError(t, err)
 
 	found = false
 	for _, entry := range allEntries {
@@ -80,14 +82,17 @@ func TestDB(t *testing.T) {
 	}
 	assert.True(t, found)
 
-	first, err := covidDB.GetFirstEntry()
-
-	assert.Nil(t, err)
+	var first time.Time
+	first, found, err = covidDB.GetFirstEntry()
+	assert.NoError(t, err)
+	assert.True(t, found)
 	assert.True(t, first.Equal(now))
 
-	entry, err := covidDB.GetLastBeforeDate("???", now.AddDate(1, 0, 0))
+	var entry *coviddb.CountryEntry
+	entry, found, err = covidDB.GetLastBeforeDate("???", now.AddDate(1, 0, 0))
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
+	assert.True(t, found)
 	if assert.NotNil(t, entry) {
 		assert.Equal(t, "???", entry.Name)
 		assert.Equal(t, int64(3), entry.Confirmed)
@@ -95,8 +100,15 @@ func TestDB(t *testing.T) {
 		assert.Equal(t, int64(1), entry.Recovered)
 	}
 
-	entry, err = covidDB.GetLastBeforeDate("???", now.AddDate(-1, 0, 0))
+	entry, found, err = covidDB.GetLastBeforeDate("???", now.AddDate(-1, 0, 0))
+	assert.NoError(t, err)
+	assert.False(t, found)
 
-	assert.Nil(t, err)
-	assert.Nil(t, entry)
+	var codes []string
+	codes, err = covidDB.GetAllCountryCodes()
+	assert.NoError(t, err)
+	if assert.Len(t, codes, 1) {
+		assert.Equal(t, "??", codes[0])
+	}
+
 }

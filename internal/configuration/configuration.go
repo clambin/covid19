@@ -3,7 +3,6 @@ package configuration
 import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -59,13 +58,9 @@ func (v *ValueOrEnvVar) Set() {
 }
 
 // LoadConfigurationFile loads the configuration file from file
-func LoadConfigurationFile(fileName string) (*Configuration, error) {
-	var (
-		err           error
-		content       []byte
-		configuration *Configuration
-	)
-	if content, err = ioutil.ReadFile(fileName); err == nil {
+func LoadConfigurationFile(fileName string) (configuration *Configuration, err error) {
+	var content []byte
+	if content, err = os.ReadFile(fileName); err == nil {
 		configuration, err = LoadConfiguration(content)
 	}
 	return configuration, err

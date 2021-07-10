@@ -52,22 +52,23 @@ func (dbh *DB) ListLatestByCountry() (map[string]time.Time, error) {
 }
 
 // GetFirstEntry returns the timestamp of the first entry
-func (dbh *DB) GetFirstEntry() (time.Time, error) {
+func (dbh *DB) GetFirstEntry() (first time.Time, found bool, err error) {
 	dbh.lock.RLock()
 	defer dbh.lock.RUnlock()
-	first := time.Time{}
+	first = time.Time{}
 	for index, entry := range dbh.data {
 		if index == 0 || entry.Timestamp.Before(first) {
+			found = true
 			first = entry.Timestamp
 		}
 	}
-	return first, nil
+	return
 }
 
-func (dbh *DB) GetLastBeforeDate(countryName string, before time.Time) (*coviddb.CountryEntry, error) {
+func (dbh *DB) GetLastBeforeDate(countryName string, before time.Time) (result *coviddb.CountryEntry, found bool, err error) {
 	dbh.lock.RLock()
 	defer dbh.lock.RUnlock()
-	result := coviddb.CountryEntry{}
+	result = &coviddb.CountryEntry{}
 	for _, entry := range dbh.data {
 		if entry.Name == countryName && entry.Timestamp.Before(before) && entry.Timestamp.After(result.Timestamp) {
 			result.Timestamp = entry.Timestamp
@@ -76,13 +77,10 @@ func (dbh *DB) GetLastBeforeDate(countryName string, before time.Time) (*coviddb
 			result.Confirmed = entry.Confirmed
 			result.Deaths = entry.Deaths
 			result.Recovered = entry.Recovered
+			found = true
 		}
 	}
-	if result.Name == "" {
-		return nil, nil
-	}
-
-	return &result, nil
+	return
 }
 
 // Add inserts all specified records in the covid19 database table
@@ -93,4 +91,19 @@ func (dbh *DB) Add(entries []coviddb.CountryEntry) error {
 		dbh.data = append(dbh.data, entry)
 	}
 	return nil
+}
+
+// GetAllCountryCodes returns all country codes that have an entry in the covid19 database table
+func (dbh *DB) GetAllCountryCodes() (codes []string, err error) {
+	dbh.lock.Lock()
+	defer dbh.lock.Unlock()
+	added := make(map[string]struct{})
+	for _, entry := range dbh.data {
+		if _, found := added[entry.Code]; found == false {
+			codes = append(codes, entry.Code)
+			added[entry.Code] = struct{}{}
+		}
+	}
+
+	return
 }

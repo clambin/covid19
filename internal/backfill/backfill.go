@@ -40,7 +40,8 @@ func (backFiller *Backfiller) Run() error {
 
 	countries, err = backFiller.getCountries()
 	if err == nil {
-		if first, err = backFiller.DB.GetFirstEntry(); err == nil {
+		var found bool
+		if first, found, err = backFiller.DB.GetFirstEntry(); err == nil {
 			log.Debugf("First entry in DB: %s", first.String())
 
 			for slug, details := range countries {
@@ -50,7 +51,7 @@ func (backFiller *Backfiller) Run() error {
 				if entries, err = backFiller.getHistoricalData(slug); err == nil {
 					for _, entry := range entries {
 						log.Debugf("Entry date: %s", entry.Date.String())
-						if first.IsZero() || entry.Date.Before(first) {
+						if !found || entry.Date.Before(first) {
 							records = append(records, coviddb.CountryEntry{
 								Timestamp: entry.Date,
 								Code:      details.Code,
@@ -92,7 +93,6 @@ func (backFiller *Backfiller) getCountries() (map[string]struct {
 			ISO2    string
 		}
 
-		defer resp.Body.Close()
 		decoder := json.NewDecoder(resp.Body)
 		if err = decoder.Decode(&stats); err == nil {
 			for _, entry := range stats {
@@ -102,6 +102,7 @@ func (backFiller *Backfiller) getCountries() (map[string]struct {
 				}{Name: entry.Country, Code: entry.ISO2}
 			}
 		}
+		_ = resp.Body.Close()
 	}
 
 	return result, err
@@ -124,9 +125,9 @@ func (backFiller *Backfiller) getHistoricalData(slug string) ([]struct {
 	resp, err := backFiller.slowCall(req)
 
 	if err == nil {
-		defer resp.Body.Close()
 		decoder := json.NewDecoder(resp.Body)
 		err = decoder.Decode(&stats)
+		_ = resp.Body.Close()
 	}
 
 	return stats, err
@@ -137,7 +138,7 @@ func (backFiller *Backfiller) slowCall(req *http.Request) (*http.Response, error
 	resp, err := backFiller.Client.Do(req)
 
 	for err == nil && resp.StatusCode == 429 {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		log.Debug("429 recv'd. Slowing down")
 		time.Sleep(time.Second * 5)
 		resp, err = backFiller.Client.Do(req)

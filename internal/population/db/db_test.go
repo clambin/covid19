@@ -41,7 +41,7 @@ func TestDB(t *testing.T) {
 	_, err = covidDB.List()
 	assert.Nil(t, err)
 
-	err = covidDB.Add(map[string]int64{"???": 242})
+	err = covidDB.Add("???", 242)
 	assert.Nil(t, err)
 
 	newContent, err := covidDB.List()
