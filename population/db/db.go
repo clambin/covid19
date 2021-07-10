@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	// postgres sql driver
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )

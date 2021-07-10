@@ -19,7 +19,7 @@ type Probe struct {
 	APIClient     APIClient
 	db            coviddb.DB
 	cache         *covidcache.Cache
-	notifications *configuration.NotificationsConfiguration
+	notifications *configuration.NotificationConfiguration
 	notifier      *router.ServiceRouter
 
 	NotifyCache           map[string]coviddb.CountryEntry

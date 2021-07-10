@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Configuration for covid19 app
 type Configuration struct {
 	Port     int                  `yaml:"port"`
 	Debug    bool                 `yaml:"debug"`
@@ -16,6 +17,7 @@ type Configuration struct {
 	Grafana  GrafanaConfiguration `yaml:"grafana"`
 }
 
+// PostgresDB configuration parameters
 type PostgresDB struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
@@ -24,24 +26,28 @@ type PostgresDB struct {
 	Password string `yaml:"password"`
 }
 
+// MonitorConfiguration parameters
 type MonitorConfiguration struct {
-	Enabled       bool                       `yaml:"enabled"`
-	Interval      time.Duration              `yaml:"interval"`
-	RapidAPIKey   ValueOrEnvVar              `yaml:"rapidAPIKey"`
-	Notifications NotificationsConfiguration `yaml:"notifications"`
+	Enabled       bool                      `yaml:"enabled"`
+	Interval      time.Duration             `yaml:"interval"`
+	RapidAPIKey   ValueOrEnvVar             `yaml:"rapidAPIKey"`
+	Notifications NotificationConfiguration `yaml:"notifications"`
 }
 
+// ValueOrEnvVar allows a value to be specified directly, or via environment variable
 type ValueOrEnvVar struct {
 	Value  string `yaml:"value"`
 	EnvVar string `yaml:"envVar"`
 }
 
-type NotificationsConfiguration struct {
+// NotificationConfiguration allows to set a notification when a country gets new data
+type NotificationConfiguration struct {
 	Enabled   bool          `yaml:"enabled"`
 	URL       ValueOrEnvVar `yaml:"url"`
 	Countries []string      `yaml:"countries"`
 }
 
+// GrafanaConfiguration if set, runs a Grafana SimpleJson API server
 type GrafanaConfiguration struct {
 	Enabled bool `yaml:"enabled"`
 }

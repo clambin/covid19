@@ -55,7 +55,7 @@ func TestProbe(t *testing.T) {
 	go cache.Run()
 	cfg := configuration2.MonitorConfiguration{
 		Enabled: true,
-		Notifications: configuration2.NotificationsConfiguration{
+		Notifications: configuration2.NotificationConfiguration{
 			Enabled: true,
 			URL:     configuration2.ValueOrEnvVar{Value: ""},
 			Countries: []string{
