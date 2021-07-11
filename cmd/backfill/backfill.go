@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/clambin/covid19/internal/backfill"
-	"github.com/clambin/covid19/internal/coviddb"
-	"github.com/clambin/covid19/internal/version"
+	"github.com/clambin/covid19/backfill"
+	"github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/version"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
