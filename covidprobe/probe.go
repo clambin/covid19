@@ -108,7 +108,7 @@ func (probe *Probe) Run() (err error) {
 			}
 
 			if probe.cache != nil {
-				probe.cache.Refresh <- true
+				probe.cache.Refresh()
 			}
 
 			if err = probe.sendNotifications(notifications); err != nil {

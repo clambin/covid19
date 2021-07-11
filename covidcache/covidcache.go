@@ -3,6 +3,7 @@ package covidcache
 import (
 	"github.com/clambin/covid19/coviddb"
 	log "github.com/sirupsen/logrus"
+	"sync"
 	"time"
 )
 
@@ -10,22 +11,10 @@ import (
 // Helper function to improve responsiveness of Grafana API server
 type Cache struct {
 	DB      coviddb.DB
-	Refresh chan bool
-	Request chan Request
-
-	totals []CacheEntry
-	deltas []CacheEntry
-}
-
-// Request for latest data
-type Request struct {
-	Response chan Response
-	End      time.Time
-	Delta    bool
-}
-
-type Response struct {
-	Series []CacheEntry
+	refresh chan struct{}
+	lock    sync.RWMutex
+	totals  []CacheEntry
+	deltas  []CacheEntry
 }
 
 // CacheEntry holds one date's data
@@ -41,8 +30,7 @@ type CacheEntry struct {
 func New(db coviddb.DB) *Cache {
 	return &Cache{
 		DB:      db,
-		Refresh: make(chan bool),
-		Request: make(chan Request),
+		refresh: make(chan struct{}),
 	}
 }
 
@@ -54,29 +42,25 @@ func (cache *Cache) Run() {
 
 	for {
 		select {
-		case <-cache.Refresh:
+		case <-cache.refresh:
 			if err := cache.update(); err != nil {
 				log.WithField("err", err).Warning("failed to refresh cache")
-			}
-		case req := <-cache.Request:
-			var series []CacheEntry
-			switch req.Delta {
-			case false:
-				series = cache.getTotals(req.End)
-			case true:
-				series = cache.getDeltas(req.End)
-			}
-			req.Response <- Response{
-				Series: series,
 			}
 		}
 	}
 }
 
+// Refresh asks the cache to refresh itself from the database
+func (cache *Cache) Refresh() {
+	cache.refresh <- struct{}{}
+}
+
 // Update recalculates the cached data
 func (cache *Cache) update() (err error) {
-	var entries []coviddb.CountryEntry
+	cache.lock.Lock()
+	defer cache.lock.Unlock()
 
+	var entries []coviddb.CountryEntry
 	if entries, err = cache.DB.List(time.Now()); err == nil {
 		cache.totals = GetTotalCases(entries)
 		cache.deltas = GetTotalDeltas(cache.totals)
@@ -85,14 +69,18 @@ func (cache *Cache) update() (err error) {
 	return
 }
 
-// GetTotals gets all totals up to the specified date
-func (cache *Cache) getTotals(end time.Time) []CacheEntry {
-	return filterEntries(cache.totals, end)
+// GetTotals return total covid figures up to endTime
+func (cache *Cache) GetTotals(endTime time.Time) (totals []CacheEntry) {
+	cache.lock.RLock()
+	defer cache.lock.RUnlock()
+	return filterEntries(cache.totals, endTime)
 }
 
-// GetDeltas gets all deltas up to the specified date
-func (cache *Cache) getDeltas(end time.Time) []CacheEntry {
-	return filterEntries(cache.deltas, end)
+// GetDeltas returns the incremental covid figures up to endTime
+func (cache *Cache) GetDeltas(endTime time.Time) (deltas []CacheEntry) {
+	cache.lock.RLock()
+	defer cache.lock.RUnlock()
+	return filterEntries(cache.deltas, endTime)
 }
 
 func filterEntries(entries []CacheEntry, end time.Time) (result []CacheEntry) {

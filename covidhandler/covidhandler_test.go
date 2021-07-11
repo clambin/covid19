@@ -65,6 +65,11 @@ func TestTimeSeriesHandler(t *testing.T) {
 		},
 	}
 
+	assert.Eventually(t, func() bool {
+		responses, err := handler.Endpoints().Query("confirmed", &args)
+		return err == nil && len(responses.DataPoints) > 0
+	}, 500*time.Millisecond, 50*time.Millisecond)
+
 	testCases := map[string][]int64{
 		"confirmed":       {1, 6, 13},
 		"confirmed-delta": {1, 5, 7},
@@ -79,14 +84,12 @@ func TestTimeSeriesHandler(t *testing.T) {
 	for target, testCase := range testCases {
 		responses, err := handler.Endpoints().Query(target, &args)
 
-		if assert.Nil(t, err) {
-			assert.Equal(t, len(testCase), len(responses.DataPoints))
+		if assert.NoError(t, err, target) && assert.Equal(t, len(testCase), len(responses.DataPoints), target) {
 
 			for index, entry := range testCase {
-				assert.Equal(t, entry, responses.DataPoints[index].Value)
+				assert.Equal(t, entry, responses.DataPoints[index].Value, target, index)
 			}
 		}
-
 	}
 }
 
@@ -105,6 +108,11 @@ func TestTableHandler(t *testing.T) {
 		},
 	}
 
+	assert.Eventually(t, func() bool {
+		responses, err := handler.Endpoints().TableQuery("daily", &args)
+		return err == nil && len(responses.Columns) > 0 && len(responses.Columns[0].Data.(grafanaJson.TableQueryResponseTimeColumn)) > 0
+	}, 500*time.Millisecond, 50*time.Millisecond)
+
 	testCases := map[string]map[string][]float64{
 		"daily": {
 			"confirmed": {1, 5, 7},
@@ -121,11 +129,11 @@ func TestTableHandler(t *testing.T) {
 	for target, testCase := range testCases {
 		responses, err := handler.Endpoints().TableQuery(target, &args)
 
-		if assert.NoError(t, err) == false {
+		if assert.NoError(t, err, target) == false {
 			continue
 		}
 
-		if assert.Len(t, responses.Columns, 4) == false {
+		if assert.Len(t, responses.Columns, 4, target) == false {
 			continue
 		}
 
@@ -140,9 +148,9 @@ func TestTableHandler(t *testing.T) {
 				continue
 			}
 
-			if assert.Equal(t, len(expected), len(column.Data.(grafanaJson.TableQueryResponseNumberColumn))) {
+			if assert.Equal(t, len(expected), len(column.Data.(grafanaJson.TableQueryResponseNumberColumn)), target, column.Text) {
 				for index, value := range expected {
-					assert.Equal(t, value, column.Data.(grafanaJson.TableQueryResponseNumberColumn)[index])
+					assert.Equal(t, value, column.Data.(grafanaJson.TableQueryResponseNumberColumn)[index], target, column.Text, index)
 				}
 			}
 		}

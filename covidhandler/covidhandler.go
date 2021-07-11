@@ -57,9 +57,6 @@ func (handler *CovidHandler) Search() []string {
 func (handler *CovidHandler) Query(target string, args *grafana_json.TimeSeriesQueryArgs) (response *grafana_json.QueryResponse, err error) {
 	start := time.Now()
 
-	responseChannel := make(chan covidcache.Response)
-	defer close(responseChannel)
-
 	deltas := false
 	subTarget := target
 	if strings.HasSuffix(target, "-delta") {
@@ -67,20 +64,19 @@ func (handler *CovidHandler) Query(target string, args *grafana_json.TimeSeriesQ
 		subTarget = strings.TrimSuffix(target, "-delta")
 	}
 
-	handler.cache.Request <- covidcache.Request{
-		Response: responseChannel,
-		End:      args.Range.To,
-		Delta:    deltas,
+	var resp []covidcache.CacheEntry
+	if deltas == false {
+		resp = handler.cache.GetTotals(args.Range.To)
+	} else {
+		resp = handler.cache.GetDeltas(args.Range.To)
 	}
-
-	resp := <-responseChannel
 
 	response = new(grafana_json.QueryResponse)
 	response.Target = target
-	response.DataPoints = make([]grafana_json.QueryResponseDataPoint, len(resp.Series))
+	response.DataPoints = make([]grafana_json.QueryResponseDataPoint, len(resp))
 
 loop:
-	for index, entry := range resp.Series {
+	for index, entry := range resp {
 		var value int64
 		switch subTarget {
 		case "confirmed":
@@ -105,6 +101,7 @@ loop:
 	log.WithFields(log.Fields{
 		"target": target,
 		"time":   time.Now().Sub(start).String(),
+		"count":  len(response.DataPoints),
 	}).Info("query timeserie")
 
 	return
@@ -133,32 +130,23 @@ func (handler *CovidHandler) TableQuery(target string, args *grafana_json.TableQ
 	log.WithFields(log.Fields{
 		"target": target,
 		"time":   time.Now().Sub(start),
-		"actual": dataLen,
+		"count":  dataLen,
 	}).Info("query table")
 
 	return
 }
 
 func (handler *CovidHandler) buildDaily(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse) {
-	responseChannel := make(chan covidcache.Response)
-	defer close(responseChannel)
+	resp := handler.cache.GetDeltas(args.Range.To)
 
-	handler.cache.Request <- covidcache.Request{
-		Response: responseChannel,
-		End:      args.Range.To,
-		Delta:    true,
-	}
-
-	resp := <-responseChannel
-
-	dataLen := len(resp.Series)
+	dataLen := len(resp)
 	response = new(grafana_json.TableQueryResponse)
 	timestamps := make(grafana_json.TableQueryResponseTimeColumn, 0, dataLen)
 	confirmed := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
 	recovered := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
 	deaths := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
 
-	for _, entry := range resp.Series {
+	for _, entry := range resp {
 		timestamps = append(timestamps, entry.Timestamp)
 		confirmed = append(confirmed, float64(entry.Confirmed))
 		recovered = append(recovered, float64(entry.Recovered))
@@ -176,25 +164,16 @@ func (handler *CovidHandler) buildDaily(args *grafana_json.TableQueryArgs) (resp
 }
 
 func (handler *CovidHandler) buildCumulative(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse) {
-	responseChannel := make(chan covidcache.Response)
-	defer close(responseChannel)
+	resp := handler.cache.GetTotals(args.Range.To)
 
-	handler.cache.Request <- covidcache.Request{
-		Response: responseChannel,
-		End:      args.Range.To,
-		Delta:    false,
-	}
-
-	resp := <-responseChannel
-
-	dataLen := len(resp.Series)
+	dataLen := len(resp)
 	response = new(grafana_json.TableQueryResponse)
 	timestamps := make(grafana_json.TableQueryResponseTimeColumn, 0, dataLen)
 	active := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
 	recovered := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
 	deaths := make(grafana_json.TableQueryResponseNumberColumn, 0, dataLen)
 
-	for _, entry := range resp.Series {
+	for _, entry := range resp {
 		timestamps = append(timestamps, entry.Timestamp)
 		active = append(active, float64(entry.Confirmed-entry.Recovered-entry.Deaths))
 		recovered = append(recovered, float64(entry.Recovered))

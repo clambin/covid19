@@ -91,50 +91,35 @@ var (
 
 func TestCovidCache(t *testing.T) {
 	cache := covidcache.New(mock.Create(testData))
-	responseChannel := make(chan covidcache.Response)
 	go cache.Run()
 
-	req := covidcache.Request{
-		Response: responseChannel,
-		End:      time.Now(),
-		Delta:    false,
-	}
-
-	cache.Refresh <- true
-	cache.Request <- req
-	response := <-responseChannel
-	assert.Len(t, response.Series, 3)
+	cache.Refresh()
+	response := cache.GetTotals(time.Now())
+	assert.Len(t, response, 3)
 
 	for index, totalCase := range totalCases {
-		assert.Equal(t, totalCase.Timestamp, response.Series[index].Timestamp)
-		assert.Equal(t, totalCase.Confirmed, response.Series[index].Confirmed)
-		assert.Equal(t, totalCase.Recovered, response.Series[index].Recovered)
-		assert.Equal(t, totalCase.Deaths, response.Series[index].Deaths)
-		assert.Equal(t, totalCase.Active, response.Series[index].Active)
+		assert.Equal(t, totalCase.Timestamp, response[index].Timestamp)
+		assert.Equal(t, totalCase.Confirmed, response[index].Confirmed)
+		assert.Equal(t, totalCase.Recovered, response[index].Recovered)
+		assert.Equal(t, totalCase.Deaths, response[index].Deaths)
+		assert.Equal(t, totalCase.Active, response[index].Active)
 	}
 
-	req.Delta = true
-	cache.Request <- req
-	response = <-responseChannel
-	assert.Len(t, response.Series, 3)
+	response = cache.GetDeltas(time.Now())
+	assert.Len(t, response, 3)
 
 	for index, deltaCase := range deltaCases {
-		assert.Equal(t, deltaCase.Timestamp, response.Series[index].Timestamp)
-		assert.Equal(t, deltaCase.Confirmed, response.Series[index].Confirmed)
-		assert.Equal(t, deltaCase.Recovered, response.Series[index].Recovered)
-		assert.Equal(t, deltaCase.Deaths, response.Series[index].Deaths)
-		assert.Equal(t, deltaCase.Active, response.Series[index].Active)
+		assert.Equal(t, deltaCase.Timestamp, response[index].Timestamp)
+		assert.Equal(t, deltaCase.Confirmed, response[index].Confirmed)
+		assert.Equal(t, deltaCase.Recovered, response[index].Recovered)
+		assert.Equal(t, deltaCase.Deaths, response[index].Deaths)
+		assert.Equal(t, deltaCase.Active, response[index].Active)
 	}
 
-	cache.Request <- covidcache.Request{
-		Response: responseChannel,
-		End:      time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC),
-		Delta:    false,
-	}
-	response = <-responseChannel
-	assert.Len(t, response.Series, 2)
+	response = cache.GetTotals(time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC))
+	assert.Len(t, response, 2)
 
-	for index, total := range response.Series {
+	for index, total := range response {
 		assert.Equal(t, totalCases[index].Timestamp, total.Timestamp)
 		assert.Equal(t, totalCases[index].Confirmed, total.Confirmed)
 		assert.Equal(t, totalCases[index].Recovered, total.Recovered)
