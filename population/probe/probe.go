@@ -41,13 +41,13 @@ func (probe *Probe) Run() (err error) {
 		}
 		log.WithFields(log.Fields{"country": country, "code": code}).Debug("looking up population")
 
-		population, err = probe.APIClient.GetPopulation(country)
-		if err == nil {
+		var err2 error
+		population, err2 = probe.APIClient.GetPopulation(country)
+		if err2 == nil {
 			log.WithField("population", population).Debug("found population")
 			err = probe.popDB.Add(code, population)
 		} else {
 			log.WithError(err).WithField("country", country).Warning("could not get population stats")
-			err = nil
 		}
 	}
 

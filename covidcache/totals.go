@@ -22,7 +22,7 @@ func GetTotalCases(rows []coviddb.CountryEntry) (result []CacheEntry) {
 	timeMap := make(map[time.Time][]coviddb.CountryEntry)
 	for _, row := range rows {
 		if timeMap[row.Timestamp] == nil {
-			timeMap[row.Timestamp] = make([]coviddb.CountryEntry, 0)
+			timeMap[row.Timestamp] = make([]coviddb.CountryEntry, 0, 300)
 		}
 		timeMap[row.Timestamp] = append(timeMap[row.Timestamp], row)
 	}
@@ -36,6 +36,7 @@ func GetTotalCases(rows []coviddb.CountryEntry) (result []CacheEntry) {
 
 	// Go through each timestamp, record running total for each country & compute total cases
 	countryMap := make(map[string]covidData)
+	result = make([]CacheEntry, 0, 365)
 	for _, timestamp := range timestamps {
 		for _, row := range timeMap[timestamp] {
 			countryMap[row.Code] = covidData{Confirmed: row.Confirmed, Recovered: row.Recovered, Deaths: row.Deaths}
