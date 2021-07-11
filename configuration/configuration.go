@@ -14,7 +14,6 @@ type Configuration struct {
 	Debug    bool                 `yaml:"debug"`
 	Postgres PostgresDB           `yaml:"postgres"`
 	Monitor  MonitorConfiguration `yaml:"monitor"`
-	Grafana  GrafanaConfiguration `yaml:"grafana"`
 }
 
 // PostgresDB configuration parameters
@@ -45,11 +44,6 @@ type NotificationConfiguration struct {
 	Enabled   bool          `yaml:"enabled"`
 	URL       ValueOrEnvVar `yaml:"url"`
 	Countries []string      `yaml:"countries"`
-}
-
-// GrafanaConfiguration if set, runs a Grafana SimpleJson API server
-type GrafanaConfiguration struct {
-	Enabled bool `yaml:"enabled"`
 }
 
 // Set a ValueOrEnvVar

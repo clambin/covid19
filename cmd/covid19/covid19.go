@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
@@ -11,10 +10,8 @@ import (
 	"github.com/clambin/covid19/population/probe"
 	"github.com/clambin/covid19/version"
 	"github.com/clambin/grafana-json"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -51,22 +48,14 @@ func main() {
 	}
 
 	var cache *covidcache.Cache
-
 	if cfg.Monitor.Enabled {
-		cache = startMonitor(cfg, cfg.Grafana.Enabled)
+		cache = startMonitor(cfg)
 	}
 
-	if cfg.Grafana.Enabled {
-		runGrafanaServer(cfg, cache)
-	} else {
-		// Grafana Server won't start prometheus server, so we start one manually
-		listenAddress := fmt.Sprintf(":%d", cfg.Port)
-		http.Handle("/metrics", promhttp.Handler())
-		_ = http.ListenAndServe(listenAddress, nil)
-	}
+	runGrafanaServer(cfg, cache)
 }
 
-func startMonitor(cfg *configuration.Configuration, createCache bool) (cache *covidcache.Cache) {
+func startMonitor(cfg *configuration.Configuration) (cache *covidcache.Cache) {
 	covidDB := coviddb.NewPostgresDB(
 		cfg.Postgres.Host,
 		cfg.Postgres.Port,
@@ -83,10 +72,9 @@ func startMonitor(cfg *configuration.Configuration, createCache bool) (cache *co
 		cfg.Postgres.Password,
 	)
 
-	if createCache {
-		cache = covidcache.New(covidDB)
-		go cache.Run()
-	}
+	cache = covidcache.New(covidDB)
+	go cache.Run()
+
 	populationProbe := probe.Create(cfg.Monitor.RapidAPIKey.Value, popDB, covidDB)
 	go func() {
 		err := populationProbe.Run()

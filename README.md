@@ -78,9 +78,6 @@ monitor:
     countries:
       - Belgium
       - US
-# Covid19 contains a Grafana helper API datasource for more complex queries. See below.
-grafana:
-  enabled: true
 ```
 
 ## Postgres

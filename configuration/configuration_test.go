@@ -70,7 +70,6 @@ grafana:
 			assert.Equal(t, "Belgium", cfg.Monitor.Notifications.Countries[0])
 			assert.Equal(t, "US", cfg.Monitor.Notifications.Countries[1])
 		}
-		assert.True(t, cfg.Grafana.Enabled)
 	}
 }
 
@@ -126,7 +125,6 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 	assert.False(t, cfg.Debug)
 	assert.True(t, cfg.Monitor.Enabled)
 	assert.Equal(t, 20*time.Minute, cfg.Monitor.Interval)
-	assert.False(t, cfg.Grafana.Enabled)
 	assert.Equal(t, "postgres", cfg.Postgres.Host)
 	assert.Equal(t, 5432, cfg.Postgres.Port)
 	assert.Equal(t, "covid19", cfg.Postgres.Database)
