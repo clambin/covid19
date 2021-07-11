@@ -74,17 +74,6 @@ grafana:
 	}
 }
 
-func TestLoadConfiguration_Defaults(t *testing.T) {
-	cfg, err := configuration.LoadConfiguration([]byte{})
-
-	assert.Nil(t, err)
-	assert.Equal(t, 8080, cfg.Port)
-	assert.False(t, cfg.Debug)
-	assert.True(t, cfg.Monitor.Enabled)
-	assert.Equal(t, 20*time.Minute, cfg.Monitor.Interval)
-	assert.False(t, cfg.Grafana.Enabled)
-}
-
 func TestLoadConfiguration_EnvVars(t *testing.T) {
 	const configString = `
 monitor:
@@ -123,4 +112,24 @@ monitor:
 		assert.Equal(t, "1234", cfg.Monitor.RapidAPIKey.Value)
 		assert.Equal(t, "https://example.com/", cfg.Monitor.Notifications.URL.Value)
 	}
+}
+
+func TestLoadConfiguration_Defaults(t *testing.T) {
+	for _, envVar := range []string{"pg_host", "pg_port", "pg_database", "pg_user", "pg_password"} {
+		_ = os.Setenv(envVar, "")
+	}
+
+	cfg, err := configuration.LoadConfiguration([]byte{})
+
+	assert.Nil(t, err)
+	assert.Equal(t, 8080, cfg.Port)
+	assert.False(t, cfg.Debug)
+	assert.True(t, cfg.Monitor.Enabled)
+	assert.Equal(t, 20*time.Minute, cfg.Monitor.Interval)
+	assert.False(t, cfg.Grafana.Enabled)
+	assert.Equal(t, "postgres", cfg.Postgres.Host)
+	assert.Equal(t, 5432, cfg.Postgres.Port)
+	assert.Equal(t, "covid19", cfg.Postgres.Database)
+	assert.Equal(t, "covid", cfg.Postgres.User)
+	assert.Equal(t, "covid", cfg.Postgres.Password)
 }
