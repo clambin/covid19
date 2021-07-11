@@ -60,26 +60,23 @@ func (db *PostgresDB) openDB() (dbh *sql.DB, err error) {
 func (db *PostgresDB) List(endDate time.Time) (entries []CountryEntry, err error) {
 	var dbh *sql.DB
 	dbh, err = db.openDB()
-	if err != nil {
-		return
-	}
-
-	var rows *sql.Rows
-	rows, err = dbh.Query(fmt.Sprintf(
-		"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
-		endDate.Format("2006-01-02 15:04:05")))
-
 	if err == nil {
-		for rows.Next() {
-			var entry CountryEntry
-			if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
-				entries = append(entries, entry)
-			}
-		}
-		_ = rows.Close()
-	}
-	_ = dbh.Close()
+		var rows *sql.Rows
+		rows, err = dbh.Query(fmt.Sprintf(
+			"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
+			endDate.Format("2006-01-02 15:04:05")))
 
+		if err == nil {
+			for rows.Next() {
+				var entry CountryEntry
+				if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
+					entries = append(entries, entry)
+				}
+			}
+			_ = rows.Close()
+		}
+		_ = dbh.Close()
+	}
 	return entries, err
 }
 
@@ -87,26 +84,23 @@ func (db *PostgresDB) List(endDate time.Time) (entries []CountryEntry, err error
 func (db *PostgresDB) ListLatestByCountry() (entries map[string]time.Time, err error) {
 	var dbh *sql.DB
 	dbh, err = db.openDB()
-	if err != nil {
-		return
-	}
-
-	entries = make(map[string]time.Time)
-	var rows *sql.Rows
-	if rows, err = dbh.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`); err == nil {
-		for rows.Next() {
-			var (
-				country   string
-				timestamp time.Time
-			)
-			if rows.Scan(&country, &timestamp) == nil {
-				entries[country] = timestamp
+	if err == nil {
+		entries = make(map[string]time.Time)
+		var rows *sql.Rows
+		if rows, err = dbh.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`); err == nil {
+			for rows.Next() {
+				var (
+					country   string
+					timestamp time.Time
+				)
+				if rows.Scan(&country, &timestamp) == nil {
+					entries[country] = timestamp
+				}
 			}
+			_ = rows.Close()
 		}
-		_ = rows.Close()
+		_ = dbh.Close()
 	}
-	_ = dbh.Close()
-
 	return entries, err
 }
 
@@ -114,14 +108,11 @@ func (db *PostgresDB) ListLatestByCountry() (entries map[string]time.Time, err e
 func (db *PostgresDB) GetFirstEntry() (first time.Time, found bool, err error) {
 	var dbh *sql.DB
 	dbh, err = db.openDB()
-	if err != nil {
-		return
+	if err == nil {
+		err = dbh.QueryRow(`SELECT MIN(time) FROM covid19`).Scan(&first)
+		found = err == nil
+		_ = dbh.Close()
 	}
-
-	err = dbh.QueryRow(`SELECT MIN(time) FROM covid19`).Scan(&first)
-	found = err == nil
-	_ = dbh.Close()
-
 	return
 }
 
@@ -129,32 +120,30 @@ func (db *PostgresDB) GetFirstEntry() (first time.Time, found bool, err error) {
 func (db *PostgresDB) GetLastBeforeDate(countryName string, before time.Time) (result *CountryEntry, found bool, err error) {
 	var dbh *sql.DB
 	dbh, err = db.openDB()
-	if err != nil {
-		return
+	if err == nil {
+		var last time.Time
+		// FIXME: leaving out sprintf gives errors on processing timestamp???
+		err = dbh.QueryRow(fmt.Sprintf(
+			"SELECT MAX(time) FROM covid19 WHERE country_name = '%s' AND time < '%s'", countryName, before.Format("2006-01-02 15:04:05"),
+		)).Scan(&last)
+
+		// row.Scan() should return sql.ErrNoRows ???
+		if err != nil && err.Error() == "sql: Scan error on column index 0, name \"max\": unsupported Scan, storing driver.Value type <nil> into type *time.Time" {
+			err = nil
+		} else if err == nil {
+			result = &CountryEntry{Timestamp: before, Name: countryName}
+			err = dbh.QueryRow(
+				fmt.Sprintf(
+					"SELECT country_code, confirmed, death, recovered FROM covid19 where country_name = '%s' and time = '%s'",
+					countryName,
+					last.Format("2006-01-02 15:04:05"),
+				),
+			).Scan(&result.Code, &result.Confirmed, &result.Deaths, &result.Recovered)
+
+			found = err == nil
+		}
+		_ = dbh.Close()
 	}
-
-	var last time.Time
-	// FIXME: leaving out sprintf gives errors on processing timestamp???
-	err = dbh.QueryRow(fmt.Sprintf(
-		"SELECT MAX(time) FROM covid19 WHERE country_name = '%s' AND time < '%s'", countryName, before.Format("2006-01-02 15:04:05"),
-	)).Scan(&last)
-
-	// row.Scan() should return sql.ErrNoRows ???
-	if err != nil && err.Error() == "sql: Scan error on column index 0, name \"max\": unsupported Scan, storing driver.Value type <nil> into type *time.Time" {
-		err = nil
-	} else if err == nil {
-		result = &CountryEntry{Timestamp: before, Name: countryName}
-		err = dbh.QueryRow(
-			fmt.Sprintf(
-				"SELECT country_code, confirmed, death, recovered FROM covid19 where country_name = '%s' and time = '%s'",
-				countryName,
-				last.Format("2006-01-02 15:04:05"),
-			),
-		).Scan(&result.Code, &result.Confirmed, &result.Deaths, &result.Recovered)
-
-		found = err == nil
-	}
-
 	return
 }
 
@@ -236,37 +225,31 @@ func (db *PostgresDB) initializeDB(dbh *sql.DB) (err error) {
 func (db *PostgresDB) RemoveDB() (err error) {
 	var dbh *sql.DB
 	dbh, err = sql.Open("postgres", db.psqlInfo)
-
-	if err != nil {
-		return
+	if err == nil {
+		_, err = dbh.Exec(`DROP TABLE IF EXISTS covid19 CASCADE`)
+		db.initialized = err != nil
+		_ = dbh.Close()
 	}
-
-	_, err = dbh.Exec(`DROP TABLE IF EXISTS covid19 CASCADE`)
-	db.initialized = err != nil
-	_ = dbh.Close()
-
 	return
 }
 
 func (db *PostgresDB) GetAllCountryCodes() (codes []string, err error) {
 	var dbh *sql.DB
 	dbh, err = db.openDB()
-	if err != nil {
-		return
-	}
-
-	var rows *sql.Rows
-	rows, err = dbh.Query(`SELECT distinct country_code FROM covid19`)
-
 	if err == nil {
-		for rows.Next() {
-			var code string
-			if rows.Scan(&code) == nil {
-				codes = append(codes, code)
+		var rows *sql.Rows
+		rows, err = dbh.Query(`SELECT distinct country_code FROM covid19`)
+
+		if err == nil {
+			for rows.Next() {
+				var code string
+				if rows.Scan(&code) == nil {
+					codes = append(codes, code)
+				}
 			}
+			_ = rows.Close()
 		}
-		_ = rows.Close()
+		_ = dbh.Close()
 	}
-	_ = dbh.Close()
 	return
 }
