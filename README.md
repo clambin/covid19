@@ -6,20 +6,18 @@
 ![GitHub](https://img.shields.io/github/license/clambin/covid19?style=plastic)
 
 
-A lightweight Covid19 data tracker.
+A lightweight Covid-19 tracker.
 
 ## Introduction
-This package tracks global Covid19 data. It was designed to be lightweight and operates easily on my Raspberry Pi stack. 
-The basic operation is as follows:
+This package tracks global Covid-19 data. The basic operation is as follows:
 
-- Daily updated data are retrieved from a public Covid19 API 
-- All data is stored in an external Postgres DB
+- It retrieves daily updates from a public Covid-19 tracker and stores them in an external Postgres DB
 - Grafana is used to visualize the data
 
 ## Installation
-A Docker image for the main covid tracker is available on [docker](https://hub.docker.com/r/clambin/covid19). Images are available for amd64 & arm32v7.
+A Docker image for the main Covid-19 tracker is available on [docker](https://hub.docker.com/r/clambin/covid19). Images are available for amd64, arm64 & arm32.
 
-Binaries are also uploaded to [github](https://github.com/clambin/covid19/releases).
+Binaries are also available at [github](https://github.com/clambin/covid19/releases).
 
 Alternatively, you can clone the repository and build from source:
 
@@ -30,12 +28,12 @@ go build cmd/covid19/covid19.go
 go build cmd/backfill/backfill.go
 ```
 
-You will need to have Go 1.15 installed on your system.
+You will need to have Go 1.16 installed on your system.
 
 ## Configuration
 ### Configuration file
 
-Main configuration is done through an associated yaml file:
+Use the following yaml file to configure parameters & desired behaviour:
 
 ```
 # HTTP port for Prometheus (optional) & Grafana. Default is 8080
@@ -94,12 +92,12 @@ Covid19 uses two APIs published on RapidAPI.com to collect new data. You will ne
 Add this key to the configuration file above and subscribe to the following two services:
 
 - https://rapidapi.com/KishCom/api/covid-19-coronavirus-statistics
-- https://rapidapi.com/mitecsoftware-mitecsoftware-default/api/geohub3
+- https://rapidapi.com/aldair.sr99/api/world-population/
 
-The first one offers the latest Covid19 statistics. The second one provides population figures for each country.
+The first one offers the latest Covid-19 statistics. The second one provides population figures for each country.
 
-## Grafana datasources
-Both Postgres and the covid19 Grafana datasource will need to be configured in Grafana. 
+## Grafana data sources
+Both Postgres and the covid19 Grafana data source will need to be configured in Grafana. 
 This can be done manually through the Grafana admin UI, or through a datasource provisioning file, e.g.
 
 ```
@@ -111,7 +109,7 @@ datasources:
     type: grafana-simple-json-datasource
     access: proxy
     # URL of covid19 server
-    url: http://covid19api.default.svc:5000
+    url: http://covid19.default.svc:5000
     password: ""
     user: ""
     database: ""
@@ -140,7 +138,7 @@ datasources:
 
 ### Backfilling historical data
 Covid19 only adds new data for the current day. For new installations, historical data will need to be added manually. 
-Use the provided backfill utility to do this:
+Use the provided utility to do this:
 
 ```
 backfill --postgres-host=<postgres-host> \
