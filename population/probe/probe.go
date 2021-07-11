@@ -9,9 +9,9 @@ import (
 
 // Probe handle
 type Probe struct {
-	APIClient APIClient
-	popDB     db.DB
-	covidDB   coviddb.DB
+	APIClient
+	popDB   db.DB
+	covidDB coviddb.DB
 }
 
 // Create a new Probe handle

@@ -21,18 +21,15 @@ func TestPopulationProbe(t *testing.T) {
 			Confirmed: 300,
 		},
 		{
-			Code:      "FO",
+			Code:      "??",
 			Confirmed: 10,
 		},
 	}
 	covidDB := mock.Create(covidEntries)
 	popDB := mock2.Create(map[string]int64{})
 
-	p := probe.Create("", popDB, covidDB)
-	p.APIClient = &probe.RapidAPIClient{
-		HTTPClient: httpstub.NewTestClient(serverStub),
-		APIKey:     "1234",
-	}
+	p := probe.Create("1234", popDB, covidDB)
+	p.APIClient.(*probe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
 
 	// DB should be empty
 	entries, err := popDB.List()
