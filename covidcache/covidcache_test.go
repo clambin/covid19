@@ -1,6 +1,7 @@
 package covidcache_test
 
 import (
+	"context"
 	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
 	"github.com/clambin/covid19/coviddb/mock"
@@ -90,8 +91,11 @@ var (
 )
 
 func TestCovidCache(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	cache := covidcache.New(mock.Create(testData))
-	go cache.Run()
+	go cache.Run(ctx)
 
 	cache.Refresh()
 	response := cache.GetTotals(time.Now())

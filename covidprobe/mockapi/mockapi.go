@@ -1,6 +1,7 @@
 package mockapi
 
 import (
+	"context"
 	"github.com/clambin/covid19/covidprobe"
 )
 
@@ -15,6 +16,6 @@ func New(data map[string]covidprobe.CountryStats) *API {
 }
 
 // GetCountryStats returns the provided data
-func (api *API) GetCountryStats() (map[string]covidprobe.CountryStats, error) {
+func (api *API) GetCountryStats(_ context.Context) (map[string]covidprobe.CountryStats, error) {
 	return api.data, nil
 }

@@ -2,6 +2,7 @@ package covidprobe_test
 
 import (
 	"bytes"
+	"context"
 	"github.com/clambin/covid19/covidprobe"
 	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
@@ -12,9 +13,9 @@ import (
 
 func TestGetCountryStats(t *testing.T) {
 	apiClient := covidprobe.NewAPIClient("1234")
-	apiClient.(*covidprobe.RapidAPIClient).Client.Client = httpstub.NewTestClient(loopback)
+	apiClient.(*covidprobe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
 
-	response, err := apiClient.GetCountryStats()
+	response, err := apiClient.GetCountryStats(context.Background())
 
 	assert.Equal(t, nil, err)
 	assert.Equal(t, 2, len(response))
@@ -30,8 +31,8 @@ func TestGetCountryStats(t *testing.T) {
 	assert.Equal(t, int64(4), stats.Recovered)
 }
 
-// loopback function
-func loopback(_ *http.Request) *http.Response {
+// serverStub function
+func serverStub(_ *http.Request) *http.Response {
 
 	return &http.Response{
 		StatusCode: 200,

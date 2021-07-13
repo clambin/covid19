@@ -1,6 +1,7 @@
 package covidprobe
 
 import (
+	"context"
 	"fmt"
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/covidcache"
@@ -81,13 +82,29 @@ func (probe *Probe) initCache() error {
 }
 
 // Run gets latest data, inserts any new entries in the DB and reports to Prometheus' pushGateway
-func (probe *Probe) Run() (err error) {
+func (probe *Probe) Run(ctx context.Context, interval time.Duration) (err error) {
+	err = probe.update(ctx)
+	timer := time.NewTicker(interval)
+loop:
+	for err == nil {
+		select {
+		case <-ctx.Done():
+			break loop
+		case <-timer.C:
+			err = probe.update(ctx)
+		}
+	}
+	timer.Stop()
+	return
+}
+
+func (probe *Probe) update(ctx context.Context) (err error) {
 	var (
 		countryStats map[string]CountryStats
 		newRecords   = make([]coviddb.CountryEntry, 0)
 	)
 
-	countryStats, err = probe.APIClient.GetCountryStats()
+	countryStats, err = probe.APIClient.GetCountryStats(ctx)
 
 	if err == nil {
 		log.WithField("countryStats", len(countryStats)).Debug("covidProbe got new entries")

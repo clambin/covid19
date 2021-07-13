@@ -2,6 +2,7 @@ package probe_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/clambin/covid19/population/probe"
 	"github.com/clambin/gotools/httpstub"
@@ -15,17 +16,18 @@ func TestGetPopulation(t *testing.T) {
 	apiClient := probe.NewAPIClient("1234")
 	apiClient.(*probe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
 
-	population, err := apiClient.GetPopulation("Belgium")
+	ctx := context.Background()
+	population, err := apiClient.GetPopulation(ctx, "Belgium")
 
 	assert.NoError(t, err)
 	assert.Equal(t, int64(20), population)
 
-	population, err = apiClient.GetPopulation("United States")
+	population, err = apiClient.GetPopulation(ctx, "United States")
 
 	assert.NoError(t, err)
 	assert.Equal(t, int64(40), population)
 
-	population, err = apiClient.GetPopulation("??")
+	population, err = apiClient.GetPopulation(ctx, "??")
 
 	assert.Error(t, err)
 }
@@ -34,7 +36,8 @@ func TestGetCountries(t *testing.T) {
 	apiClient := probe.NewAPIClient("1234")
 	apiClient.(*probe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
 
-	countries, err := apiClient.GetCountries()
+	ctx := context.Background()
+	countries, err := apiClient.GetCountries(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, countries, 2)
 	assert.Contains(t, countries, "Belgium")

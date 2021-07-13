@@ -1,18 +1,19 @@
 package probe
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/clambin/gotools/rapidapi"
-	"io"
 	"net/http"
 	"net/url"
 )
 
 // APIClient interface representing a Population API Client
 type APIClient interface {
-	GetPopulation(codes string) (int64, error)
-	GetCountries() ([]string, error)
+	GetPopulation(ctx context.Context, codes string) (int64, error)
+	GetCountries(ctx context.Context) ([]string, error)
 }
 
 // RapidAPIClient API Client handle
@@ -46,13 +47,13 @@ type populationResponseBody struct {
 }
 
 // GetPopulation finds the most recent data for a countries
-func (client *RapidAPIClient) GetPopulation(country string) (population int64, err error) {
-	var resp io.Reader
-	resp, err = client.Client.CallAsReader("/population?country_name=" + url.QueryEscape(country))
+func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string) (population int64, err error) {
+	var body []byte
+	body, err = client.Client.CallWithContext(ctx, "/population?country_name="+url.QueryEscape(country))
 
 	var stats populationResponse
 	if err == nil {
-		decoder := json.NewDecoder(resp)
+		decoder := json.NewDecoder(bytes.NewReader(body))
 		err = decoder.Decode(&stats)
 	}
 
@@ -67,9 +68,9 @@ func (client *RapidAPIClient) GetPopulation(country string) (population int64, e
 	return
 }
 
-func (client *RapidAPIClient) GetCountries() (countries []string, err error) {
-	var resp io.Reader
-	resp, err = client.Client.CallAsReader("/allcountriesname")
+func (client *RapidAPIClient) GetCountries(ctx context.Context) (countries []string, err error) {
+	var body []byte
+	body, err = client.Client.CallWithContext(ctx, "/allcountriesname")
 
 	var stats struct {
 		OK   bool
@@ -78,7 +79,7 @@ func (client *RapidAPIClient) GetCountries() (countries []string, err error) {
 		}
 	}
 	if err == nil {
-		decoder := json.NewDecoder(resp)
+		decoder := json.NewDecoder(bytes.NewReader(body))
 		err = decoder.Decode(&stats)
 	}
 

@@ -1,6 +1,8 @@
 package covidprobe
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"github.com/clambin/gotools/rapidapi"
 	"net/http"
@@ -9,7 +11,7 @@ import (
 
 // APIClient interface representing a Population API Client
 type APIClient interface {
-	GetCountryStats() (map[string]CountryStats, error)
+	GetCountryStats(ctx context.Context) (map[string]CountryStats, error)
 }
 
 // RapidAPIClient Client handle
@@ -19,7 +21,13 @@ type RapidAPIClient struct {
 
 // NewAPIClient creates a new Covid API Client
 func NewAPIClient(apiKey string) APIClient {
-	return &RapidAPIClient{rapidapi.Client{Client: &http.Client{}, HostName: rapidAPIHost, APIKey: apiKey}}
+	return &RapidAPIClient{
+		rapidapi.Client{
+			Client:   &http.Client{},
+			HostName: rapidAPIHost,
+			APIKey:   apiKey,
+		},
+	}
 }
 
 // CountryStats contains total figures for one country
@@ -31,9 +39,10 @@ type CountryStats struct {
 }
 
 // GetCountryStats finds the most recent figures for all countries
-func (client *RapidAPIClient) GetCountryStats() (map[string]CountryStats, error) {
-	countryStats := make(map[string]CountryStats, 0)
-	stats, err := client.getStats()
+func (client *RapidAPIClient) GetCountryStats(ctx context.Context) (countryStats map[string]CountryStats, err error) {
+	countryStats = make(map[string]CountryStats, 0)
+	var stats statsResponse
+	stats, err = client.getStats(ctx)
 
 	if err == nil {
 		for _, entry := range stats.Data.Covid19Stats {
@@ -82,14 +91,13 @@ type statsResponse struct {
 }
 
 // getStats retrieves today's covid19 country stats from rapidapi.com
-func (client *RapidAPIClient) getStats() (*statsResponse, error) {
-	var stats statsResponse
-
-	resp, err := client.Client.CallAsReader("/v1/stats")
+func (client *RapidAPIClient) getStats(ctx context.Context) (stats statsResponse, err error) {
+	var body []byte
+	body, err = client.Client.CallWithContext(ctx, "/v1/stats")
 	if err == nil {
-		decoder := json.NewDecoder(resp)
+		decoder := json.NewDecoder(bytes.NewReader(body))
 		err = decoder.Decode(&stats)
 	}
 
-	return &stats, err
+	return stats, err
 }

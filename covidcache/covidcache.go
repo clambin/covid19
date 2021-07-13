@@ -1,6 +1,7 @@
 package covidcache
 
 import (
+	"context"
 	"github.com/clambin/covid19/coviddb"
 	log "github.com/sirupsen/logrus"
 	"sync"
@@ -35,13 +36,15 @@ func New(db coviddb.DB) *Cache {
 }
 
 // Run the cache
-func (cache *Cache) Run() {
+func (cache *Cache) Run(ctx context.Context) {
 	if err := cache.update(); err != nil {
 		log.WithField("err", err).Warning("failed to refresh cache")
 	}
-
+loop:
 	for {
 		select {
+		case <-ctx.Done():
+			break loop
 		case <-cache.refresh:
 			if err := cache.update(); err != nil {
 				log.WithField("err", err).Warning("failed to refresh cache")

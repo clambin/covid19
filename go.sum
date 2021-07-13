@@ -46,6 +46,8 @@ github.com/chromedp/chromedp v0.3.1-0.20190619195644-fd957a4d2901/go.mod h1:mJdv
 github.com/chromedp/chromedp v0.4.0/go.mod h1:DC3QUn4mJ24dwjcaGQLoZrhm4X/uPHZ6spDbS2uFhm4=
 github.com/clambin/gotools v0.2.1 h1:pbxa4oAaWe8VhzQtT+SxzXhd9GluQoQXgess7HFt2TE=
 github.com/clambin/gotools v0.2.1/go.mod h1:ou43UqOdwLHFnTkfGDZtkt6lpULsyJ0tgd48hHrakc0=
+github.com/clambin/gotools v0.3.0 h1:Ub6nxfHmQkIJQLgQCL6Gfb8gXiWi+Va/635tRVAH9ms=
+github.com/clambin/gotools v0.3.0/go.mod h1:12mW+UZTyh4Mag+p6mhI2rrw9Sax/wTZjouU7WrLyuQ=
 github.com/clambin/grafana-json v0.4.0 h1:Xf9D4J4rqgsjkgG41AYLJjM5zy6uJIkc/aNiWEwroi4=
 github.com/clambin/grafana-json v0.4.0/go.mod h1:vKkqavAOgVX/TOA39cL3lXwtxH8InX4CrHi/RCnP2Ug=
 github.com/clbanning/x2j v0.0.0-20191024224557-825249438eec/go.mod h1:jMjuTZXRI4dUb/I5gc9Hdhagfvm9+RyrPryS/auMzxE=

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
@@ -13,7 +14,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 )
 
@@ -47,15 +50,29 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var cache *covidcache.Cache
 	if cfg.Monitor.Enabled {
-		cache = startMonitor(cfg)
+		cache = startMonitor(ctx, cfg)
 	}
 
-	runGrafanaServer(cfg, cache)
+	handler, _ := covidhandler.Create(cache)
+	server := grafana_json.Create(handler, cfg.Port)
+	go func() {
+		if err = server.Run(); err != nil {
+			log.WithError(err).Fatal("unable to start grafana SimpleJson server")
+		}
+	}()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	<-sigs
 }
 
-func startMonitor(cfg *configuration.Configuration) (cache *covidcache.Cache) {
+func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache *covidcache.Cache) {
 	covidDB := coviddb.NewPostgresDB(
 		cfg.Postgres.Host,
 		cfg.Postgres.Port,
@@ -73,33 +90,25 @@ func startMonitor(cfg *configuration.Configuration) (cache *covidcache.Cache) {
 	)
 
 	cache = covidcache.New(covidDB)
-	go cache.Run()
+	go cache.Run(ctx)
 
 	populationProbe := probe.Create(cfg.Monitor.RapidAPIKey.Value, popDB, covidDB)
 	go func() {
-		err := populationProbe.Run()
+		err := populationProbe.Run(ctx, 24*time.Hour)
+
 		if err != nil {
-			log.WithError(err).Warning("failed to get latest population figures")
+			log.WithError(err).Fatal("unable to get population data")
 		}
 	}()
 
 	covidProbe := covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
-
 	go func() {
-		for {
-			err := covidProbe.Run()
-			if err != nil {
-				log.WithField("err", err).Warning("covidProbe failed")
-			}
-			time.Sleep(cfg.Monitor.Interval)
+		err := covidProbe.Run(ctx, cfg.Monitor.Interval)
+
+		if err != nil {
+			log.WithError(err).Fatal("unable to get covid data")
 		}
 	}()
 
 	return
-}
-
-func runGrafanaServer(cfg *configuration.Configuration, cache *covidcache.Cache) {
-	handler, _ := covidhandler.Create(cache)
-	server := grafana_json.Create(handler, cfg.Port)
-	_ = server.Run()
 }

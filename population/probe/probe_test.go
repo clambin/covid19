@@ -1,13 +1,15 @@
 package probe_test
 
 import (
+	"context"
 	"github.com/clambin/covid19/coviddb"
-	"github.com/clambin/covid19/coviddb/mock"
-	mock2 "github.com/clambin/covid19/population/db/mock"
+	covidDBMock "github.com/clambin/covid19/coviddb/mock"
+	popDBMock "github.com/clambin/covid19/population/db/mock"
 	"github.com/clambin/covid19/population/probe"
 	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestPopulationProbe(t *testing.T) {
@@ -25,8 +27,8 @@ func TestPopulationProbe(t *testing.T) {
 			Confirmed: 10,
 		},
 	}
-	covidDB := mock.Create(covidEntries)
-	popDB := mock2.Create(map[string]int64{})
+	covidDB := covidDBMock.Create(covidEntries)
+	popDB := popDBMock.Create(map[string]int64{})
 
 	p := probe.Create("1234", popDB, covidDB)
 	p.APIClient.(*probe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
@@ -36,20 +38,34 @@ func TestPopulationProbe(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, entries, 0)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Run the probe
-	err = p.Run()
-	assert.NoError(t, err)
+	go func() {
+		err = p.Run(ctx, 50*time.Millisecond)
+		assert.NoError(t, err)
+	}()
 
-	// Check results
-	entries, err = popDB.List()
-	assert.NoError(t, err)
-	assert.Len(t, entries, 2)
+	for i := 0; i < 2; i++ {
+		assert.Eventually(t, func() bool {
+			checkEntries, err2 := popDB.List()
+			return err2 == nil && len(checkEntries) == 2
+		}, 500*time.Millisecond, 10*time.Millisecond)
 
-	val, ok := entries["BE"]
-	assert.True(t, ok)
-	assert.Equal(t, int64(20), val)
+		// Check results
+		entries, err = popDB.List()
+		assert.NoError(t, err)
+		assert.Len(t, entries, 2)
 
-	val, ok = entries["US"]
-	assert.True(t, ok)
-	assert.Equal(t, int64(40), val)
+		val, ok := entries["BE"]
+		assert.True(t, ok)
+		assert.Equal(t, int64(20), val)
+
+		val, ok = entries["US"]
+		assert.True(t, ok)
+		assert.Equal(t, int64(40), val)
+
+		popDB.DeleteAll()
+	}
 }

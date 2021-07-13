@@ -1,6 +1,7 @@
 package covidhandler_test
 
 import (
+	"context"
 	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
 	"github.com/clambin/covid19/coviddb/mock"
@@ -51,9 +52,12 @@ func TestCovidHandler_Search(t *testing.T) {
 }
 
 func TestTimeSeriesHandler(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	dbh := mock.Create(dbContents)
 	cache := covidcache.New(dbh)
-	go cache.Run()
+	go cache.Run(ctx)
 	handler, _ := covidhandler.Create(cache)
 
 	args := grafanaJson.TimeSeriesQueryArgs{
@@ -94,9 +98,12 @@ func TestTimeSeriesHandler(t *testing.T) {
 }
 
 func TestTableHandler(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	dbh := mock.Create(dbContents)
 	cache := covidcache.New(dbh)
-	go cache.Run()
+	go cache.Run(ctx)
 	handler, _ := covidhandler.Create(cache)
 
 	args := grafanaJson.TableQueryArgs{
@@ -197,11 +204,13 @@ func BenchmarkHandlerQuery(b *testing.B) {
 			},
 		},
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	b.ResetTimer()
 
 	// Run the benchmark
-	go cache.Run()
+	go cache.Run(ctx)
 	for _, target := range covidhandler.Targets {
 		_, err := handler.Endpoints().Query(target, &seriesArgs)
 		assert.Nil(b, err)
@@ -243,10 +252,13 @@ func BenchmarkHandlerTableQuery(b *testing.B) {
 		},
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	b.ResetTimer()
 
 	// Run the benchmark
-	go cache.Run()
+	go cache.Run(ctx)
 	for _, target := range []string{"daily", "cumulative"} {
 		_, err := handler.Endpoints().TableQuery(target, &tableArgs)
 		assert.Nil(b, err)
