@@ -57,12 +57,12 @@ func (probe *Probe) runUpdate(ctx context.Context) (err error) {
 	if err == nil {
 		for _, code := range codes {
 			country, ok := countryNames[code]
-			if !ok {
-				log.WithField("code", code).Warning("unknown country code for population DB. skipping")
-				continue
+			if ok {
+				updater.Input <- &update{code: code, country: country}
+			} else {
+				log.WithField("code", code).Warning("unknown country code found in covid DB. skipping")
 			}
 
-			updater.Input <- &update{code: code, country: country}
 		}
 
 		updater.Stop <- struct{}{}
