@@ -67,7 +67,9 @@ func TestProbe(t *testing.T) {
 			},
 		},
 	}
-	p := covidprobe.NewProbe(&cfg, dbh, cache)
+
+	p, err := covidprobe.NewProbe(&cfg, dbh, cache)
+	assert.NoError(t, err)
 
 	// NotifyCache should contain the latest entry for each (valid) country we want to send notifications for
 	assert.Len(t, p.NotifyCache, 2)
@@ -85,35 +87,11 @@ func TestProbe(t *testing.T) {
 	})
 
 	go func() {
-		err := p.Run(ctx, 24*time.Hour)
-		assert.Error(t, err)
-		// FIXME: test is dependent on shoutrrr implementation. needs a more generic test
-		assert.Equal(t, "error sending message: no senders", err.Error())
+		_ = p.Run(ctx, 24*time.Hour)
 	}()
 
-	/*
-		// TODO: thread-safe way of checking this
-		// Check that the NotifyCache was updated
-		// NotifyCache should contain the latest entry for each (valid) country we want to send notifications for
-		assert.Len(t, p.NotifyCache, 2)
-		record, ok = p.NotifyCache["Belgium"]
-		assert.True(t, ok)
-		assert.Equal(t, "Belgium", record.Name)
-		assert.Equal(t, int64(40), record.Confirmed)
-		record, ok = p.NotifyCache["France"]
-		assert.True(t, ok)
-		assert.Equal(t, int64(0), record.Confirmed)
-
-		// Check we marked "NotACountry" as invalid (so it's logged only once)
-		if assert.NotNil(t, p.KnownInvalidCountries) {
-			assert.Len(t, p.KnownInvalidCountries, 1)
-			_, ok := p.KnownInvalidCountries["NotACountry"]
-			assert.True(t, ok)
-		}
-	*/
 	// Check that the latest values were added to the DB
 	var latest map[string]time.Time
-	var err error
 	assert.Eventually(t, func() bool {
 		latest, err = dbh.ListLatestByCountry()
 		return err == nil && len(latest) == 2

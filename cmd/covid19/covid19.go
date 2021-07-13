@@ -101,7 +101,11 @@ func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache 
 		}
 	}()
 
-	covidProbe := covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
+	covidProbe, err := covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
+
+	if err != nil {
+		log.WithError(err).Fatal("failed to start covid probe")
+	}
 	go func() {
 		err := covidProbe.Run(ctx, cfg.Monitor.Interval)
 

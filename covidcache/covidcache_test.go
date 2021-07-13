@@ -92,7 +92,10 @@ var (
 
 func TestCovidCache(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	defer func() {
+		cancel()
+		time.Sleep(100 * time.Millisecond)
+	}()
 
 	cache := covidcache.New(mock.Create(testData))
 	go cache.Run(ctx)

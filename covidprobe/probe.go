@@ -29,27 +29,25 @@ type Probe struct {
 }
 
 // NewProbe creates a new Probe handle
-func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB, cache *covidcache.Cache) *Probe {
-	probe := Probe{
+func NewProbe(cfg *configuration.MonitorConfiguration, db coviddb.DB, cache *covidcache.Cache) (probe *Probe, err error) {
+	probe = &Probe{
 		APIClient:     NewAPIClient(cfg.RapidAPIKey.Value),
 		db:            db,
 		cache:         cache,
 		notifications: &cfg.Notifications,
 	}
 
-	var err error
-	if err = probe.initCache(); err != nil {
-		log.WithField("err", err).Fatal("failed to access the database")
-	}
+	err = probe.initCache()
 
-	if probe.notifications.Enabled {
-		if probe.notifier, err = shoutrrr.CreateSender(cfg.Notifications.URL.Value); err != nil {
-			log.WithField("err", err).Error("failed to set up notifications")
+	if err == nil && probe.notifications.Enabled {
+		var err2 error
+		if probe.notifier, err2 = shoutrrr.CreateSender(cfg.Notifications.URL.Value); err2 != nil {
+			log.WithField("err", err2).Error("failed to set up notifications")
 			probe.notifier = nil
 		}
 	}
 
-	return &probe
+	return
 }
 
 // initCache initializes the NotifyCache structure
@@ -247,11 +245,8 @@ func (probe *Probe) metricsLatestUpdates(newEntries []coviddb.CountryEntry) {
 	}
 
 	for _, newEntry := range newEntries {
-		if count, ok := probe.PrometheusMetrics[newEntry.Name]; ok == false {
-			probe.PrometheusMetrics[newEntry.Name] = 1
-		} else {
-			probe.PrometheusMetrics[newEntry.Name] = count + 1
-		}
+		count, _ := probe.PrometheusMetrics[newEntry.Name]
+		probe.PrometheusMetrics[newEntry.Name] = count + 1
 	}
 	for country, count := range probe.PrometheusMetrics {
 		reportedCount.WithLabelValues(country).Set(float64(count))
