@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -19,8 +22,9 @@ type DB interface {
 
 // PostgresDB implementation of DB
 type PostgresDB struct {
-	psqlInfo    string
-	initialized bool
+	psqlInfo string
+	database string
+	dbh      *sql.DB
 }
 
 // NewPostgresDB create a new PostgresDB object
@@ -28,7 +32,7 @@ func NewPostgresDB(host string, port int, database string, user string, password
 	return &PostgresDB{
 		psqlInfo: fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 			host, port, user, password, database),
-		initialized: false,
+		database: database,
 	}
 }
 
@@ -42,127 +46,107 @@ type CountryEntry struct {
 	Deaths    int64
 }
 
-func (db *PostgresDB) openDB() (dbh *sql.DB, err error) {
-	dbh, err = sql.Open("postgres", db.psqlInfo)
+// List retrieved all records from the database up to endDate
+func (db *PostgresDB) List(endDate time.Time) (entries []CountryEntry, err error) {
+	db.initialize()
+
+	var rows *sql.Rows
+	rows, err = db.dbh.Query(fmt.Sprintf(
+		"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
+		endDate.Format("2006-01-02 15:04:05")))
+
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to covid DB: %s", err.Error())
+		db.close()
+		return nil, fmt.Errorf("unable to list coviddb records: %v", err)
 	}
 
-	err = db.initializeDB(dbh)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize covid db: %s", err.Error())
+	for rows.Next() {
+		var entry CountryEntry
+		if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
+			entries = append(entries, entry)
+		}
 	}
+	_ = rows.Close()
 
 	return
 }
 
-// List retrieved all records from the database up to endDate
-func (db *PostgresDB) List(endDate time.Time) (entries []CountryEntry, err error) {
-	var dbh *sql.DB
-	dbh, err = db.openDB()
-	if err == nil {
-		var rows *sql.Rows
-		rows, err = dbh.Query(fmt.Sprintf(
-			"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
-			endDate.Format("2006-01-02 15:04:05")))
-
-		if err == nil {
-			for rows.Next() {
-				var entry CountryEntry
-				if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
-					entries = append(entries, entry)
-				}
-			}
-			_ = rows.Close()
-		}
-		_ = dbh.Close()
-	}
-	return entries, err
-}
-
 // ListLatestByCountry returns the timestamp of each country's last update
 func (db *PostgresDB) ListLatestByCountry() (entries map[string]time.Time, err error) {
-	var dbh *sql.DB
-	dbh, err = db.openDB()
-	if err == nil {
-		entries = make(map[string]time.Time)
-		var rows *sql.Rows
-		if rows, err = dbh.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`); err == nil {
-			for rows.Next() {
-				var (
-					country   string
-					timestamp time.Time
-				)
-				if rows.Scan(&country, &timestamp) == nil {
-					entries[country] = timestamp
-				}
-			}
-			_ = rows.Close()
-		}
-		_ = dbh.Close()
+	db.initialize()
+
+	entries = make(map[string]time.Time)
+	var rows *sql.Rows
+	rows, err = db.dbh.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`)
+
+	if err != nil {
+		db.close()
+		return nil, fmt.Errorf("unable to get latest entry by country: %v", err)
 	}
-	return entries, err
+
+	for rows.Next() {
+		var (
+			country   string
+			timestamp time.Time
+		)
+		if rows.Scan(&country, &timestamp) == nil {
+			entries[country] = timestamp
+		}
+	}
+	_ = rows.Close()
+
+	return
 }
 
 // GetFirstEntry returns the timestamp of the first entry
 func (db *PostgresDB) GetFirstEntry() (first time.Time, found bool, err error) {
-	var dbh *sql.DB
-	dbh, err = db.openDB()
-	if err == nil {
-		err = dbh.QueryRow(`SELECT MIN(time) FROM covid19`).Scan(&first)
-		found = err == nil
-		_ = dbh.Close()
-	}
+	db.initialize()
+
+	err = db.dbh.QueryRow(`SELECT MIN(time) FROM covid19`).Scan(&first)
+	found = err == nil
+
 	return
 }
 
 // GetLastBeforeDate gets the last entry for a country before a specified data.
 func (db *PostgresDB) GetLastBeforeDate(countryName string, before time.Time) (result *CountryEntry, found bool, err error) {
-	var dbh *sql.DB
-	dbh, err = db.openDB()
-	if err == nil {
-		var last time.Time
-		// FIXME: leaving out sprintf gives errors on processing timestamp???
-		err = dbh.QueryRow(fmt.Sprintf(
-			"SELECT MAX(time) FROM covid19 WHERE country_name = '%s' AND time < '%s'", countryName, before.Format("2006-01-02 15:04:05"),
-		)).Scan(&last)
+	db.initialize()
 
-		// row.Scan() should return sql.ErrNoRows ???
-		if err != nil && err.Error() == "sql: Scan error on column index 0, name \"max\": unsupported Scan, storing driver.Value type <nil> into type *time.Time" {
-			err = nil
-		} else if err == nil {
-			result = &CountryEntry{Timestamp: before, Name: countryName}
-			err = dbh.QueryRow(
-				fmt.Sprintf(
-					"SELECT country_code, confirmed, death, recovered FROM covid19 where country_name = '%s' and time = '%s'",
-					countryName,
-					last.Format("2006-01-02 15:04:05"),
-				),
-			).Scan(&result.Code, &result.Confirmed, &result.Deaths, &result.Recovered)
+	var last time.Time
+	// FIXME: leaving out sprintf gives errors on processing timestamp???
+	err = db.dbh.QueryRow(
+		fmt.Sprintf("SELECT MAX(time) FROM covid19 WHERE country_name = '%s' AND time < '%s'", countryName, before.Format("2006-01-02 15:04:05"))).Scan(&last)
 
-			found = err == nil
+	// row.Scan() should return sql.ErrNoRows ???
+	if err != nil {
+		if err.Error() != "sql: Scan error on column index 0, name \"max\": unsupported Scan, storing driver.Value type <nil> into type *time.Time" {
+			db.close()
+			return nil, false, fmt.Errorf("unable to get coviddb data: %v", err)
 		}
-		_ = dbh.Close()
+		err = nil
+	} else {
+		result = &CountryEntry{Timestamp: before, Name: countryName}
+		err = db.dbh.QueryRow(
+			fmt.Sprintf("SELECT country_code, confirmed, death, recovered FROM covid19 where country_name = '%s' and time = '%s'",
+				countryName,
+				last.Format("2006-01-02 15:04:05")),
+		).Scan(&result.Code, &result.Confirmed, &result.Deaths, &result.Recovered)
+
+		found = err == nil
 	}
+
 	return
 }
 
 // Add inserts all specified records in the covid19 database table
 func (db *PostgresDB) Add(entries []CountryEntry) (err error) {
-	var dbh *sql.DB
-	dbh, err = db.openDB()
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		_ = dbh.Close()
-	}()
+	db.initialize()
 
 	var tx *sql.Tx
-	tx, err = dbh.Begin()
+	tx, err = db.dbh.Begin()
 
 	if err != nil {
+		db.close()
 		return fmt.Errorf("failed to start transaction for coviddb: %s", err.Error())
 	}
 
@@ -173,6 +157,7 @@ func (db *PostgresDB) Add(entries []CountryEntry) (err error) {
 	))
 
 	if err != nil {
+		db.close()
 		return fmt.Errorf("failed to add to prepare statement for coviddb: %s", err.Error())
 	}
 
@@ -196,13 +181,51 @@ func (db *PostgresDB) Add(entries []CountryEntry) (err error) {
 	return err
 }
 
-// initializeDB created the required tables
-func (db *PostgresDB) initializeDB(dbh *sql.DB) (err error) {
-	if db.initialized {
+// RemoveDB removes all tables & indexes
+func (db *PostgresDB) RemoveDB() (err error) {
+	db.initialize()
+	_, err = db.dbh.Exec(`DROP TABLE IF EXISTS covid19 CASCADE`)
+	return
+}
+
+// GetAllCountryCodes retrieves all country codes present in the covid table
+func (db *PostgresDB) GetAllCountryCodes() (codes []string, err error) {
+	db.initialize()
+
+	var rows *sql.Rows
+	rows, err = db.dbh.Query(`SELECT distinct country_code FROM covid19`)
+
+	if err != nil {
+		db.close()
+		return nil, fmt.Errorf("unable to get coviddb entries: %v", err)
+	}
+
+	for rows.Next() {
+		var code string
+		if rows.Scan(&code) == nil {
+			codes = append(codes, code)
+		}
+	}
+	_ = rows.Close()
+
+	return
+}
+
+// initialize opens a db connection and created the required tables
+func (db *PostgresDB) initialize() {
+	if db.dbh != nil {
 		return
 	}
 
-	_, err = dbh.Exec(`
+	var err error
+	db.dbh, err = sql.Open("postgres", db.psqlInfo)
+	if err != nil {
+		log.WithError(err).Fatalf("failed to open database '%s'", db.database)
+	}
+
+	prometheus.DefaultRegisterer.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
+
+	_, err = db.dbh.Exec(`
 		CREATE TABLE IF NOT EXISTS covid19 (
 			time TIMESTAMP WITHOUT TIME ZONE,
 			country_code TEXT,
@@ -216,40 +239,15 @@ func (db *PostgresDB) initializeDB(dbh *sql.DB) (err error) {
 		CREATE INDEX IF NOT EXISTS idx_covid_time ON covid19(time);
 	`)
 
-	db.initialized = err == nil
-
-	return err
+	if err != nil {
+		log.WithError(err).Fatalf("unable to intialize database '%s'", db.database)
+	}
 }
 
-// RemoveDB removes all tables & indexes
-func (db *PostgresDB) RemoveDB() (err error) {
-	var dbh *sql.DB
-	dbh, err = sql.Open("postgres", db.psqlInfo)
-	if err == nil {
-		_, err = dbh.Exec(`DROP TABLE IF EXISTS covid19 CASCADE`)
-		db.initialized = err != nil
-		_ = dbh.Close()
+// close the db connection
+func (db *PostgresDB) close() {
+	if db.dbh != nil {
+		_ = db.dbh.Close()
 	}
-	return
-}
-
-func (db *PostgresDB) GetAllCountryCodes() (codes []string, err error) {
-	var dbh *sql.DB
-	dbh, err = db.openDB()
-	if err == nil {
-		var rows *sql.Rows
-		rows, err = dbh.Query(`SELECT distinct country_code FROM covid19`)
-
-		if err == nil {
-			for rows.Next() {
-				var code string
-				if rows.Scan(&code) == nil {
-					codes = append(codes, code)
-				}
-			}
-			_ = rows.Close()
-		}
-		_ = dbh.Close()
-	}
-	return
+	db.dbh = nil
 }
