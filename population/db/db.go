@@ -3,9 +3,11 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+
 	// postgres sql driver
 	_ "github.com/lib/pq"
-	log "github.com/sirupsen/logrus"
 )
 
 // DB interface representing a Population database table
@@ -22,23 +24,27 @@ type PostgresDB struct {
 }
 
 // NewPostgresDB creates a new PostgresDB object
-func NewPostgresDB(host string, port int, database string, user string, password string) *PostgresDB {
-	return &PostgresDB{
+func NewPostgresDB(host string, port int, database string, user string, password string) (db *PostgresDB, err error) {
+	db = &PostgresDB{
 		psqlInfo: fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 			host, port, user, password, database),
 		database: database,
 	}
+	err = db.initialize()
+
+	if err == nil {
+		prometheus.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
+	}
+
+	return
 }
 
 // List all records from the population table
 func (db *PostgresDB) List() (entries map[string]int64, err error) {
-	db.initializeDB()
-
 	var rows *sql.Rows
 	rows, err = db.dbh.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
 
 	if err != nil {
-		db.close()
 		return nil, fmt.Errorf("failed to get population data from database: %v", err)
 	}
 
@@ -57,8 +63,6 @@ func (db *PostgresDB) List() (entries map[string]int64, err error) {
 
 // Add to population database table. If a record for the specified country code already exists, it will be updated
 func (db *PostgresDB) Add(code string, population int64) (err error) {
-	db.initializeDB()
-
 	sqlStr := fmt.Sprintf("INSERT INTO population(country_code, population) VALUES ('%s', %d) "+
 		"ON CONFLICT (country_code) DO UPDATE SET population = EXCLUDED.population",
 		code, population)
@@ -71,27 +75,18 @@ func (db *PostgresDB) Add(code string, population int64) (err error) {
 
 	if err != nil {
 		err = fmt.Errorf("failed to insert population data in database: %v", err)
-		db.close()
 	}
 
 	return
 }
 
-// initializeDB creates the required tables
-func (db *PostgresDB) initializeDB() {
-	if db.dbh != nil {
-		return
-	}
-
-	var err error
+// initialize creates the required tables
+func (db *PostgresDB) initialize() (err error) {
 	db.dbh, err = sql.Open("postgres", db.psqlInfo)
 
 	if err != nil {
-		log.WithError(err).Fatalf("failed to open database '%s'", db.database)
+		return fmt.Errorf("failed to open database '%s': %v", db.database, err)
 	}
-
-	// r := prometheus.NewRegistry()
-	// r.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
 
 	_, err = db.dbh.Exec(`
 		CREATE TABLE IF NOT EXISTS population (
@@ -101,15 +96,8 @@ func (db *PostgresDB) initializeDB() {
 	`)
 
 	if err != nil {
-		log.WithError(err).Fatalf("failed to initialize database '%s'", db.database)
+		err = fmt.Errorf("failed to initialize database '%s': %v", db.database, err)
 	}
 
 	return
-}
-
-func (db *PostgresDB) close() {
-	if db.dbh != nil {
-		_ = db.dbh.Close()
-	}
-	db.dbh = nil
 }

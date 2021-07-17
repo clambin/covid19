@@ -85,7 +85,8 @@ func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache 
 		log.WithError(err).Fatalf("unable to access covid DB '%s'", cfg.Postgres.Database)
 	}
 
-	popDB := db.NewPostgresDB(
+	var popDB *db.PostgresDB
+	popDB, err = db.NewPostgresDB(
 		cfg.Postgres.Host,
 		cfg.Postgres.Port,
 		cfg.Postgres.Database,
@@ -93,28 +94,33 @@ func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache 
 		cfg.Postgres.Password,
 	)
 
+	if err != nil {
+		log.WithError(err).Fatalf("unable to access population DB '%s'", cfg.Postgres.Database)
+	}
+
 	cache = covidcache.New(covidDB)
 	go cache.Run(ctx)
 
 	populationProbe := probe.Create(cfg.Monitor.RapidAPIKey.Value, popDB, covidDB)
 	go func() {
-		err := populationProbe.Run(ctx, 24*time.Hour)
+		err2 := populationProbe.Run(ctx, 24*time.Hour)
 
-		if err != nil {
-			log.WithError(err).Fatal("unable to get population data")
+		if err2 != nil {
+			log.WithError(err2).Fatal("unable to get population data")
 		}
 	}()
 
-	covidProbe, err := covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
+	var covidProbe *covidprobe.Probe
+	covidProbe, err = covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
 
 	if err != nil {
 		log.WithError(err).Fatal("failed to start covid probe")
 	}
 	go func() {
-		err := covidProbe.Run(ctx, cfg.Monitor.Interval)
+		err2 := covidProbe.Run(ctx, cfg.Monitor.Interval)
 
-		if err != nil {
-			log.WithError(err).Fatal("unable to get covid data")
+		if err2 != nil {
+			log.WithError(err2).Fatal("unable to get covid data")
 		}
 	}()
 

@@ -27,13 +27,19 @@ type PostgresDB struct {
 }
 
 // NewPostgresDB create a new PostgresDB object
-func NewPostgresDB(host string, port int, database string, user string, password string) (*PostgresDB, error) {
-	db := &PostgresDB{
+func NewPostgresDB(host string, port int, database string, user string, password string) (db *PostgresDB, err error) {
+	db = &PostgresDB{
 		psqlInfo: fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 			host, port, user, password, database),
 		database: database,
 	}
-	return db, db.initialize()
+	err = db.initialize()
+
+	if err == nil {
+		prometheus.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
+	}
+
+	return db, err
 }
 
 // CountryEntry represents one row in the Covid DB
@@ -202,8 +208,6 @@ func (db *PostgresDB) initialize() (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to open database '%s'", db.database)
 	}
-
-	prometheus.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
 
 	_, err = db.dbh.Exec(`
 		CREATE TABLE IF NOT EXISTS covid19 (

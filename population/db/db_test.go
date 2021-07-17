@@ -35,16 +35,17 @@ func TestDB(t *testing.T) {
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.Nil(t, err)
 
-	covidDB := db.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
-	assert.NotNil(t, covidDB)
+	var popDB *db.PostgresDB
+	popDB, err = db.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	assert.NoError(t, err)
 
-	_, err = covidDB.List()
+	_, err = popDB.List()
 	assert.Nil(t, err)
 
-	err = covidDB.Add("???", 242)
+	err = popDB.Add("???", 242)
 	assert.Nil(t, err)
 
-	newContent, err := covidDB.List()
+	newContent, err := popDB.List()
 	assert.Nil(t, err)
 
 	entry, ok := newContent["???"]
