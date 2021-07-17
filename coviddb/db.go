@@ -105,6 +105,10 @@ func (db *PostgresDB) GetFirstEntry() (first time.Time, found bool, err error) {
 	err = db.dbh.QueryRow(`SELECT MIN(time) FROM covid19`).Scan(&first)
 	found = err == nil
 
+	if err != nil && err.Error() == "sql: Scan error on column index 0, name \"min\": unsupported Scan, storing driver.Value type <nil> into type *time.Time" {
+		err = nil
+	}
+
 	return
 }
 
@@ -185,6 +189,7 @@ func (db *PostgresDB) Add(entries []CountryEntry) (err error) {
 func (db *PostgresDB) RemoveDB() (err error) {
 	db.initialize()
 	_, err = db.dbh.Exec(`DROP TABLE IF EXISTS covid19 CASCADE`)
+	db.close()
 	return
 }
 
@@ -241,7 +246,7 @@ func (db *PostgresDB) initialize() {
 	`)
 
 	if err != nil {
-		log.WithError(err).Fatalf("unable to intialize database '%s'", db.database)
+		log.WithError(err).Fatalf("unable to initialize database '%s'", db.database)
 	}
 }
 
