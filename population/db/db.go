@@ -3,9 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
-
 	// postgres sql driver
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
@@ -93,8 +90,8 @@ func (db *PostgresDB) initializeDB() {
 		log.WithError(err).Fatalf("failed to open database '%s'", db.database)
 	}
 
-	r := prometheus.NewRegistry()
-	r.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
+	// r := prometheus.NewRegistry()
+	// r.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
 
 	_, err = db.dbh.Exec(`
 		CREATE TABLE IF NOT EXISTS population (
