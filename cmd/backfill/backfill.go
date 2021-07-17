@@ -43,14 +43,17 @@ func main() {
 
 	log.WithField("version", version.BuildVersion).Info("backfill")
 
-	app := backfill.Create(coviddb.NewPostgresDB(
+	db, err := coviddb.NewPostgresDB(
 		cfg.postgresHost,
 		cfg.postgresPort,
 		cfg.postgresDatabase,
 		cfg.postgresUser,
-		cfg.postgresPassword))
+		cfg.postgresPassword)
 
-	err := app.Run()
+	if err == nil {
+		app := backfill.Create(db)
+		err = app.Run()
+	}
 
 	if err != nil {
 		log.Error(err)

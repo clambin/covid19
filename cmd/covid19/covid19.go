@@ -73,13 +73,17 @@ func main() {
 }
 
 func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache *covidcache.Cache) {
-	covidDB := coviddb.NewPostgresDB(
+	covidDB, err := coviddb.NewPostgresDB(
 		cfg.Postgres.Host,
 		cfg.Postgres.Port,
 		cfg.Postgres.Database,
 		cfg.Postgres.User,
 		cfg.Postgres.Password,
 	)
+
+	if err != nil {
+		log.WithError(err).Fatalf("unable to access covid DB '%s'", cfg.Postgres.Database)
+	}
 
 	popDB := db.NewPostgresDB(
 		cfg.Postgres.Host,

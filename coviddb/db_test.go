@@ -37,10 +37,8 @@ func TestDB(t *testing.T) {
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.NoError(t, err)
 
-	covidDB := coviddb.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
-	assert.NotNil(t, covidDB)
-
-	err = covidDB.RemoveDB()
+	var covidDB *coviddb.PostgresDB
+	covidDB, err = coviddb.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
 	assert.NoError(t, err)
 
 	now := time.Now().UTC().Truncate(time.Second)
@@ -111,4 +109,9 @@ func TestDB(t *testing.T) {
 		assert.Equal(t, "??", codes[0])
 	}
 
+	err = covidDB.RemoveDB()
+	assert.NoError(t, err)
+
+	_, err = covidDB.ListLatestByCountry()
+	assert.Error(t, err)
 }
