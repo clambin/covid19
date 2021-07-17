@@ -3,9 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
-
 	// postgres sql driver
 	_ "github.com/lib/pq"
 )
@@ -32,9 +29,10 @@ func NewPostgresDB(host string, port int, database string, user string, password
 	}
 	err = db.initialize()
 
-	if err == nil {
-		prometheus.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
-	}
+	// TODO: how to register multiple DBStatsCollectors?
+	// if err == nil {
+	//	prometheus.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
+	// }
 
 	return
 }
