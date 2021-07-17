@@ -93,7 +93,8 @@ func (db *PostgresDB) initializeDB() {
 		log.WithError(err).Fatalf("failed to open database '%s'", db.database)
 	}
 
-	prometheus.DefaultRegisterer.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
+	r := prometheus.NewRegistry()
+	r.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
 
 	_, err = db.dbh.Exec(`
 		CREATE TABLE IF NOT EXISTS population (
