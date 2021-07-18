@@ -32,19 +32,19 @@ func (db *PostgresDB) List() (entries map[string]int64, err error) {
 	var rows *sql.Rows
 	rows, err = db.DB.Handle.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to get population data from database: %v", err)
-	}
+	if err == nil {
+		entries = make(map[string]int64, 0)
 
-	entries = make(map[string]int64, 0)
-	for rows.Next() {
-		var code string
-		var population int64
-		if rows.Scan(&code, &population) == nil {
-			entries[code] = population
+		for rows.Next() {
+			var code string
+			var population int64
+			if rows.Scan(&code, &population) == nil {
+				entries[code] = population
+			}
 		}
+
+		_ = rows.Close()
 	}
-	_ = rows.Close()
 
 	return entries, err
 }
@@ -61,10 +61,6 @@ func (db *PostgresDB) Add(code string, population int64) (err error) {
 		_, err = stmt.Exec()
 	}
 
-	if err != nil {
-		err = fmt.Errorf("failed to insert population data in database: %v", err)
-	}
-
 	return
 }
 
@@ -76,10 +72,6 @@ func (db *PostgresDB) initialize() (err error) {
 			population NUMERIC
 		)
 	`)
-
-	if err != nil {
-		err = fmt.Errorf("failed to initialize database: %v", err)
-	}
 
 	return
 }

@@ -23,9 +23,6 @@ func New(host string, port int, database string, user string, password string) (
 	}
 
 	db.Handle, err = sql.Open("postgres", db.psqlInfo)
-	if err != nil {
-		err = fmt.Errorf("failed to open database: %v", err)
-	}
 
 	if err == nil {
 		prometheus.MustRegister(collectors.NewDBStatsCollector(db.Handle, db.database))

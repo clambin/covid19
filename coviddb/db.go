@@ -47,17 +47,16 @@ func (db *PostgresDB) List(endDate time.Time) (entries []CountryEntry, err error
 		"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
 		endDate.Format("2006-01-02 15:04:05")))
 
-	if err != nil {
-		return nil, fmt.Errorf("unable to list coviddb records: %v", err)
-	}
-
-	for rows.Next() {
-		var entry CountryEntry
-		if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
-			entries = append(entries, entry)
+	if err == nil {
+		for rows.Next() {
+			var entry CountryEntry
+			if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
+				entries = append(entries, entry)
+			}
 		}
+
+		_ = rows.Close()
 	}
-	_ = rows.Close()
 
 	return
 }
@@ -68,21 +67,18 @@ func (db *PostgresDB) ListLatestByCountry() (entries map[string]time.Time, err e
 	var rows *sql.Rows
 	rows, err = db.DB.Handle.Query(`SELECT country_name, MAX(time) FROM covid19 GROUP BY country_name`)
 
-	if err != nil {
-		return nil, fmt.Errorf("unable to get latest entry by country: %v", err)
-	}
+	if err == nil {
+		for rows.Next() {
+			var country string
+			var timestamp time.Time
 
-	for rows.Next() {
-		var (
-			country   string
-			timestamp time.Time
-		)
-		if rows.Scan(&country, &timestamp) == nil {
-			entries[country] = timestamp
+			if rows.Scan(&country, &timestamp) == nil {
+				entries[country] = timestamp
+			}
 		}
-	}
-	_ = rows.Close()
 
+		_ = rows.Close()
+	}
 	return
 }
 
@@ -130,36 +126,32 @@ func (db *PostgresDB) Add(entries []CountryEntry) (err error) {
 	var tx *sql.Tx
 	tx, err = db.DB.Handle.Begin()
 
-	if err != nil {
-		return fmt.Errorf("failed to start transaction for coviddb: %s", err.Error())
-	}
+	if err == nil {
+		var stmt *sql.Stmt
+		stmt, err = tx.Prepare(pq.CopyIn(
+			"covid19",
+			"time", "country_code", "country_name", "confirmed", "death", "recovered",
+		))
 
-	var stmt *sql.Stmt
-	stmt, err = tx.Prepare(pq.CopyIn(
-		"covid19",
-		"time", "country_code", "country_name", "confirmed", "death", "recovered",
-	))
+		if err == nil {
+			for _, entry := range entries {
+				_, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered)
+				if err != nil {
+					break
+				}
+			}
 
-	if err != nil {
-		return fmt.Errorf("failed to add to prepare statement for coviddb: %s", err.Error())
-	}
+			if err == nil {
+				_, err = stmt.Exec()
+			}
 
-	for _, entry := range entries {
-		_, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered)
-		if err != nil {
-			break
+			if err == nil {
+				err = tx.Commit()
+			}
+
+			_ = stmt.Close()
 		}
 	}
-
-	if err == nil {
-		_, err = stmt.Exec()
-	}
-
-	if err == nil {
-		err = tx.Commit()
-	}
-
-	_ = stmt.Close()
 
 	return err
 }
@@ -175,17 +167,17 @@ func (db *PostgresDB) GetAllCountryCodes() (codes []string, err error) {
 	var rows *sql.Rows
 	rows, err = db.DB.Handle.Query(`SELECT distinct country_code FROM covid19`)
 
-	if err != nil {
-		return nil, fmt.Errorf("unable to get coviddb entries: %v", err)
-	}
-
-	for rows.Next() {
-		var code string
-		if rows.Scan(&code) == nil {
-			codes = append(codes, code)
+	if err == nil {
+		for rows.Next() {
+			var code string
+			if rows.Scan(&code) == nil {
+				codes = append(codes, code)
+			}
 		}
+
+		_ = rows.Close()
+
 	}
-	_ = rows.Close()
 
 	return
 }
@@ -206,8 +198,5 @@ func (db *PostgresDB) initialize() (err error) {
 		CREATE INDEX IF NOT EXISTS idx_covid_time ON covid19(time);
 	`)
 
-	if err != nil {
-		err = fmt.Errorf("unable to initialize database: %v", err)
-	}
 	return
 }
