@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/version"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -43,15 +44,20 @@ func main() {
 
 	log.WithField("version", version.BuildVersion).Info("backfill")
 
-	db, err := coviddb.NewPostgresDB(
+	DB, err := db.New(
 		cfg.postgresHost,
 		cfg.postgresPort,
 		cfg.postgresDatabase,
 		cfg.postgresUser,
 		cfg.postgresPassword)
 
+	var covidDB coviddb.DB
 	if err == nil {
-		app := backfill.Create(db)
+		covidDB, err = coviddb.New(DB)
+	}
+
+	if err == nil {
+		app := backfill.Create(covidDB)
 		err = app.Run()
 	}
 

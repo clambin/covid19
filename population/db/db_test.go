@@ -1,7 +1,8 @@
 package db_test
 
 import (
-	"github.com/clambin/covid19/population/db"
+	"github.com/clambin/covid19/db"
+	popdb "github.com/clambin/covid19/population/db"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"
@@ -35,8 +36,12 @@ func TestDB(t *testing.T) {
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.Nil(t, err)
 
-	var popDB *db.PostgresDB
-	popDB, err = db.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	var DB *db.DB
+	DB, err = db.New(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	assert.NoError(t, err)
+
+	var popDB *popdb.PostgresDB
+	popDB, err = popdb.New(DB)
 	assert.NoError(t, err)
 
 	_, err = popDB.List()

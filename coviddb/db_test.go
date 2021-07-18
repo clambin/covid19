@@ -2,6 +2,7 @@ package coviddb_test
 
 import (
 	"github.com/clambin/covid19/coviddb"
+	db2 "github.com/clambin/covid19/db"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"
@@ -37,8 +38,12 @@ func TestDB(t *testing.T) {
 	port, err := strconv.Atoi(values["pg_port"])
 	assert.NoError(t, err)
 
+	var DB *db2.DB
+	DB, err = db2.New(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	assert.NoError(t, err)
+
 	var covidDB *coviddb.PostgresDB
-	covidDB, err = coviddb.NewPostgresDB(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	covidDB, err = coviddb.New(DB)
 	assert.NoError(t, err)
 
 	now := time.Now().UTC().Truncate(time.Second)

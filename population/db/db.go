@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/clambin/covid19/db"
+
 	// postgres sql driver
 	_ "github.com/lib/pq"
 )
@@ -15,32 +17,20 @@ type DB interface {
 
 // PostgresDB implements DB in Postgres
 type PostgresDB struct {
-	psqlInfo string
-	database string
-	dbh      *sql.DB
+	DB *db.DB
 }
 
-// NewPostgresDB creates a new PostgresDB object
-func NewPostgresDB(host string, port int, database string, user string, password string) (db *PostgresDB, err error) {
-	db = &PostgresDB{
-		psqlInfo: fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			host, port, user, password, database),
-		database: database,
-	}
-	err = db.initialize()
-
-	// TODO: how to register multiple DBStatsCollectors?
-	// if err == nil {
-	//	prometheus.MustRegister(collectors.NewDBStatsCollector(db.dbh, db.database))
-	// }
-
+// New creates a new PostgresDB object
+func New(db *db.DB) (pgdb *PostgresDB, err error) {
+	pgdb = &PostgresDB{DB: db}
+	err = pgdb.initialize()
 	return
 }
 
 // List all records from the population table
 func (db *PostgresDB) List() (entries map[string]int64, err error) {
 	var rows *sql.Rows
-	rows, err = db.dbh.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
+	rows, err = db.DB.Handle.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get population data from database: %v", err)
@@ -66,7 +56,7 @@ func (db *PostgresDB) Add(code string, population int64) (err error) {
 		code, population)
 
 	var stmt *sql.Stmt
-	stmt, err = db.dbh.Prepare(sqlStr)
+	stmt, err = db.DB.Handle.Prepare(sqlStr)
 	if err == nil {
 		_, err = stmt.Exec()
 	}
@@ -80,13 +70,7 @@ func (db *PostgresDB) Add(code string, population int64) (err error) {
 
 // initialize creates the required tables
 func (db *PostgresDB) initialize() (err error) {
-	db.dbh, err = sql.Open("postgres", db.psqlInfo)
-
-	if err != nil {
-		return fmt.Errorf("failed to open database '%s': %v", db.database, err)
-	}
-
-	_, err = db.dbh.Exec(`
+	_, err = db.DB.Handle.Exec(`
 		CREATE TABLE IF NOT EXISTS population (
 			country_code TEXT PRIMARY KEY,
 			population NUMERIC
@@ -94,7 +78,7 @@ func (db *PostgresDB) initialize() (err error) {
 	`)
 
 	if err != nil {
-		err = fmt.Errorf("failed to initialize database '%s': %v", db.database, err)
+		err = fmt.Errorf("failed to initialize database: %v", err)
 	}
 
 	return

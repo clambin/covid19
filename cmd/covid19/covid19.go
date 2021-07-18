@@ -7,7 +7,8 @@ import (
 	"github.com/clambin/covid19/coviddb"
 	"github.com/clambin/covid19/covidhandler"
 	"github.com/clambin/covid19/covidprobe"
-	"github.com/clambin/covid19/population/db"
+	"github.com/clambin/covid19/db"
+	popdb "github.com/clambin/covid19/population/db"
 	"github.com/clambin/covid19/population/probe"
 	"github.com/clambin/covid19/version"
 	"github.com/clambin/grafana-json"
@@ -73,7 +74,7 @@ func main() {
 }
 
 func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache *covidcache.Cache) {
-	covidDB, err := coviddb.NewPostgresDB(
+	DB, err := db.New(
 		cfg.Postgres.Host,
 		cfg.Postgres.Port,
 		cfg.Postgres.Database,
@@ -85,14 +86,15 @@ func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache 
 		log.WithError(err).Fatalf("unable to access covid DB '%s'", cfg.Postgres.Database)
 	}
 
-	var popDB *db.PostgresDB
-	popDB, err = db.NewPostgresDB(
-		cfg.Postgres.Host,
-		cfg.Postgres.Port,
-		cfg.Postgres.Database,
-		cfg.Postgres.User,
-		cfg.Postgres.Password,
-	)
+	var covidDB *coviddb.PostgresDB
+	covidDB, err = coviddb.New(DB)
+
+	if err != nil {
+		log.WithError(err).Fatalf("unable to access covid DB '%s'", cfg.Postgres.Database)
+	}
+
+	var popDB *popdb.PostgresDB
+	popDB, err = popdb.New(DB)
 
 	if err != nil {
 		log.WithError(err).Fatalf("unable to access population DB '%s'", cfg.Postgres.Database)
