@@ -125,17 +125,9 @@ jobs:
         run: |
           mkdir bld
           mv artifacts/*/* bld
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@2.2.1
+      - uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: bld/*
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
-      #- name: Docker Hub Description
-      #  uses: peter-evans/dockerhub-description@v2.4.3
-      #  with:
-      #    username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #    password: ${{ secrets.DOCKERHUB_TOKEN }}
-      #    repository: clambin/covid19
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            bld/*
