@@ -15,9 +15,9 @@ This package tracks global Covid-19 data. The basic operation is as follows:
 - Grafana is used to visualize the data
 
 ## Installation
-A Docker image for the main Covid-19 tracker is available on [docker](https://hub.docker.com/r/clambin/covid19). Images are available for amd64, arm64 & arm32.
+A Docker image for the main Covid-19 tracker is available on [ghcr.io](https://github.com/clambin/covid19/pkgs/container/covid19). Images are available for amd64, arm64 & arm32.
 
-Binaries are also available at [github](https://github.com/clambin/covid19/releases).
+Binaries are also available on [github](https://github.com/clambin/covid19/releases).
 
 Alternatively, you can clone the repository and build from source:
 
