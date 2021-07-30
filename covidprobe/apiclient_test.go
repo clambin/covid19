@@ -1,19 +1,20 @@
 package covidprobe_test
 
 import (
-	"bytes"
 	"context"
 	"github.com/clambin/covid19/covidprobe"
-	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestGetCountryStats(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(serverStub))
+	defer server.Close()
+
 	apiClient := covidprobe.NewAPIClient("1234")
-	apiClient.(*covidprobe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
+	apiClient.(*covidprobe.RapidAPIClient).Client.URL = server.URL
 
 	response, err := apiClient.GetCountryStats(context.Background())
 
@@ -32,13 +33,8 @@ func TestGetCountryStats(t *testing.T) {
 }
 
 // serverStub function
-func serverStub(_ *http.Request) *http.Response {
-
-	return &http.Response{
-		StatusCode: 200,
-		Header:     make(http.Header),
-		Body:       ioutil.NopCloser(bytes.NewBufferString(goodResponse)),
-	}
+func serverStub(w http.ResponseWriter, _ *http.Request) {
+	_, _ = w.Write([]byte(goodResponse))
 }
 
 const goodResponse = `

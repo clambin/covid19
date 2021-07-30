@@ -10,13 +10,13 @@ import (
 
 // Backfiller retrieves historic COVID19 data and adds it to the database
 type Backfiller struct {
-	Client *http.Client
-	DB     coviddb.DB
+	URL string
+	DB  coviddb.DB
 }
 
 // Create a new Backfiller object
 func Create(db coviddb.DB) *Backfiller {
-	return &Backfiller{Client: &http.Client{}, DB: db}
+	return &Backfiller{URL: covid19url, DB: db}
 }
 
 // Run the backfiller.  Get all supported countries from the API
@@ -72,7 +72,7 @@ func (backFiller *Backfiller) Run() error {
 	return err
 }
 
-const url = "https://api.covid19api.com"
+const covid19url = "https://api.covid19api.com"
 
 func (backFiller *Backfiller) getCountries() (map[string]struct {
 	Name string
@@ -83,26 +83,28 @@ func (backFiller *Backfiller) getCountries() (map[string]struct {
 		Code string
 	}{}
 
-	req, _ := http.NewRequest("GET", url+"/countries", nil)
+	req, _ := http.NewRequest(http.MethodGet, backFiller.URL+"/countries", nil)
 	resp, err := backFiller.slowCall(req)
 
 	if err == nil {
-		var stats []struct {
-			Country string
-			Slug    string
-			ISO2    string
-		}
-
-		decoder := json.NewDecoder(resp.Body)
-		if err = decoder.Decode(&stats); err == nil {
-			for _, entry := range stats {
-				result[entry.Slug] = struct {
-					Name string
-					Code string
-				}{Name: entry.Country, Code: entry.ISO2}
+		if resp.StatusCode == http.StatusOK {
+			var stats []struct {
+				Country string
+				Slug    string
+				ISO2    string
 			}
+
+			decoder := json.NewDecoder(resp.Body)
+			if err = decoder.Decode(&stats); err == nil {
+				for _, entry := range stats {
+					result[entry.Slug] = struct {
+						Name string
+						Code string
+					}{Name: entry.Country, Code: entry.ISO2}
+				}
+			}
+			_ = resp.Body.Close()
 		}
-		_ = resp.Body.Close()
 	}
 
 	return result, err
@@ -121,12 +123,14 @@ func (backFiller *Backfiller) getHistoricalData(slug string) ([]struct {
 		Date      time.Time
 	}
 
-	req, _ := http.NewRequest("GET", url+"/total/country/"+slug, nil)
+	req, _ := http.NewRequest(http.MethodGet, backFiller.URL+"/total/country/"+slug, nil)
 	resp, err := backFiller.slowCall(req)
 
 	if err == nil {
-		decoder := json.NewDecoder(resp.Body)
-		err = decoder.Decode(&stats)
+		if resp.StatusCode == http.StatusOK {
+			decoder := json.NewDecoder(resp.Body)
+			err = decoder.Decode(&stats)
+		}
 		_ = resp.Body.Close()
 	}
 
@@ -134,25 +138,28 @@ func (backFiller *Backfiller) getHistoricalData(slug string) ([]struct {
 }
 
 // slowCall handles 429 errors, slowing down before trying again
-func (backFiller *Backfiller) slowCall(req *http.Request) (*http.Response, error) {
-	resp, err := backFiller.Client.Do(req)
+func (backFiller *Backfiller) slowCall(req *http.Request) (resp *http.Response, err error) {
+	client := &http.Client{}
+	resp, err = client.Do(req)
 
-	for err == nil && resp.StatusCode == 429 {
+	waitTime := 250 * time.Millisecond
+
+	for err == nil && resp.StatusCode == http.StatusTooManyRequests {
 		_ = resp.Body.Close()
-		log.Debug("429 recv'd. Slowing down")
-		time.Sleep(time.Second * 5)
-		resp, err = backFiller.Client.Do(req)
+
+		if waitTime < 5*time.Second {
+			waitTime *= 2
+		}
+		log.WithField("waitTime", waitTime).Debug("429 recv'd. Slowing down")
+		time.Sleep(waitTime)
+
+		resp, err = client.Do(req)
 	}
 
-	if err == nil && resp.StatusCode == 200 {
-		return resp, nil
-	}
-
-	return nil, err
-
+	return
 }
 
-// rapidapi's Covid API uses different names than covidapi
+// rapidapi's Covid API uses different country names than covidapi
 var (
 	lookupTable = map[string]string{
 		"Wallis and Futuna Islands":       "Wallis and Futuna",

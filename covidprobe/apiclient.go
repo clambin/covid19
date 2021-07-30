@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/clambin/gotools/rapidapi"
-	"net/http"
 	"time"
 )
 
@@ -23,8 +22,7 @@ type RapidAPIClient struct {
 func NewAPIClient(apiKey string) APIClient {
 	return &RapidAPIClient{
 		rapidapi.Client{
-			Client:   &http.Client{},
-			HostName: rapidAPIHost,
+			Hostname: rapidAPIHost,
 			APIKey:   apiKey,
 		},
 	}
@@ -73,7 +71,6 @@ const (
 
 // statsResponse matches the layout of the API's response object
 // so json.Decoder will parse it directly into the struct
-// !!! fields needs to start w/ uppercase or decoder will ignore them
 type statsResponse struct {
 	Error      bool
 	StatusCode int

@@ -6,8 +6,9 @@ import (
 	covidDBMock "github.com/clambin/covid19/coviddb/mock"
 	popDBMock "github.com/clambin/covid19/population/db/mock"
 	"github.com/clambin/covid19/population/probe"
-	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -30,8 +31,11 @@ func TestPopulationProbe(t *testing.T) {
 	covidDB := covidDBMock.Create(covidEntries)
 	popDB := popDBMock.Create(map[string]int64{})
 
+	server := httptest.NewServer(http.HandlerFunc(serverStub))
+	defer server.Close()
+
 	p := probe.Create("1234", popDB, covidDB)
-	p.APIClient.(*probe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
+	p.APIClient.(*probe.RapidAPIClient).Client.URL = server.URL
 
 	// DB should be empty
 	entries, err := popDB.List()

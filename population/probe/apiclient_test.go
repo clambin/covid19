@@ -1,20 +1,22 @@
 package probe_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/clambin/covid19/population/probe"
-	"github.com/clambin/gotools/httpstub"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"html"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestGetPopulation(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(serverStub))
+	defer server.Close()
+
 	apiClient := probe.NewAPIClient("1234")
-	apiClient.(*probe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
+	apiClient.(*probe.RapidAPIClient).Client.URL = server.URL
 
 	ctx := context.Background()
 	population, err := apiClient.GetPopulation(ctx, "Belgium")
@@ -33,8 +35,11 @@ func TestGetPopulation(t *testing.T) {
 }
 
 func TestGetCountries(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(serverStub))
+	defer server.Close()
+
 	apiClient := probe.NewAPIClient("1234")
-	apiClient.(*probe.RapidAPIClient).Client.Client = httpstub.NewTestClient(serverStub)
+	apiClient.(*probe.RapidAPIClient).Client.URL = server.URL
 
 	ctx := context.Background()
 	countries, err := apiClient.GetCountries(ctx)
@@ -44,7 +49,7 @@ func TestGetCountries(t *testing.T) {
 	assert.Contains(t, countries, "United States")
 }
 
-func serverStub(req *http.Request) *http.Response {
+func serverStub(w http.ResponseWriter, req *http.Request) {
 	var response string
 	if req.URL.Path == "/population" {
 		switch req.URL.RawQuery {
@@ -60,14 +65,10 @@ func serverStub(req *http.Request) *http.Response {
 	}
 
 	if response == "" {
-		return &http.Response{StatusCode: http.StatusNotFound}
+		http.Error(w, "endpoint not implemented:"+html.EscapeString(req.URL.Path), http.StatusNotFound)
 	}
 
-	return &http.Response{
-		StatusCode: 200,
-		Header:     make(http.Header),
-		Body:       ioutil.NopCloser(bytes.NewBufferString(response)),
-	}
+	_, _ = w.Write([]byte(response))
 }
 
 var countryResponse = `

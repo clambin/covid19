@@ -1,23 +1,21 @@
 package backfill_test
 
 import (
-	"bytes"
-	backfill2 "github.com/clambin/covid19/backfill"
-	coviddb2 "github.com/clambin/covid19/coviddb"
-	mock2 "github.com/clambin/covid19/coviddb/mock"
-	"github.com/clambin/gotools/httpstub"
+	"github.com/clambin/covid19/backfill"
+	"github.com/clambin/covid19/coviddb"
+	"github.com/clambin/covid19/coviddb/mock"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestBackFiller(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
-	covidDB := mock2.Create([]coviddb2.CountryEntry{
+	covidDB := mock.Create([]coviddb.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",
@@ -27,8 +25,11 @@ func TestBackFiller(t *testing.T) {
 			Recovered: 0,
 		}})
 
-	backFiller := backfill2.Create(covidDB)
-	backFiller.Client = httpstub.NewTestClient(covidAPI)
+	server := httptest.NewServer(http.HandlerFunc(covidAPI))
+	defer server.Close()
+
+	backFiller := backfill.Create(covidDB)
+	backFiller.URL = server.URL
 
 	err := backFiller.Run()
 	assert.Nil(t, err)
@@ -51,24 +52,21 @@ func TestBackFiller(t *testing.T) {
 
 // covidAPI emulates the Covid API Server
 
-func covidAPI(req *http.Request) *http.Response {
+func covidAPI(w http.ResponseWriter, req *http.Request) {
 	// rand.Seed(time.Now().UnixNano())
 	if rand.Intn(10) < 2 {
-		return &http.Response{
-			StatusCode: 429,
-		}
+		http.Error(w, "slow down!", http.StatusTooManyRequests)
+		return
 	}
+
 	response, ok := goodResponse[req.URL.Path]
-	if ok == true {
-		return &http.Response{
-			StatusCode: 200,
-			Header:     make(http.Header),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(response)),
-		}
+
+	if ok == false {
+		http.Error(w, "endpoint not implemented", http.StatusNotFound)
+		return
 	}
-	return &http.Response{
-		StatusCode: 404,
-	}
+
+	_, _ = w.Write([]byte(response))
 }
 
 // Stubbing the API Call
