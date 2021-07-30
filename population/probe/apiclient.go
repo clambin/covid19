@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/clambin/gotools/rapidapi"
+	"net/http"
 	"net/url"
 )
 
@@ -26,8 +27,9 @@ const rapidAPIHost = "world-population.p.rapidapi.com"
 func NewAPIClient(apiKey string) APIClient {
 	return &RapidAPIClient{
 		Client: rapidapi.Client{
-			Hostname: rapidAPIHost,
-			APIKey:   apiKey,
+			HTTPClient: &http.Client{},
+			Hostname:   rapidAPIHost,
+			APIKey:     apiKey,
 		},
 	}
 }
