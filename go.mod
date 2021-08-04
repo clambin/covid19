@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/clambin/gotools v0.3.90
-	github.com/clambin/grafana-json v0.4.0
+	github.com/clambin/grafana-json v0.4.1
 	github.com/containrrr/shoutrrr v0.4.4
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/lib/pq v1.10.2
