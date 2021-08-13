@@ -1,6 +1,7 @@
 package covidhandler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/clambin/covid19/covidcache"
@@ -54,7 +55,7 @@ func (handler *CovidHandler) Search() []string {
 }
 
 // Query the DB and return the requested targets
-func (handler *CovidHandler) Query(target string, args *grafana_json.TimeSeriesQueryArgs) (response *grafana_json.QueryResponse, err error) {
+func (handler *CovidHandler) Query(_ context.Context, target string, args *grafana_json.TimeSeriesQueryArgs) (response *grafana_json.QueryResponse, err error) {
 	start := time.Now()
 
 	deltas := false
@@ -107,7 +108,7 @@ loop:
 	return
 }
 
-func (handler *CovidHandler) TableQuery(target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *CovidHandler) TableQuery(_ context.Context, target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
 	start := time.Now()
 
 	switch target {

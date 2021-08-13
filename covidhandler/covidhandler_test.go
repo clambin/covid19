@@ -70,7 +70,7 @@ func TestTimeSeriesHandler(t *testing.T) {
 	}
 
 	assert.Eventually(t, func() bool {
-		responses, err := handler.Endpoints().Query("confirmed", &args)
+		responses, err := handler.Endpoints().Query(context.Background(), "confirmed", &args)
 		return err == nil && len(responses.DataPoints) > 0
 	}, 500*time.Millisecond, 50*time.Millisecond)
 
@@ -86,7 +86,7 @@ func TestTimeSeriesHandler(t *testing.T) {
 	}
 
 	for target, testCase := range testCases {
-		responses, err := handler.Endpoints().Query(target, &args)
+		responses, err := handler.Endpoints().Query(context.Background(), target, &args)
 
 		if assert.NoError(t, err, target) && assert.Equal(t, len(testCase), len(responses.DataPoints), target) {
 
@@ -116,7 +116,7 @@ func TestTableHandler(t *testing.T) {
 	}
 
 	assert.Eventually(t, func() bool {
-		responses, err := handler.Endpoints().TableQuery("daily", &args)
+		responses, err := handler.Endpoints().TableQuery(context.Background(), "daily", &args)
 		return err == nil && len(responses.Columns) > 0 && len(responses.Columns[0].Data.(grafanaJson.TableQueryResponseTimeColumn)) > 0
 	}, 500*time.Millisecond, 50*time.Millisecond)
 
@@ -134,7 +134,7 @@ func TestTableHandler(t *testing.T) {
 	}
 
 	for target, testCase := range testCases {
-		responses, err := handler.Endpoints().TableQuery(target, &args)
+		responses, err := handler.Endpoints().TableQuery(context.Background(), target, &args)
 
 		if assert.NoError(t, err, target) == false {
 			continue
@@ -212,7 +212,7 @@ func BenchmarkHandlerQuery(b *testing.B) {
 	// Run the benchmark
 	go cache.Run(ctx)
 	for _, target := range covidhandler.Targets {
-		_, err := handler.Endpoints().Query(target, &seriesArgs)
+		_, err := handler.Endpoints().Query(context.Background(), target, &seriesArgs)
 		assert.Nil(b, err)
 	}
 }
@@ -260,7 +260,7 @@ func BenchmarkHandlerTableQuery(b *testing.B) {
 	// Run the benchmark
 	go cache.Run(ctx)
 	for _, target := range []string{"daily", "cumulative"} {
-		_, err := handler.Endpoints().TableQuery(target, &tableArgs)
+		_, err := handler.Endpoints().TableQuery(context.Background(), target, &tableArgs)
 		assert.Nil(b, err)
 	}
 }
