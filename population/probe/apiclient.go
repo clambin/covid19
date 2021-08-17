@@ -46,7 +46,7 @@ type populationResponseBody struct {
 	WorldShare  float32 `json:"world_share"`
 }
 
-// GetPopulation finds the most recent data for a countries
+// GetPopulation finds the most recent data for a country
 func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string) (population int64, err error) {
 	var body []byte
 	body, err = client.Client.CallWithContext(ctx, "/population?country_name="+url.QueryEscape(country))

@@ -60,9 +60,9 @@ func main() {
 	}
 
 	handler, _ := covidhandler.Create(cache)
-	server := grafana_json.Create(handler, cfg.Port)
+	server := grafana_json.Create(handler)
 	go func() {
-		if err = server.Run(); err != nil {
+		if err = server.Run(cfg.Port); err != nil {
 			log.WithError(err).Fatal("unable to start grafana SimpleJson server")
 		}
 	}()
