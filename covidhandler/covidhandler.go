@@ -25,20 +25,19 @@ func Create(cache *covidcache.Cache) (*CovidHandler, error) {
 	return &CovidHandler{cache: cache}, nil
 }
 
-var (
-	Targets = []string{
-		"active",
-		"active-delta",
-		"confirmed",
-		"confirmed-delta",
-		"death",
-		"death-delta",
-		"recovered",
-		"recovered-delta",
-		"daily",
-		"cumulative",
-	}
-)
+// Targets for the Grafana SimpleJSON API Handler
+var Targets = []string{
+	"active",
+	"active-delta",
+	"confirmed",
+	"confirmed-delta",
+	"death",
+	"death-delta",
+	"recovered",
+	"recovered-delta",
+	"daily",
+	"cumulative",
+}
 
 // Endpoints tells the server which endpoints we have implemented
 func (handler *CovidHandler) Endpoints() grafana_json.Endpoints {
@@ -108,6 +107,7 @@ loop:
 	return
 }
 
+// TableQuery returns the table response for the provided target
 func (handler *CovidHandler) TableQuery(_ context.Context, target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
 	start := time.Now()
 

@@ -3,9 +3,9 @@ package backfill_test
 import (
 	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/coviddb"
-	"github.com/clambin/covid19/coviddb/mock"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	covidDBMock "github.com/clambin/covid19/coviddb/mocks"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -13,41 +13,48 @@ import (
 	"time"
 )
 
-func TestBackFiller(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
-	covidDB := mock.Create([]coviddb.CountryEntry{
-		{
-			Timestamp: time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC),
-			Code:      "BE",
-			Name:      "Belgium",
-			Confirmed: 0,
-			Deaths:    0,
-			Recovered: 0,
-		}})
+func TestBackfiller_Run(t *testing.T) {
+	db := &covidDBMock.DB{}
 
 	server := httptest.NewServer(http.HandlerFunc(covidAPI))
 	defer server.Close()
 
-	backFiller := backfill.Create(covidDB)
+	backFiller := backfill.Create(db)
 	backFiller.URL = server.URL
 
+	db.On("GetFirstEntry").Return(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC), true, nil)
+	db.On("Add", []coviddb.CountryEntry{
+		{
+			Timestamp: time.Date(2020, 1, 22, 0, 0, 0, 0, time.UTC),
+			Name:      "Belgium",
+			Code:      "BE",
+			Confirmed: 0,
+			Recovered: 0,
+			Deaths:    0,
+		},
+		{
+			Timestamp: time.Date(2020, 2, 4, 0, 0, 0, 0, time.UTC),
+			Name:      "Belgium",
+			Code:      "BE",
+			Confirmed: 1,
+			Recovered: 0,
+			Deaths:    0,
+		},
+	}).Return(nil)
+	db.On("Add", []coviddb.CountryEntry{{
+		Timestamp: time.Date(2020, 1, 31, 0, 0, 0, 0, time.UTC),
+		Name:      "Burma",
+		Code:      "MM",
+		Confirmed: 8,
+		Recovered: 0,
+		Deaths:    0,
+	},
+	}).Return(nil)
+
 	err := backFiller.Run()
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
-	records, err := covidDB.List(time.Now())
-	assert.Nil(t, err)
-	log.Debug(records)
-	assert.Len(t, records, 3)
-
-	latest, err := covidDB.ListLatestByCountry()
-	assert.Nil(t, err)
-	assert.Len(t, latest, 2)
-	timestamp, ok := latest["Belgium"]
-	assert.True(t, ok)
-	assert.Equal(t, time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC), timestamp)
-	timestamp, ok = latest["Burma"]
-	assert.True(t, ok)
-	assert.Equal(t, time.Date(2020, time.January, 31, 0, 0, 0, 0, time.UTC), timestamp)
+	mock.AssertExpectationsForObjects(t, db)
 }
 
 // covidAPI emulates the Covid API Server

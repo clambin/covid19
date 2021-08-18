@@ -10,6 +10,7 @@ import (
 )
 
 // DB interface representing a Population database table
+//go:generate mockery --name DB
 type DB interface {
 	List() (map[string]int64, error)
 	Add(string, int64) error

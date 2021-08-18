@@ -4,8 +4,10 @@ import (
 	"context"
 	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
-	"github.com/clambin/covid19/coviddb/mock"
+	covidDBMock "github.com/clambin/covid19/coviddb/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"sync"
 	"testing"
 	"time"
 )
@@ -92,13 +94,19 @@ var (
 
 func TestCovidCache(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		cancel()
-		time.Sleep(100 * time.Millisecond)
-	}()
 
-	cache := covidcache.New(mock.Create(testData))
-	go cache.Run(ctx)
+	db := &covidDBMock.DB{}
+	cache := covidcache.New(db)
+
+	// Set up expectations
+	db.On("List").Return(testData, nil)
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		cache.Run(ctx)
+		wg.Done()
+	}()
 
 	cache.Refresh()
 	response := cache.GetTotals(time.Now())
@@ -133,4 +141,9 @@ func TestCovidCache(t *testing.T) {
 		assert.Equal(t, totalCases[index].Deaths, total.Deaths)
 		assert.Equal(t, totalCases[index].Active, total.Active)
 	}
+
+	cancel()
+	wg.Wait()
+
+	mock.AssertExpectationsForObjects(t, db)
 }

@@ -9,11 +9,12 @@ import (
 )
 
 // DB interface representing a Covid Database
+//go:generate mockery --name DB
 type DB interface {
-	List(time.Time) ([]CountryEntry, error)
+	List() ([]CountryEntry, error)
 	ListLatestByCountry() (map[string]time.Time, error)
 	GetFirstEntry() (time.Time, bool, error)
-	GetLastBeforeDate(string, time.Time) (*CountryEntry, bool, error)
+	GetLastForCountry(string) (*CountryEntry, bool, error)
 	Add([]CountryEntry) error
 	GetAllCountryCodes() (codes []string, err error)
 }
@@ -40,12 +41,10 @@ type CountryEntry struct {
 	Deaths    int64
 }
 
-// List retrieved all records from the database up to endDate
-func (db *PostgresDB) List(endDate time.Time) (entries []CountryEntry, err error) {
+// List retrieved all records from the database
+func (db *PostgresDB) List() (entries []CountryEntry, err error) {
 	var rows *sql.Rows
-	rows, err = db.DB.Handle.Query(fmt.Sprintf(
-		"SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 WHERE time <= '%s' ORDER BY 1",
-		endDate.Format("2006-01-02 15:04:05")))
+	rows, err = db.DB.Handle.Query(`SELECT time, country_code, country_name, confirmed, recovered, death FROM covid19 ORDER BY 1`)
 
 	if err == nil {
 		for rows.Next() {
@@ -54,10 +53,8 @@ func (db *PostgresDB) List(endDate time.Time) (entries []CountryEntry, err error
 				entries = append(entries, entry)
 			}
 		}
-
 		_ = rows.Close()
 	}
-
 	return
 }
 
@@ -76,7 +73,6 @@ func (db *PostgresDB) ListLatestByCountry() (entries map[string]time.Time, err e
 				entries[country] = timestamp
 			}
 		}
-
 		_ = rows.Close()
 	}
 	return
@@ -84,40 +80,29 @@ func (db *PostgresDB) ListLatestByCountry() (entries map[string]time.Time, err e
 
 // GetFirstEntry returns the timestamp of the first entry
 func (db *PostgresDB) GetFirstEntry() (first time.Time, found bool, err error) {
-	err = db.DB.Handle.QueryRow(`SELECT MIN(time) FROM covid19`).Scan(&first)
+	// TODO: SELECT MIN(time) may be more efficient, but makes Scan throw the following error:
+	// "sql: Scan error on column index 0, name \"min\": unsupported Scan, storing driver.Value type <nil> into type *time.Time"
+	const query = `SELECT time FROM covid19 ORDER BY 1 LIMIT 1`
+	err = db.DB.Handle.QueryRow(query).Scan(&first)
 	found = err == nil
 
-	if err != nil && err.Error() == "sql: Scan error on column index 0, name \"min\": unsupported Scan, storing driver.Value type <nil> into type *time.Time" {
+	if err == sql.ErrNoRows {
 		err = nil
 	}
-
 	return
 }
 
-// GetLastBeforeDate gets the last entry for a country before a specified data.
-func (db *PostgresDB) GetLastBeforeDate(countryName string, before time.Time) (result *CountryEntry, found bool, err error) {
-	var last time.Time
-	// FIXME: leaving out sprintf gives errors on processing timestamp???
-	err = db.DB.Handle.QueryRow(
-		fmt.Sprintf("SELECT MAX(time) FROM covid19 WHERE country_name = '%s' AND time < '%s'", countryName, before.Format("2006-01-02 15:04:05"))).Scan(&last)
+// GetLastForCountry returns the latest record for the country
+func (db *PostgresDB) GetLastForCountry(countryName string) (result *CountryEntry, found bool, err error) {
+	const query = `SELECT time, country_name, country_code, confirmed, death, recovered FROM covid19 WHERE country_name = '%s' ORDER BY time DESC LIMIT 1`
 
-	// row.Scan() should return sql.ErrNoRows ???
-	if err != nil {
-		if err.Error() != "sql: Scan error on column index 0, name \"max\": unsupported Scan, storing driver.Value type <nil> into type *time.Time" {
-			return nil, false, fmt.Errorf("unable to get coviddb data: %v", err)
-		}
+	row := db.DB.Handle.QueryRow(fmt.Sprintf(query, countryName))
+	result = &CountryEntry{}
+	err = row.Scan(&result.Timestamp, &result.Name, &result.Code, &result.Confirmed, &result.Deaths, &result.Recovered)
+	found = err == nil
+	if err == sql.ErrNoRows {
 		err = nil
-	} else {
-		result = &CountryEntry{Timestamp: before, Name: countryName}
-		err = db.DB.Handle.QueryRow(
-			fmt.Sprintf("SELECT country_code, confirmed, death, recovered FROM covid19 where country_name = '%s' and time = '%s'",
-				countryName,
-				last.Format("2006-01-02 15:04:05")),
-		).Scan(&result.Code, &result.Confirmed, &result.Deaths, &result.Recovered)
-
-		found = err == nil
 	}
-
 	return
 }
 
@@ -144,16 +129,13 @@ func (db *PostgresDB) Add(entries []CountryEntry) (err error) {
 			if err == nil {
 				_, err = stmt.Exec()
 			}
-
 			if err == nil {
 				err = tx.Commit()
 			}
-
 			_ = stmt.Close()
 		}
 	}
-
-	return err
+	return
 }
 
 // RemoveDB removes all tables & indexes
@@ -174,11 +156,8 @@ func (db *PostgresDB) GetAllCountryCodes() (codes []string, err error) {
 				codes = append(codes, code)
 			}
 		}
-
 		_ = rows.Close()
-
 	}
-
 	return
 }
 

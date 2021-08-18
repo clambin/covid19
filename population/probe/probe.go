@@ -26,30 +26,12 @@ func Create(apiKey string, popDB db.DB, covidDB coviddb.DB) *Probe {
 	}
 }
 
-// Run gets latest data and updates the database
-func (probe *Probe) Run(ctx context.Context, interval time.Duration) (err error) {
-	probe.runUpdate(ctx)
-	ticker := time.NewTicker(interval)
+const maxConcurrentJobs = 5
 
-	for running := true; running; {
-		select {
-		case <-ctx.Done():
-			running = false
-		case <-ticker.C:
-			probe.runUpdate(ctx)
-		}
-	}
-
-	ticker.Stop()
-	return
-}
-
-func (probe *Probe) runUpdate(ctx context.Context) {
-	const maxConcurrentJobs = 5
+// Update gets the current population for each supported country and stores it in the database
+func (probe *Probe) Update(ctx context.Context) {
 	start := time.Now()
-	var codes []string
-	var err error
-	codes, err = probe.covidDB.GetAllCountryCodes()
+	codes, err := probe.covidDB.GetAllCountryCodes()
 	if err != nil {
 		return
 	}

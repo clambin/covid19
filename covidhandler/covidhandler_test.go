@@ -4,10 +4,11 @@ import (
 	"context"
 	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
-	"github.com/clambin/covid19/coviddb/mock"
+	covidDBMock "github.com/clambin/covid19/coviddb/mocks"
 	"github.com/clambin/covid19/covidhandler"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 )
@@ -55,7 +56,9 @@ func TestTimeSeriesHandler(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	dbh := mock.Create(dbContents)
+	dbh := &covidDBMock.DB{}
+	dbh.On("List").Return(dbContents, nil)
+
 	cache := covidcache.New(dbh)
 	go cache.Run(ctx)
 	handler, _ := covidhandler.Create(cache)
@@ -95,13 +98,17 @@ func TestTimeSeriesHandler(t *testing.T) {
 			}
 		}
 	}
+
+	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestTableHandler(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	dbh := mock.Create(dbContents)
+	dbh := &covidDBMock.DB{}
+	dbh.On("List").Return(dbContents, nil)
+
 	cache := covidcache.New(dbh)
 	go cache.Run(ctx)
 	handler, _ := covidhandler.Create(cache)
@@ -162,6 +169,7 @@ func TestTableHandler(t *testing.T) {
 			}
 		}
 	}
+	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestNoDB(t *testing.T) {
@@ -171,7 +179,7 @@ func TestNoDB(t *testing.T) {
 }
 
 func BenchmarkHandlerQuery(b *testing.B) {
-	// Build a large DB
+	// Build a large PopulationDB
 	countries := []struct{ code, name string }{
 		{code: "BE", name: "Belgium"},
 		{code: "US", name: "USA"},
@@ -193,7 +201,10 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		}
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
-	cache := covidcache.New(mock.Create(entries))
+	dbh := &covidDBMock.DB{}
+	dbh.On("List").Return(entries, nil)
+
+	cache := covidcache.New(dbh)
 	handler, _ := covidhandler.Create(cache)
 
 	seriesArgs := grafanaJson.TimeSeriesQueryArgs{
@@ -215,10 +226,12 @@ func BenchmarkHandlerQuery(b *testing.B) {
 		_, err := handler.Endpoints().Query(context.Background(), target, &seriesArgs)
 		assert.Nil(b, err)
 	}
+
+	mock.AssertExpectationsForObjects(b, dbh)
 }
 
 func BenchmarkHandlerTableQuery(b *testing.B) {
-	// Build a large DB
+	// Build a large PopulationDB
 	countries := []struct{ code, name string }{
 		{code: "BE", name: "Belgium"},
 		{code: "US", name: "USA"},
@@ -240,7 +253,11 @@ func BenchmarkHandlerTableQuery(b *testing.B) {
 		}
 		timestamp = timestamp.Add(24 * time.Hour)
 	}
-	cache := covidcache.New(mock.Create(entries))
+
+	dbh := &covidDBMock.DB{}
+	dbh.On("List").Return(entries, nil)
+
+	cache := covidcache.New(dbh)
 	handler, _ := covidhandler.Create(cache)
 
 	tableArgs := grafanaJson.TableQueryArgs{
@@ -263,4 +280,6 @@ func BenchmarkHandlerTableQuery(b *testing.B) {
 		_, err := handler.Endpoints().TableQuery(context.Background(), target, &tableArgs)
 		assert.Nil(b, err)
 	}
+
+	mock.AssertExpectationsForObjects(b, dbh)
 }

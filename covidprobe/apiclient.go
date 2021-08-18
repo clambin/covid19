@@ -9,6 +9,7 @@ import (
 )
 
 // APIClient interface representing a Population API Client
+//go:generate mockery --name APIClient
 type APIClient interface {
 	GetCountryStats(ctx context.Context) (map[string]CountryStats, error)
 }

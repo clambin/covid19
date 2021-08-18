@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
@@ -12,8 +13,11 @@ import (
 	"github.com/clambin/covid19/population/probe"
 	"github.com/clambin/covid19/version"
 	"github.com/clambin/grafana-json"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -54,26 +58,50 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var cache *covidcache.Cache
-	if cfg.Monitor.Enabled {
-		cache = startMonitor(ctx, cfg)
-	}
+	covidDB, populationDB := openDatabases(cfg)
+	cache := covidcache.New(covidDB)
+	go cache.Run(ctx)
 
-	handler, _ := covidhandler.Create(cache)
-	server := grafana_json.Create(handler)
-	go func() {
-		if err = server.Run(cfg.Port); err != nil {
-			log.WithError(err).Fatal("unable to start grafana SimpleJson server")
-		}
-	}()
+	populationProbe := probe.Create(cfg.Monitor.RapidAPIKey.Value, populationDB, covidDB)
+	populationTicker := time.NewTicker(24 * time.Hour)
+
+	covidProbe := covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
+	prometheus.MustRegister(covidProbe)
+	covidTicker := time.NewTicker(cfg.Monitor.Interval)
+
+	go startAPIServer(cache, cfg)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	<-sigs
+	for running := true; running; {
+		select {
+		case <-ctx.Done():
+			running = false
+		case <-sigs:
+			running = false
+		case <-populationTicker.C:
+			populationProbe.Update(ctx)
+		case <-covidTicker.C:
+			_ = covidProbe.Update(ctx)
+		}
+	}
+	covidTicker.Stop()
+	populationTicker.Stop()
 }
 
-func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache *covidcache.Cache) {
+func startAPIServer(cache *covidcache.Cache, cfg *configuration.Configuration) {
+	handler, _ := covidhandler.Create(cache)
+	server := grafana_json.Create(handler)
+	r := server.GetRouter()
+	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
+	err2 := http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), r)
+	if err2 != nil {
+		log.WithError(err2).Fatal("unable to start grafana SimpleJson server")
+	}
+}
+
+func openDatabases(cfg *configuration.Configuration) (covidDB coviddb.DB, populationDB popdb.DB) {
 	DB, err := db.New(
 		cfg.Postgres.Host,
 		cfg.Postgres.Port,
@@ -86,45 +114,16 @@ func startMonitor(ctx context.Context, cfg *configuration.Configuration) (cache 
 		log.WithError(err).Fatalf("unable to access covid DB '%s'", cfg.Postgres.Database)
 	}
 
-	var covidDB *coviddb.PostgresDB
 	covidDB, err = coviddb.New(DB)
 
 	if err != nil {
 		log.WithError(err).Fatalf("unable to access covid DB '%s'", cfg.Postgres.Database)
 	}
 
-	var popDB *popdb.PostgresDB
-	popDB, err = popdb.New(DB)
+	populationDB, err = popdb.New(DB)
 
 	if err != nil {
 		log.WithError(err).Fatalf("unable to access population DB '%s'", cfg.Postgres.Database)
 	}
-
-	cache = covidcache.New(covidDB)
-	go cache.Run(ctx)
-
-	populationProbe := probe.Create(cfg.Monitor.RapidAPIKey.Value, popDB, covidDB)
-	go func() {
-		err2 := populationProbe.Run(ctx, 24*time.Hour)
-
-		if err2 != nil {
-			log.WithError(err2).Fatal("unable to get population data")
-		}
-	}()
-
-	var covidProbe *covidprobe.Probe
-	covidProbe, err = covidprobe.NewProbe(&cfg.Monitor, covidDB, cache)
-
-	if err != nil {
-		log.WithError(err).Fatal("failed to start covid probe")
-	}
-	go func() {
-		err2 := covidProbe.Run(ctx, cfg.Monitor.Interval)
-
-		if err2 != nil {
-			log.WithError(err2).Fatal("unable to get covid data")
-		}
-	}()
-
 	return
 }

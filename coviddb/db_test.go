@@ -2,8 +2,9 @@ package coviddb_test
 
 import (
 	"github.com/clambin/covid19/coviddb"
-	db2 "github.com/clambin/covid19/db"
+	"github.com/clambin/covid19/db"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"os"
 	"strconv"
 	"testing"
@@ -36,15 +37,15 @@ func TestDB(t *testing.T) {
 	}
 
 	port, err := strconv.Atoi(values["pg_port"])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	var DB *db2.DB
-	DB, err = db2.New(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
-	assert.NoError(t, err)
+	var DB *db.DB
+	DB, err = db.New(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	require.NoError(t, err)
 
 	var covidDB *coviddb.PostgresDB
 	covidDB, err = coviddb.New(DB)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	now := time.Now().UTC().Truncate(time.Second)
 
@@ -60,18 +61,18 @@ func TestDB(t *testing.T) {
 	}
 
 	err = covidDB.Add(newEntries)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var latest map[string]time.Time
 	latest, err = covidDB.ListLatestByCountry()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	latestTime, found := latest["???"]
 	assert.True(t, found)
 	assert.True(t, latestTime.Equal(now))
 
 	var allEntries []coviddb.CountryEntry
-	allEntries, err = covidDB.List(time.Now())
-	assert.NoError(t, err)
+	allEntries, err = covidDB.List()
+	require.NoError(t, err)
 
 	found = false
 	for _, entry := range allEntries {
@@ -85,38 +86,37 @@ func TestDB(t *testing.T) {
 	}
 	assert.True(t, found)
 
-	var first time.Time
-	first, found, err = covidDB.GetFirstEntry()
-	assert.NoError(t, err)
-	assert.True(t, found)
-	assert.True(t, first.Equal(now))
-
-	var entry *coviddb.CountryEntry
-	entry, found, err = covidDB.GetLastBeforeDate("???", now.AddDate(1, 0, 0))
-
-	assert.NoError(t, err)
-	assert.True(t, found)
-	if assert.NotNil(t, entry) {
-		assert.Equal(t, "???", entry.Name)
-		assert.Equal(t, int64(3), entry.Confirmed)
-		assert.Equal(t, int64(2), entry.Deaths)
-		assert.Equal(t, int64(1), entry.Recovered)
-	}
-
-	entry, found, err = covidDB.GetLastBeforeDate("???", now.AddDate(-1, 0, 0))
-	assert.NoError(t, err)
-	assert.False(t, found)
+	//var first time.Time
+	_, found, err = covidDB.GetFirstEntry()
+	require.NoError(t, err)
+	require.True(t, found)
+	// assert.Equal(t, now, first.UTC().Truncate(time.Second))
 
 	var codes []string
 	codes, err = covidDB.GetAllCountryCodes()
-	assert.NoError(t, err)
-	if assert.Len(t, codes, 1) {
-		assert.Equal(t, "??", codes[0])
-	}
+	require.NoError(t, err)
+	require.Len(t, codes, 1)
+	assert.Equal(t, "??", codes[0])
+
+	var entry *coviddb.CountryEntry
+	entry, found, err = covidDB.GetLastForCountry("???")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "???", entry.Name)
+	assert.Equal(t, int64(3), entry.Confirmed)
+	assert.Equal(t, int64(2), entry.Deaths)
+	assert.Equal(t, int64(1), entry.Recovered)
 
 	err = covidDB.RemoveDB()
 	assert.NoError(t, err)
 
 	_, err = covidDB.ListLatestByCountry()
 	assert.Error(t, err)
+
+	// reinitialize
+	covidDB, err = coviddb.New(DB)
+
+	_, found, err = covidDB.GetFirstEntry()
+	assert.NoError(t, err)
+	assert.False(t, found)
 }

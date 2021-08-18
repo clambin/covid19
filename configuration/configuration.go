@@ -27,7 +27,6 @@ type PostgresDB struct {
 
 // MonitorConfiguration parameters
 type MonitorConfiguration struct {
-	Enabled       bool                      `yaml:"enabled"`
 	Interval      time.Duration             `yaml:"interval"`
 	RapidAPIKey   ValueOrEnvVar             `yaml:"rapidAPIKey"`
 	Notifications NotificationConfiguration `yaml:"notifications"`
@@ -57,6 +56,15 @@ func (v *ValueOrEnvVar) Set() {
 	}
 }
 
+// Get a ValueOrEnvVar
+func (v ValueOrEnvVar) Get() (value string) {
+	value = v.Value
+	if v.EnvVar != "" {
+		value = os.Getenv(v.EnvVar)
+	}
+	return value
+}
+
 // LoadConfigurationFile loads the configuration file from file
 func LoadConfigurationFile(fileName string) (configuration *Configuration, err error) {
 	var content []byte
@@ -72,7 +80,6 @@ func LoadConfiguration(content []byte) (*Configuration, error) {
 		Port:     8080,
 		Postgres: loadPGEnvironment(),
 		Monitor: MonitorConfiguration{
-			Enabled:  true,
 			Interval: 20 * time.Minute,
 		},
 	}

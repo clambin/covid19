@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Cache caches the total evolution of covid figures
+// Cache caches the total evolution of COVID-19 figures
 // Helper function to improve responsiveness of Grafana API server
 type Cache struct {
 	DB      coviddb.DB
@@ -37,18 +37,14 @@ func New(db coviddb.DB) *Cache {
 
 // Run the cache
 func (cache *Cache) Run(ctx context.Context) {
-	if err := cache.update(); err != nil {
-		log.WithField("err", err).Warning("failed to refresh cache")
-	}
-loop:
-	for {
+	_ = cache.Update()
+
+	for running := true; running; {
 		select {
 		case <-ctx.Done():
-			break loop
+			running = false
 		case <-cache.refresh:
-			if err := cache.update(); err != nil {
-				log.WithField("err", err).Warning("failed to refresh cache")
-			}
+			_ = cache.Update()
 		}
 	}
 }
@@ -59,16 +55,21 @@ func (cache *Cache) Refresh() {
 }
 
 // Update recalculates the cached data
-func (cache *Cache) update() (err error) {
+func (cache *Cache) Update() (err error) {
 	cache.lock.Lock()
 	defer cache.lock.Unlock()
 
 	var entries []coviddb.CountryEntry
-	if entries, err = cache.DB.List(time.Now()); err == nil {
+	if entries, err = cache.DB.List(); err == nil {
 		cache.totals = GetTotalCases(entries)
 		cache.deltas = GetTotalDeltas(cache.totals)
 
 	}
+
+	if err != nil {
+		log.WithField("err", err).Warning("failed to refresh cache")
+	}
+
 	return
 }
 

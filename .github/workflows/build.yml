@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - dbstats
+    - refactor
 
 jobs:
   test:

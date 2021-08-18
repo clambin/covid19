@@ -55,8 +55,6 @@ postgres:
   password: "its4covid"
 # Monitor section to configure how new covid data should be retrieved
 monitor:
-  # Turn on covid data capturing. Default is true
-  enabled: true
   # How ofter new data should be gathered. Default is 20m.
   # Be kind to API providers and don't put this too low. Data only changes daily anyway
   interval: 20m

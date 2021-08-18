@@ -11,6 +11,7 @@ import (
 )
 
 // APIClient interface representing a Population API Client
+//go:generate mockery --name APIClient
 type APIClient interface {
 	GetPopulation(ctx context.Context, codes string) (int64, error)
 	GetCountries(ctx context.Context) ([]string, error)
@@ -68,6 +69,7 @@ func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string)
 	return
 }
 
+// GetCountries returns all country names that the RapidAPI API supports
 func (client *RapidAPIClient) GetCountries(ctx context.Context) (countries []string, err error) {
 	var body []byte
 	body, err = client.Client.CallWithContext(ctx, "/allcountriesname")

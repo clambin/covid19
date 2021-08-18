@@ -3,131 +3,52 @@ package covidprobe_test
 import (
 	"context"
 	"github.com/clambin/covid19/configuration"
-	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
-	"github.com/clambin/covid19/coviddb/mock"
+	dbMock "github.com/clambin/covid19/coviddb/mocks"
 	"github.com/clambin/covid19/covidprobe"
-	"github.com/clambin/covid19/covidprobe/mockapi"
-	"github.com/clambin/gotools/metrics"
-	"github.com/stretchr/testify/assert"
+	probeMock "github.com/clambin/covid19/covidprobe/mocks"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 var (
 	lastUpdate = time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC)
-
-	seedDB = []coviddb.CountryEntry{
-		{
-			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
-			Code:      "BE",
-			Name:      "Belgium",
-			Confirmed: 1,
-			Recovered: 0,
-			Deaths:    0},
-		{
-			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
-			Code:      "BE",
-			Name:      "Belgium",
-			Confirmed: 3,
-			Recovered: 0,
-			Deaths:    0},
-		{
-			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
-			Code:      "US",
-			Name:      "US",
-			Confirmed: 3,
-			Recovered: 1,
-			Deaths:    0},
-		{
-			Timestamp: time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
-			Code:      "BE",
-			Name:      "Belgium",
-			Confirmed: 10,
-			Recovered: 5,
-			Deaths:    1,
-		},
-	}
 )
 
-func TestProbe(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	dbh := mock.Create(seedDB)
-	cache := covidcache.New(dbh)
-	go cache.Run(ctx)
-
-	cfg := configuration.MonitorConfiguration{
-		Enabled: true,
-		Notifications: configuration.NotificationConfiguration{
-			Enabled: true,
-			URL:     configuration.ValueOrEnvVar{Value: ""},
-			Countries: []string{
-				"Belgium", "Sokovia", "France",
-			},
-		},
+func TestProbe_Run(t *testing.T) {
+	cfg := &configuration.MonitorConfiguration{
+		Interval:      25 * time.Millisecond,
+		RapidAPIKey:   configuration.ValueOrEnvVar{Value: "akey"},
+		Notifications: configuration.NotificationConfiguration{},
 	}
+	db := &dbMock.DB{}
+	apiClient := &probeMock.APIClient{}
 
-	p, err := covidprobe.NewProbe(&cfg, dbh, cache)
-	assert.NoError(t, err)
+	probe := covidprobe.NewProbe(cfg, db, nil)
+	probe.APIClient = apiClient
+	probe.TestMode = true
 
-	// NotifyCache should contain the latest entry for each (valid) country we want to send notifications for
-	assert.Len(t, p.NotifyCache, 2)
-	record, ok := p.NotifyCache["Belgium"]
-	assert.True(t, ok)
-	assert.Equal(t, int64(10), record.Confirmed)
-	record, ok = p.NotifyCache["France"]
-	assert.True(t, ok)
-	assert.Equal(t, int64(0), record.Confirmed)
+	timestamp := time.Now()
 
-	p.APIClient = mockapi.New(map[string]covidprobe.CountryStats{
-		"Belgium":     {LastUpdate: lastUpdate, Confirmed: 40, Recovered: 10, Deaths: 1},
-		"US":          {LastUpdate: lastUpdate, Confirmed: 20, Recovered: 15, Deaths: 5},
-		"NotACountry": {LastUpdate: lastUpdate, Confirmed: 0, Recovered: 0, Deaths: 0},
-	})
+	// setup expectations
+	apiClient.On("GetCountryStats", mock.Anything).Return(map[string]covidprobe.CountryStats{
+		"Belgium":     {LastUpdate: timestamp, Confirmed: 40, Recovered: 10, Deaths: 1},
+		"US":          {LastUpdate: timestamp, Confirmed: 20, Recovered: 15, Deaths: 5},
+		"NotACountry": {LastUpdate: timestamp, Confirmed: 0, Recovered: 0, Deaths: 0},
+	}, nil)
+	db.On("ListLatestByCountry").Return(map[string]time.Time{}, nil).Once()
+	db.On("ListLatestByCountry").Return(map[string]time.Time{"Belgium": timestamp, "US": timestamp}, nil)
+	db.On("Add", []coviddb.CountryEntry{
+		{Code: "BE", Name: "Belgium", Timestamp: timestamp, Confirmed: 40, Recovered: 10, Deaths: 1},
+		{Code: "US", Name: "US", Timestamp: timestamp, Confirmed: 20, Recovered: 15, Deaths: 5},
+	}).Return(nil).Once()
 
-	go func() {
-		_ = p.Run(ctx, 24*time.Hour)
-	}()
+	// log.SetLevel(log.DebugLevel)
 
-	// Check that the latest values were added to the DB
-	var latest map[string]time.Time
-	assert.Eventually(t, func() bool {
-		latest, err = dbh.ListLatestByCountry()
-		return err == nil && len(latest) == 2
-	}, 500*time.Millisecond, 10*time.Millisecond)
-
-	assert.True(t, latest["Belgium"].Equal(lastUpdate))
-	assert.True(t, latest["US"].Equal(lastUpdate))
-
-	var (
-		value float64
-	)
-	value, err = metrics.LoadValue("covid_reported_count", "Belgium")
-	assert.Nil(t, err)
-	assert.Equal(t, 1.0, value)
-	value, err = metrics.LoadValue("covid_reported_count", "US")
-	assert.Nil(t, err)
-	assert.Equal(t, 1.0, value)
-
-	cancel()
-	ctx, cancel = context.WithCancel(context.Background())
-	defer cancel()
-
-	go func() {
-		_ = p.Run(ctx, 24*time.Hour)
-	}()
-
-	// Prometheus metrics should now be zero
-	assert.Eventually(t, func() bool {
-		value, err = metrics.LoadValue("covid_reported_count", "Belgium")
-		if err != nil || value != 0.0 {
-			return false
-		}
-		value, err = metrics.LoadValue("covid_reported_count", "US")
-		if err != nil || value != 0.0 {
-			return false
-		}
-		return true
-	}, 500*time.Millisecond, 10*time.Millisecond)
+	// Run the probe
+	err := probe.Update(context.Background())
+	require.NoError(t, err)
+	mock.AssertExpectationsForObjects(t, apiClient, db)
 }
