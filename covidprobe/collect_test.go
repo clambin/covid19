@@ -7,8 +7,8 @@ import (
 	dbMock "github.com/clambin/covid19/coviddb/mocks"
 	"github.com/clambin/covid19/covidprobe"
 	probeMock "github.com/clambin/covid19/covidprobe/mocks"
+	"github.com/clambin/gotools/metrics"
 	"github.com/prometheus/client_golang/prometheus"
-	pcg "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,13 +20,13 @@ func TestProbe_Describe(t *testing.T) {
 	cfg := &configuration.MonitorConfiguration{}
 	m := covidprobe.NewProbe(cfg, nil, nil)
 
-	metrics := make(chan *prometheus.Desc)
-	go m.Describe(metrics)
+	ch := make(chan *prometheus.Desc)
+	go m.Describe(ch)
 
 	for _, name := range []string{
 		"covid_reported_count",
 	} {
-		metric := <-metrics
+		metric := <-ch
 		assert.Contains(t, metric.String(), "\""+name+"\"")
 	}
 }
@@ -68,12 +68,12 @@ func TestProbe_Collect(t *testing.T) {
 	for metric := range ch {
 		todo--
 		target := 0.0
-		country := metricLabel(metric, "country")
+		country := metrics.MetricLabel(metric, "country")
 		if country == "Belgium" || country == "US" {
 			target = 1.0
 		}
 
-		assert.Equal(t, target, metricValue(metric).GetCounter().GetValue(), country)
+		assert.Equal(t, target, metrics.MetricValue(metric).GetCounter().GetValue(), country)
 
 		if todo == 0 {
 			break
@@ -94,12 +94,12 @@ func TestProbe_Collect(t *testing.T) {
 	for metric := range ch {
 		todo--
 		target := 0.0
-		country := metricLabel(metric, "country")
+		country := metrics.MetricLabel(metric, "country")
 		if country == "Belgium" || country == "US" {
 			target = 1.0
 		}
 
-		assert.Equal(t, target, metricValue(metric).GetCounter().GetValue(), country)
+		assert.Equal(t, target, metrics.MetricValue(metric).GetCounter().GetValue(), country)
 
 		if todo == 0 {
 			break
@@ -107,31 +107,4 @@ func TestProbe_Collect(t *testing.T) {
 	}
 
 	mock.AssertExpectationsForObjects(t, apiClient, db)
-}
-
-// metricValue checks that a prometheus metric has a specified value
-func metricValue(metric prometheus.Metric) *pcg.Metric {
-	m := new(pcg.Metric)
-	if metric.Write(m) != nil {
-		panic("failed to parse metric")
-	}
-
-	return m
-}
-
-// metricLabel returns the value for a specified label
-func metricLabel(metric prometheus.Metric, labelName string) string {
-	var m pcg.Metric
-
-	if metric.Write(&m) != nil {
-		panic("failed to parse metric")
-	}
-
-	for _, label := range m.GetLabel() {
-		if label.GetName() == labelName {
-			return label.GetValue()
-		}
-	}
-
-	return ""
 }

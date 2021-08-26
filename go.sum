@@ -72,6 +72,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/clambin/gotools v0.3.90 h1:IgaxSwMvHnLVeBrVCmzCMZ7OJ9z0KXV5BvnAZ9rgGhQ=
 github.com/clambin/gotools v0.3.90/go.mod h1:12mW+UZTyh4Mag+p6mhI2rrw9Sax/wTZjouU7WrLyuQ=
+github.com/clambin/gotools v0.3.91 h1:aM1MJADXOlV3AD001q6TlvHJDgtEyMEqQWiI8hB7Ap4=
+github.com/clambin/gotools v0.3.91/go.mod h1:12mW+UZTyh4Mag+p6mhI2rrw9Sax/wTZjouU7WrLyuQ=
 github.com/clambin/grafana-json v0.5.1 h1:IaeDrU1EbZ1axJ96IauMRlRsVC9BW+5qkVnywfPC1cg=
 github.com/clambin/grafana-json v0.5.1/go.mod h1:ZV9Jhps3pAKuwGhec84iQDEm0l3NhytnSvEg0Vl1Djs=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
