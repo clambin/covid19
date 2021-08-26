@@ -2,8 +2,10 @@ package covidprobe_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/clambin/covid19/configuration"
+	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/covid19/coviddb"
 	dbMock "github.com/clambin/covid19/coviddb/mocks"
 	"github.com/clambin/covid19/covidprobe"
@@ -23,8 +25,12 @@ func TestProbe_Update_NoData(t *testing.T) {
 	}
 	db := &dbMock.DB{}
 	apiClient := &probeMock.APIClient{}
+	cache := covidcache.New(db)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go cache.Run(ctx)
 
-	probe := covidprobe.NewProbe(cfg, db, nil)
+	probe := covidprobe.NewProbe(cfg, db, cache)
 	probe.APIClient = apiClient
 	probe.TestMode = true
 
@@ -36,6 +42,7 @@ func TestProbe_Update_NoData(t *testing.T) {
 		"US":          {LastUpdate: timestamp, Confirmed: 20, Recovered: 15, Deaths: 5},
 		"NotACountry": {LastUpdate: timestamp, Confirmed: 0, Recovered: 0, Deaths: 0},
 	}, nil)
+	db.On("List").Return([]coviddb.CountryEntry{}, nil)
 	db.On("ListLatestByCountry").Return(map[string]time.Time{}, nil).Once()
 	db.On("Add", []coviddb.CountryEntry{
 		{Code: "BE", Name: "Belgium", Timestamp: timestamp, Confirmed: 40, Recovered: 10, Deaths: 1},
@@ -60,7 +67,6 @@ func TestProbe_Update_WithData(t *testing.T) {
 	}
 	db := &dbMock.DB{}
 	apiClient := &probeMock.APIClient{}
-
 	probe := covidprobe.NewProbe(cfg, db, nil)
 	probe.APIClient = apiClient
 
@@ -122,7 +128,7 @@ func TestProbe_Update_WithNotifier(t *testing.T) {
 
 }
 
-func TestProbe_Update_APIFailure(t *testing.T) {
+func TestProbe_Update_Failures(t *testing.T) {
 	cfg := &configuration.MonitorConfiguration{
 		Interval:      30 * time.Minute,
 		RapidAPIKey:   configuration.ValueOrEnvVar{Value: "akey"},
@@ -152,5 +158,34 @@ func TestProbe_Update_APIFailure(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "failed to process Covid figures: database is down", err.Error())
 
+	mock.AssertExpectationsForObjects(t, apiClient, db)
+}
+
+func TestProbe_Update_DBFailure(t *testing.T) {
+	cfg := &configuration.MonitorConfiguration{
+		Interval:      30 * time.Minute,
+		RapidAPIKey:   configuration.ValueOrEnvVar{Value: "akey"},
+		Notifications: configuration.NotificationConfiguration{},
+	}
+	db := &dbMock.DB{}
+	apiClient := &probeMock.APIClient{}
+
+	probe := covidprobe.NewProbe(cfg, db, nil)
+	probe.APIClient = apiClient
+	probe.TestMode = true
+
+	timestamp := time.Now()
+
+	// Initial update; nothing in database. Valid countries are inserted.
+	apiClient.On("GetCountryStats", mock.Anything).Return(map[string]covidprobe.CountryStats{
+		"Belgium":     {LastUpdate: timestamp, Confirmed: 40, Recovered: 10, Deaths: 1},
+		"US":          {LastUpdate: timestamp, Confirmed: 20, Recovered: 15, Deaths: 5},
+		"NotACountry": {LastUpdate: timestamp, Confirmed: 0, Recovered: 0, Deaths: 0},
+	}, nil)
+	db.On("ListLatestByCountry").Return(map[string]time.Time{}, nil).Once()
+	db.On("Add", mock.AnythingOfType("[]coviddb.CountryEntry")).Return(errors.New("db is down")).Once()
+
+	err := probe.Update(context.TODO())
+	require.Error(t, err)
 	mock.AssertExpectationsForObjects(t, apiClient, db)
 }
