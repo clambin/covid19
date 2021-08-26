@@ -5,13 +5,13 @@ go 1.16
 require (
 	bou.ke/monkey v1.0.2
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
-	github.com/clambin/gotools v0.3.90
+	github.com/clambin/gotools v0.3.91
 	github.com/clambin/grafana-json v0.5.1
 	github.com/containrrr/shoutrrr v0.5.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/sirupsen/logrus v1.8.1
