@@ -2,20 +2,24 @@ package covidprobe_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/covid19/covidprobe"
+	"github.com/clambin/gotools/rapidapi/mocks"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestGetCountryStats(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(serverStub))
-	defer server.Close()
-
+	mockAPI := &mocks.API{}
 	apiClient := covidprobe.NewAPIClient("1234")
-	apiClient.(*covidprobe.RapidAPIClient).Client.URL = server.URL
+	apiClient.API = mockAPI
 
+	mockAPI.
+		On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
+		Return([]byte(goodResponse), nil).
+		Once()
 	response, err := apiClient.GetCountryStats(context.Background())
 
 	assert.Equal(t, nil, err)
@@ -30,11 +34,15 @@ func TestGetCountryStats(t *testing.T) {
 	assert.Equal(t, int64(6), stats.Confirmed)
 	assert.Equal(t, int64(5), stats.Deaths)
 	assert.Equal(t, int64(4), stats.Recovered)
-}
 
-// serverStub function
-func serverStub(w http.ResponseWriter, _ *http.Request) {
-	_, _ = w.Write([]byte(goodResponse))
+	mockAPI.
+		On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
+		Return([]byte(goodResponse), fmt.Errorf("500 - Internal Server Error")).
+		Once()
+	_, err = apiClient.GetCountryStats(context.Background())
+
+	require.Error(t, err)
+
 }
 
 const goodResponse = `

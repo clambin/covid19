@@ -16,13 +16,13 @@ type APIClient interface {
 
 // RapidAPIClient Client handle
 type RapidAPIClient struct {
-	rapidapi.Client
+	rapidapi.API
 }
 
 // NewAPIClient creates a new Covid API Client
-func NewAPIClient(apiKey string) APIClient {
+func NewAPIClient(apiKey string) *RapidAPIClient {
 	return &RapidAPIClient{
-		rapidapi.Client{
+		&rapidapi.Client{
 			Hostname: rapidAPIHost,
 			APIKey:   apiKey,
 		},
@@ -43,23 +43,24 @@ func (client *RapidAPIClient) GetCountryStats(ctx context.Context) (countryStats
 	var stats statsResponse
 	stats, err = client.getStats(ctx)
 
-	if err == nil {
-		for _, entry := range stats.Data.Covid19Stats {
-			mapEntry, ok := countryStats[entry.Country]
-			if ok == false {
-				mapEntry = CountryStats{Confirmed: 0, Deaths: 0, Recovered: 0}
-				countryStats[entry.Country] = mapEntry
-			}
-			mapEntry.LastUpdate = entry.LastUpdate
-			mapEntry.Confirmed += entry.Confirmed
-			mapEntry.Deaths += entry.Deaths
-			mapEntry.Recovered += entry.Recovered
-
-			countryStats[entry.Country] = mapEntry
-		}
+	if err != nil {
+		return
 	}
 
-	return countryStats, err
+	for _, entry := range stats.Data.Covid19Stats {
+		mapEntry, ok := countryStats[entry.Country]
+		if ok == false {
+			mapEntry = CountryStats{Confirmed: 0, Deaths: 0, Recovered: 0}
+			countryStats[entry.Country] = mapEntry
+		}
+		mapEntry.LastUpdate = entry.LastUpdate
+		mapEntry.Confirmed += entry.Confirmed
+		mapEntry.Deaths += entry.Deaths
+		mapEntry.Recovered += entry.Recovered
+
+		countryStats[entry.Country] = mapEntry
+	}
+	return
 }
 
 //
@@ -91,11 +92,11 @@ type statsResponse struct {
 // getStats retrieves today's covid19 country stats from rapidapi.com
 func (client *RapidAPIClient) getStats(ctx context.Context) (stats statsResponse, err error) {
 	var body []byte
-	body, err = client.Client.CallWithContext(ctx, "/v1/stats")
-	if err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(body))
-		err = decoder.Decode(&stats)
+	body, err = client.API.CallWithContext(ctx, "/v1/stats")
+	if err != nil {
+		return
 	}
-
-	return stats, err
+	decoder := json.NewDecoder(bytes.NewReader(body))
+	err = decoder.Decode(&stats)
+	return
 }

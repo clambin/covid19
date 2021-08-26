@@ -19,15 +19,15 @@ type APIClient interface {
 
 // RapidAPIClient API Client handle
 type RapidAPIClient struct {
-	rapidapi.Client
+	rapidapi.API
 }
 
 const rapidAPIHost = "world-population.p.rapidapi.com"
 
 // NewAPIClient creates a new Population API Client
-func NewAPIClient(apiKey string) APIClient {
+func NewAPIClient(apiKey string) *RapidAPIClient {
 	return &RapidAPIClient{
-		Client: rapidapi.Client{
+		API: &rapidapi.Client{
 			HTTPClient: &http.Client{},
 			Hostname:   rapidAPIHost,
 			APIKey:     apiKey,
@@ -50,7 +50,7 @@ type populationResponseBody struct {
 // GetPopulation finds the most recent data for a country
 func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string) (population int64, err error) {
 	var body []byte
-	body, err = client.Client.CallWithContext(ctx, "/population?country_name="+url.QueryEscape(country))
+	body, err = client.API.CallWithContext(ctx, "/population?country_name="+url.QueryEscape(country))
 
 	var stats populationResponse
 	if err == nil {
@@ -72,7 +72,7 @@ func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string)
 // GetCountries returns all country names that the RapidAPI API supports
 func (client *RapidAPIClient) GetCountries(ctx context.Context) (countries []string, err error) {
 	var body []byte
-	body, err = client.Client.CallWithContext(ctx, "/allcountriesname")
+	body, err = client.API.CallWithContext(ctx, "/allcountriesname")
 
 	var stats struct {
 		OK   bool

@@ -107,7 +107,7 @@ loop:
 	return
 }
 
-// TableQuery returns the table response for the provided target
+// TableQuery returns the table response for the provided target`
 func (handler *CovidHandler) TableQuery(_ context.Context, target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
 	start := time.Now()
 

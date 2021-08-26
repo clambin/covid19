@@ -4,91 +4,60 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/covid19/population/probe"
+	"github.com/clambin/gotools/rapidapi/mocks"
 	"github.com/stretchr/testify/assert"
-	"html"
-	"net/http"
-	"net/http/httptest"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestGetPopulation(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(serverStub))
-	defer server.Close()
-
+	rapidMock := &mocks.API{}
 	apiClient := probe.NewAPIClient("1234")
-	apiClient.(*probe.RapidAPIClient).Client.URL = server.URL
+	apiClient.API = rapidMock
 
 	ctx := context.Background()
-	population, err := apiClient.GetPopulation(ctx, "Belgium")
 
-	assert.NoError(t, err)
+	rapidMock.
+		On("CallWithContext", mock.Anything, "/population?country_name=Belgium").
+		Return([]byte(`{"ok": true, "body": {"country_name": "Belgium", "population": 20}}`), nil).
+		Once()
+
+	population, err := apiClient.GetPopulation(ctx, "Belgium")
+	require.NoError(t, err)
 	assert.Equal(t, int64(20), population)
 
+	rapidMock.
+		On("CallWithContext", mock.Anything, "/population?country_name=United+States").
+		Return([]byte(`{"ok": true, "body": {"country_name": "United States", "population": 40}}`), nil).
+		Once()
 	population, err = apiClient.GetPopulation(ctx, "United States")
-
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, int64(40), population)
 
+	rapidMock.
+		On("CallWithContext", mock.Anything, "/population?country_name=%3F%3F").
+		Return([]byte(``), fmt.Errorf("404 - Not Found")).
+		Once()
 	population, err = apiClient.GetPopulation(ctx, "??")
-
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestGetCountries(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(serverStub))
-	defer server.Close()
-
+	rapidMock := &mocks.API{}
 	apiClient := probe.NewAPIClient("1234")
-	apiClient.(*probe.RapidAPIClient).Client.URL = server.URL
+	apiClient.API = rapidMock
 
 	ctx := context.Background()
+
+	rapidMock.
+		On("CallWithContext", mock.Anything, "/allcountriesname").
+		Return([]byte(`{"ok": true,"body": { "countries": [ "Belgium", "United States" ] }}`), nil).
+		Once()
+
 	countries, err := apiClient.GetCountries(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, countries, 2)
 	assert.Contains(t, countries, "Belgium")
 	assert.Contains(t, countries, "United States")
 }
-
-func serverStub(w http.ResponseWriter, req *http.Request) {
-	var response string
-	if req.URL.Path == "/population" {
-		switch req.URL.RawQuery {
-		case "country_name=Belgium":
-			response = fmt.Sprintf(countryResponse, "Belgium", 20)
-		case "country_name=United+States":
-			response = fmt.Sprintf(countryResponse, "United States", 40)
-		case "country_name=Faeroe+Islands":
-			response = fmt.Sprintf(countryResponse, "Faeroe Islands", 5)
-		}
-	} else if req.URL.Path == "/allcountriesname" {
-		response = allCountriesResponse
-	}
-
-	if response == "" {
-		http.Error(w, "endpoint not implemented:"+html.EscapeString(req.URL.Path), http.StatusNotFound)
-	}
-
-	_, _ = w.Write([]byte(response))
-}
-
-var countryResponse = `
-	{
-		"ok": true,
-		"body": {
-			"country_name": "%s",
-			"population": %d
-		}
-	}
-`
-
-var allCountriesResponse = `
-	{
-		"ok": true,
-		"body": {
-			"countries": [
-				"Belgium",
-				"United States"
-			]
-		}
-	}
-`
