@@ -2,7 +2,6 @@ package covidhandler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/clambin/covid19/covidcache"
 	"github.com/clambin/grafana-json"
@@ -17,12 +16,12 @@ type CovidHandler struct {
 }
 
 // Create a CovidAPIHandler object
-func Create(cache *covidcache.Cache) (*CovidHandler, error) {
+func Create(cache *covidcache.Cache) *CovidHandler {
 	if cache == nil {
-		return nil, errors.New("no database specified")
+		panic("cannot create covidhandler: no cache provided")
 	}
 
-	return &CovidHandler{cache: cache}, nil
+	return &CovidHandler{cache: cache}
 }
 
 // Targets for the Grafana SimpleJSON API Handler

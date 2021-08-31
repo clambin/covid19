@@ -69,7 +69,7 @@ func main() {
 	prometheus.MustRegister(covidProbe)
 	covidTicker := time.NewTicker(cfg.Monitor.Interval)
 
-	go startAPIServer(cache, cfg)
+	server := startAPIServer(cache, cfg)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -88,17 +88,29 @@ func main() {
 	}
 	covidTicker.Stop()
 	populationTicker.Stop()
+	_ = server.Shutdown(context.Background())
 }
 
-func startAPIServer(cache *covidcache.Cache, cfg *configuration.Configuration) {
-	handler, _ := covidhandler.Create(cache)
-	server := grafana_json.Create(handler)
+func startAPIServer(cache *covidcache.Cache, cfg *configuration.Configuration) (httpServer *http.Server) {
+	server := grafana_json.Server{
+		Handler: covidhandler.Create(cache),
+	}
 	r := server.GetRouter()
 	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
-	err2 := http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), r)
-	if err2 != nil {
-		log.WithError(err2).Fatal("unable to start grafana SimpleJson server")
+
+	httpServer = &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.Port),
+		Handler: r,
 	}
+
+	go func() {
+		err := httpServer.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.WithError(err).Fatal("unable to start grafana SimpleJson server")
+		}
+	}()
+
+	return
 }
 
 func openDatabases(cfg *configuration.Configuration) (covidDB coviddb.DB, populationDB popdb.DB) {

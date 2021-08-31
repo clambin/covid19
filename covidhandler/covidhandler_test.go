@@ -9,6 +9,7 @@ import (
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -46,7 +47,15 @@ var dbContents = []coviddb.CountryEntry{
 }
 
 func TestCovidHandler_Search(t *testing.T) {
-	handler, _ := covidhandler.Create(nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	dbh := &covidDBMock.DB{}
+	dbh.On("List").Return(dbContents, nil)
+
+	cache := covidcache.New(dbh)
+	go cache.Run(ctx)
+	handler := covidhandler.Create(cache)
 	targets := handler.Endpoints().Search()
 	assert.Equal(t, covidhandler.Targets, targets)
 
@@ -61,7 +70,7 @@ func TestTimeSeriesHandler(t *testing.T) {
 
 	cache := covidcache.New(dbh)
 	go cache.Run(ctx)
-	handler, _ := covidhandler.Create(cache)
+	handler := covidhandler.Create(cache)
 
 	args := grafanaJson.TimeSeriesQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
@@ -111,7 +120,7 @@ func TestTableHandler(t *testing.T) {
 
 	cache := covidcache.New(dbh)
 	go cache.Run(ctx)
-	handler, _ := covidhandler.Create(cache)
+	handler := covidhandler.Create(cache)
 
 	args := grafanaJson.TableQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
@@ -173,9 +182,9 @@ func TestTableHandler(t *testing.T) {
 }
 
 func TestNoDB(t *testing.T) {
-	_, err := covidhandler.Create(nil)
-
-	assert.NotNil(t, err)
+	require.Panics(t, func() {
+		_ = covidhandler.Create(nil)
+	})
 }
 
 func BenchmarkHandlerQuery(b *testing.B) {
@@ -205,7 +214,7 @@ func BenchmarkHandlerQuery(b *testing.B) {
 	dbh.On("List").Return(entries, nil)
 
 	cache := covidcache.New(dbh)
-	handler, _ := covidhandler.Create(cache)
+	handler := covidhandler.Create(cache)
 
 	seriesArgs := grafanaJson.TimeSeriesQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
@@ -258,7 +267,7 @@ func BenchmarkHandlerTableQuery(b *testing.B) {
 	dbh.On("List").Return(entries, nil)
 
 	cache := covidcache.New(dbh)
-	handler, _ := covidhandler.Create(cache)
+	handler := covidhandler.Create(cache)
 
 	tableArgs := grafanaJson.TableQueryArgs{
 		CommonQueryArgs: grafanaJson.CommonQueryArgs{
