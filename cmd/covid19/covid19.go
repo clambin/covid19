@@ -15,13 +15,12 @@ import (
 	"github.com/clambin/grafana-json"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"os/signal"
 	"path/filepath"
-	"syscall"
 	"time"
 )
 
@@ -71,14 +70,11 @@ func main() {
 
 	server := startAPIServer(cache, cfg)
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
 	for running := true; running; {
 		select {
 		case <-ctx.Done():
 			running = false
-		case <-sigs:
+		case <-shutdown.Chan():
 			running = false
 		case <-populationTicker.C:
 			populationProbe.Update(ctx)
