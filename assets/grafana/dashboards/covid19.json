@@ -9,6 +9,12 @@
                 "hide": true,
                 "iconColor": "rgba(0, 211, 255, 1)",
                 "name": "Annotations & Alerts",
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
                 "type": "dashboard"
             }
         ]
@@ -17,7 +23,7 @@
     "gnetId": null,
     "graphTooltip": 0,
     "id": 217,
-    "iteration": 1612557195736,
+    "iteration": 1633292925358,
     "links": [],
     "panels": [
         {
@@ -38,9 +44,6 @@
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
                     "custom": {
                         "align": "center",
                         "displayMode": "auto",
@@ -69,7 +72,7 @@
             "options": {
                 "showHeader": false
             },
-            "pluginVersion": "7.4.0",
+            "pluginVersion": "8.1.5",
             "targets": [
                 {
                     "format": "table",
@@ -104,31 +107,118 @@
             "type": "table"
         },
         {
-            "aliasColors": {
-                "Active": "#8AB8FF",
-                "Death": "#FF7383",
-                "Recovered": "#96D98D",
-                "active": "#96D98D",
-                "death": "#FF7383",
-                "recovered": "#8AB8FF"
-            },
-            "breakPoint": "50%",
             "cacheTimeout": null,
-            "combine": {
-                "label": "Others",
-                "threshold": 0
-            },
             "datasource": "PostgreSQL",
-            "decimals": 1,
             "description": "",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        }
+                    },
+                    "decimals": 1,
+                    "mappings": [],
+                    "unit": "short"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Active"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#8AB8FF",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Death"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FF7383",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#96D98D",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "active"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#96D98D",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "death"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FF7383",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#8AB8FF",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
-            "fontSize": "80%",
-            "format": "short",
             "gridPos": {
                 "h": 8,
                 "w": 5,
@@ -137,14 +227,6 @@
             },
             "id": 6,
             "interval": null,
-            "legend": {
-                "header": "",
-                "percentage": true,
-                "percentageDecimals": 0,
-                "show": true,
-                "values": true
-            },
-            "legendType": "Under graph",
             "links": [
                 {
                     "targetBlank": true,
@@ -153,9 +235,28 @@
                 }
             ],
             "maxDataPoints": 3,
-            "nullPointMode": "connected",
-            "pieType": "pie",
-            "strokeWidth": "1",
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "values": [
+                        "value",
+                        "percent"
+                    ]
+                },
+                "pieType": "pie",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
             "targets": [
                 {
                     "format": "time_series",
@@ -199,8 +300,7 @@
             "timeFrom": null,
             "timeShift": null,
             "title": "Ratio",
-            "type": "grafana-piechart-panel",
-            "valueName": "current"
+            "type": "piechart"
         },
         {
             "aliasColors": {
@@ -217,7 +317,7 @@
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "unit": "short"
                 },
                 "overrides": []
             },
@@ -247,7 +347,7 @@
                 "alertThreshold": true
             },
             "percentage": true,
-            "pluginVersion": "7.4.0",
+            "pluginVersion": "8.1.5",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -365,11 +465,9 @@
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
                     "custom": {
                         "align": null,
+                        "displayMode": "auto",
                         "filterable": false
                     },
                     "mappings": [],
@@ -454,7 +552,7 @@
                     }
                 ]
             },
-            "pluginVersion": "7.4.0",
+            "pluginVersion": "8.1.5",
             "targets": [
                 {
                     "format": "table",
@@ -517,58 +615,169 @@
             "type": "table"
         },
         {
-            "aliasColors": {
-                "Confirmed": "light-orange",
-                "Deaths": "light-red",
-                "Recovered": "light-green",
-                "confirmed": "light-yellow",
-                "death": "light-red",
-                "recovered": "light-blue"
-            },
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 30,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "none"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Confirmed"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-orange",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Deaths"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-green",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "confirmed"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-yellow",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "death"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
-            "fill": 1,
-            "fillGradient": 3,
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 0,
                 "y": 9
             },
-            "hiddenSeries": false,
             "id": 3,
-            "legend": {
-                "avg": false,
-                "current": true,
-                "max": false,
-                "min": false,
-                "show": true,
-                "total": false,
-                "values": true
-            },
-            "lines": true,
-            "linewidth": 1,
-            "nullPointMode": "connected",
             "options": {
-                "alertThreshold": true
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
             },
-            "percentage": false,
-            "pluginVersion": "7.4.0",
-            "pointradius": 2,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": false,
-            "steppedLine": false,
+            "pluginVersion": "8.0.6",
             "targets": [
                 {
                     "format": "time_series",
@@ -804,102 +1013,174 @@
                     ]
                 }
             ],
-            "thresholds": [],
             "timeFrom": null,
-            "timeRegions": [],
             "timeShift": null,
             "title": "New Cases / Day",
-            "tooltip": {
-                "shared": true,
-                "sort": 0,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "$$hashKey": "object:662",
-                    "format": "none",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                },
-                {
-                    "$$hashKey": "object:663",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": false
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
+            "type": "timeseries"
         },
         {
-            "aliasColors": {
-                "Active": "light-blue",
-                "Deaths": "light-red",
-                "Recovered": "light-green",
-                "active": "light-green",
-                "death": "light-red",
-                "recovered": "light-blue"
-            },
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 30,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "normal"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Active"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Deaths"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-green",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "active"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-green",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "death"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "light-blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
-            "fill": 1,
-            "fillGradient": 3,
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 12,
                 "y": 9
             },
-            "hiddenSeries": false,
             "id": 17,
-            "legend": {
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "show": true,
-                "total": false,
-                "values": false
-            },
-            "lines": true,
-            "linewidth": 1,
-            "nullPointMode": "connected",
             "options": {
-                "alertThreshold": true
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
             },
-            "percentage": false,
-            "pluginVersion": "7.4.0",
-            "pointradius": 2,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": true,
-            "steppedLine": false,
+            "pluginVersion": "8.0.6",
             "targets": [
                 {
                     "format": "time_series",
@@ -962,48 +1243,10 @@
                     ]
                 }
             ],
-            "thresholds": [],
             "timeFrom": null,
-            "timeRegions": [],
             "timeShift": null,
             "title": "Cases (stacked)",
-            "tooltip": {
-                "shared": true,
-                "sort": 0,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "$$hashKey": "object:662",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": "0",
-                    "show": true
-                },
-                {
-                    "$$hashKey": "object:663",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
+            "type": "timeseries"
         },
         {
             "collapsed": false,
@@ -1020,55 +1263,108 @@
             "type": "row"
         },
         {
-            "aliasColors": {
-                "Afghanistan": "dark-red",
-                "South Africa": "dark-red"
-            },
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "decimals": 2,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Afghanistan"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "dark-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "South Africa"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "dark-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
-            "fill": 1,
-            "fillGradient": 0,
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 0,
                 "y": 18
             },
-            "hiddenSeries": false,
             "id": 22,
-            "legend": {
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "rightSide": true,
-                "show": true,
-                "total": false,
-                "values": false
-            },
-            "lines": true,
-            "linewidth": 1,
-            "nullPointMode": "null",
             "options": {
-                "alertThreshold": true
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "right"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
             },
-            "percentage": false,
-            "pluginVersion": "7.4.0",
-            "pointradius": 2,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": false,
-            "steppedLine": false,
+            "pluginVersion": "8.0.6",
             "targets": [
                 {
                     "format": "time_series",
@@ -1125,100 +1421,113 @@
                     ]
                 }
             ],
-            "thresholds": [],
             "timeFrom": null,
-            "timeRegions": [],
             "timeShift": null,
             "title": "Confirmed cases vs. total population",
-            "tooltip": {
-                "shared": false,
-                "sort": 2,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "$$hashKey": "object:254",
-                    "decimals": 2,
-                    "format": "percentunit",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                },
-                {
-                    "$$hashKey": "object:255",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
+            "type": "timeseries"
         },
         {
-            "aliasColors": {
-                "Afghanistan": "dark-red",
-                "South Africa": "dark-red"
-            },
-            "bars": false,
-            "dashLength": 10,
-            "dashes": false,
             "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Afghanistan"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "dark-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "South Africa"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "dark-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
-            "fill": 1,
-            "fillGradient": 0,
             "gridPos": {
                 "h": 8,
                 "w": 12,
                 "x": 12,
                 "y": 18
             },
-            "hiddenSeries": false,
             "id": 23,
-            "legend": {
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "rightSide": true,
-                "show": true,
-                "total": false,
-                "values": false
-            },
-            "lines": true,
-            "linewidth": 1,
-            "nullPointMode": "null",
             "options": {
-                "alertThreshold": true
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "right"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
             },
-            "percentage": false,
-            "pluginVersion": "7.4.0",
-            "pointradius": 2,
-            "points": false,
-            "renderer": "flot",
-            "seriesOverrides": [],
-            "spaceLength": 10,
-            "stack": false,
-            "steppedLine": false,
+            "pluginVersion": "8.0.6",
             "targets": [
                 {
                     "format": "time_series",
@@ -1277,53 +1586,14 @@
                     ]
                 }
             ],
-            "thresholds": [],
             "timeFrom": null,
-            "timeRegions": [],
             "timeShift": null,
             "title": "Mortality vs. total population",
-            "tooltip": {
-                "shared": false,
-                "sort": 2,
-                "value_type": "individual"
-            },
-            "type": "graph",
-            "xaxis": {
-                "buckets": null,
-                "mode": "time",
-                "name": null,
-                "show": true,
-                "values": []
-            },
-            "yaxes": [
-                {
-                    "$$hashKey": "object:254",
-                    "decimals": null,
-                    "format": "percentunit",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                },
-                {
-                    "$$hashKey": "object:255",
-                    "format": "short",
-                    "label": null,
-                    "logBase": 1,
-                    "max": null,
-                    "min": null,
-                    "show": true
-                }
-            ],
-            "yaxis": {
-                "align": false,
-                "alignLevel": null
-            }
+            "type": "timeseries"
         }
     ],
     "refresh": "",
-    "schemaVersion": 27,
+    "schemaVersion": 30,
     "style": "dark",
     "tags": [],
     "templating": {
@@ -1351,7 +1621,6 @@
                 "skipUrlSync": false,
                 "sort": 5,
                 "tagValuesQuery": "",
-                "tags": [],
                 "tagsQuery": "",
                 "type": "query",
                 "useTags": false
@@ -1378,5 +1647,5 @@
     "timezone": "",
     "title": "Covid19",
     "uid": "jQXLLIzRa",
-    "version": 6
+    "version": 89
 }

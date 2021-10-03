@@ -8,8 +8,38 @@
                 "enable": true,
                 "hide": true,
                 "iconColor": "rgba(0, 211, 255, 1)",
+                "limit": 100,
                 "name": "Annotations & Alerts",
+                "showIn": 0,
+                "tags": [],
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
                 "type": "dashboard"
+            },
+            {
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": false,
+                "iconColor": "#FF7383",
+                "limit": 100,
+                "name": "Covid",
+                "showIn": 0,
+                "tags": [
+                    "covid"
+                ],
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [
+                        "covid"
+                    ],
+                    "type": "tags"
+                },
+                "type": "tags"
             }
         ]
     },
@@ -20,29 +50,117 @@
     "links": [],
     "panels": [
         {
-            "aliasColors": {
-                "Active": "#8AB8FF",
-                "Death": "#FF7383",
-                "Recovered": "#96D98D",
-                "active": "#96D98D",
-                "death": "#FF7383",
-                "recovered": "#8AB8FF"
-            },
-            "breakPoint": "50%",
             "cacheTimeout": null,
-            "combine": {
-                "label": "Others",
-                "threshold": 0
-            },
             "datasource": "covid19api",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        }
+                    },
+                    "decimals": 0,
+                    "mappings": [],
+                    "unit": "short"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Active"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#8AB8FF",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Death"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FF7383",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#96D98D",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "active"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#96D98D",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "death"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FF7383",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "recovered"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#8AB8FF",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
-            "fontSize": "80%",
-            "format": "short",
             "gridPos": {
                 "h": 8,
                 "w": 12,
@@ -51,17 +169,30 @@
             },
             "id": 15,
             "interval": null,
-            "legend": {
-                "percentage": true,
-                "show": true,
-                "values": true
-            },
-            "legendType": "Right side",
             "links": [],
             "maxDataPoints": 3,
-            "nullPointMode": "connected",
-            "pieType": "pie",
-            "strokeWidth": 1,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "values": [
+                        "value",
+                        "percent"
+                    ]
+                },
+                "pieType": "pie",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
             "targets": [
                 {
                     "refId": "A",
@@ -82,8 +213,7 @@
             "timeFrom": null,
             "timeShift": null,
             "title": "Ratio",
-            "type": "grafana-piechart-panel",
-            "valueName": "current"
+            "type": "piechart"
         },
         {
             "aliasColors": {
@@ -96,12 +226,6 @@
             "datasource": "covid19api",
             "fieldConfig": {
                 "defaults": {
-                    "color": {},
-                    "custom": {},
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": []
-                    },
                     "unit": "short"
                 },
                 "overrides": []
@@ -132,7 +256,7 @@
                 "alertThreshold": true
             },
             "percentage": true,
-            "pluginVersion": "7.4.5",
+            "pluginVersion": "8.1.5",
             "pointradius": 2,
             "points": false,
             "renderer": "flot",
@@ -206,9 +330,9 @@
                         "fillOpacity": 10,
                         "gradientMode": "none",
                         "hideFrom": {
-                            "graph": false,
                             "legend": false,
-                            "tooltip": false
+                            "tooltip": false,
+                            "viz": false
                         },
                         "lineInterpolation": "linear",
                         "lineWidth": 1,
@@ -217,7 +341,14 @@
                             "type": "linear"
                         },
                         "showPoints": "never",
-                        "spanNulls": true
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
                     },
                     "mappings": [],
                     "min": 0,
@@ -236,53 +367,7 @@
                     },
                     "unit": "short"
                 },
-                "overrides": [
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "deaths"
-                        },
-                        "properties": [
-                            {
-                                "id": "color",
-                                "value": {
-                                    "fixedColor": "light-red",
-                                    "mode": "fixed"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "recovered"
-                        },
-                        "properties": [
-                            {
-                                "id": "color",
-                                "value": {
-                                    "fixedColor": "light-blue",
-                                    "mode": "fixed"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "confirmed"
-                        },
-                        "properties": [
-                            {
-                                "id": "color",
-                                "value": {
-                                    "fixedColor": "light-yellow",
-                                    "mode": "fixed"
-                                }
-                            }
-                        ]
-                    }
-                ]
+                "overrides": []
             },
             "gridPos": {
                 "h": 8,
@@ -292,19 +377,16 @@
             },
             "id": 38,
             "options": {
-                "graph": {},
                 "legend": {
-                    "calcs": [
-                        "last"
-                    ],
+                    "calcs": [],
                     "displayMode": "list",
                     "placement": "bottom"
                 },
-                "tooltipOptions": {
-                    "mode": "multi"
+                "tooltip": {
+                    "mode": "single"
                 }
             },
-            "pluginVersion": "7.4.5",
+            "pluginVersion": "8.0.6",
             "targets": [
                 {
                     "queryType": "randomWalk",
@@ -313,6 +395,8 @@
                     "type": "table"
                 }
             ],
+            "timeFrom": null,
+            "timeShift": null,
             "title": "New cases / day",
             "type": "timeseries"
         },
@@ -328,12 +412,12 @@
                         "axisPlacement": "auto",
                         "barAlignment": 0,
                         "drawStyle": "line",
-                        "fillOpacity": 39,
-                        "gradientMode": "opacity",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
                         "hideFrom": {
-                            "graph": false,
                             "legend": false,
-                            "tooltip": false
+                            "tooltip": false,
+                            "viz": false
                         },
                         "lineInterpolation": "linear",
                         "lineWidth": 1,
@@ -342,7 +426,14 @@
                             "type": "linear"
                         },
                         "showPoints": "never",
-                        "spanNulls": true
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
                     },
                     "mappings": [],
                     "thresholds": {
@@ -360,38 +451,7 @@
                     },
                     "unit": "short"
                 },
-                "overrides": [
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "deaths"
-                        },
-                        "properties": [
-                            {
-                                "id": "color",
-                                "value": {
-                                    "fixedColor": "light-red",
-                                    "mode": "fixed"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "recovered"
-                        },
-                        "properties": [
-                            {
-                                "id": "color",
-                                "value": {
-                                    "fixedColor": "light-blue",
-                                    "mode": "fixed"
-                                }
-                            }
-                        ]
-                    }
-                ]
+                "overrides": []
             },
             "gridPos": {
                 "h": 8,
@@ -401,19 +461,16 @@
             },
             "id": 40,
             "options": {
-                "graph": {},
                 "legend": {
-                    "calcs": [
-                        "last"
-                    ],
+                    "calcs": [],
                     "displayMode": "list",
                     "placement": "bottom"
                 },
-                "tooltipOptions": {
+                "tooltip": {
                     "mode": "single"
                 }
             },
-            "pluginVersion": "7.4.5",
+            "pluginVersion": "8.0.6",
             "targets": [
                 {
                     "queryType": "randomWalk",
@@ -422,11 +479,13 @@
                     "type": "table"
                 }
             ],
+            "timeFrom": null,
+            "timeShift": null,
             "title": "Total cases",
             "type": "timeseries"
         },
         {
-            "collapsed": false,
+            "collapsed": true,
             "datasource": null,
             "gridPos": {
                 "h": 1,
@@ -435,205 +494,260 @@
                 "y": 16
             },
             "id": 29,
-            "panels": [],
+            "panels": [
+                {
+                    "cacheTimeout": null,
+                    "datasource": "PostgreSQL",
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "palette-classic"
+                            },
+                            "custom": {
+                                "hideFrom": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": false
+                                }
+                            },
+                            "mappings": []
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 13,
+                        "w": 12,
+                        "x": 0,
+                        "y": 17
+                    },
+                    "id": 24,
+                    "interval": "",
+                    "links": [],
+                    "maxDataPoints": 3,
+                    "options": {
+                        "legend": {
+                            "displayMode": "table",
+                            "placement": "right",
+                            "values": [
+                                "percent",
+                                "value"
+                            ]
+                        },
+                        "pieType": "pie",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "",
+                            "values": false
+                        },
+                        "tooltip": {
+                            "mode": "single"
+                        }
+                    },
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [
+                                {
+                                    "params": [
+                                        "$__interval",
+                                        "none"
+                                    ],
+                                    "type": "time"
+                                },
+                                {
+                                    "params": [
+                                        "country_name"
+                                    ],
+                                    "type": "column"
+                                }
+                            ],
+                            "metricColumn": "none",
+                            "rawQuery": false,
+                            "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  max(confirmed) AS \" \",\n  country_name AS \"country_name\"\nFROM covid19\nWHERE\n  $__timeFilter(\"time\")\nGROUP BY 1, country_name\nORDER BY 1",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "confirmed"
+                                        ],
+                                        "type": "column"
+                                    },
+                                    {
+                                        "params": [
+                                            "max"
+                                        ],
+                                        "type": "aggregate"
+                                    },
+                                    {
+                                        "params": [
+                                            " "
+                                        ],
+                                        "type": "alias"
+                                    }
+                                ],
+                                [
+                                    {
+                                        "params": [
+                                            "country_name"
+                                        ],
+                                        "type": "column"
+                                    },
+                                    {
+                                        "params": [
+                                            "country_name"
+                                        ],
+                                        "type": "alias"
+                                    }
+                                ]
+                            ],
+                            "table": "covid19",
+                            "timeColumn": "\"time\"",
+                            "timeColumnType": "timestamp",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "Confirmed cases by country",
+                    "type": "piechart"
+                },
+                {
+                    "cacheTimeout": null,
+                    "datasource": "PostgreSQL",
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "palette-classic"
+                            },
+                            "custom": {
+                                "hideFrom": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": false
+                                }
+                            },
+                            "mappings": []
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 13,
+                        "w": 12,
+                        "x": 12,
+                        "y": 17
+                    },
+                    "id": 43,
+                    "interval": "",
+                    "links": [],
+                    "maxDataPoints": 3,
+                    "options": {
+                        "legend": {
+                            "displayMode": "table",
+                            "placement": "right",
+                            "values": [
+                                "percent",
+                                "value"
+                            ]
+                        },
+                        "pieType": "pie",
+                        "reduceOptions": {
+                            "calcs": [
+                                "lastNotNull"
+                            ],
+                            "fields": "",
+                            "values": false
+                        },
+                        "tooltip": {
+                            "mode": "single"
+                        }
+                    },
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [
+                                {
+                                    "params": [
+                                        "$__interval",
+                                        "none"
+                                    ],
+                                    "type": "time"
+                                },
+                                {
+                                    "params": [
+                                        "country_name"
+                                    ],
+                                    "type": "column"
+                                }
+                            ],
+                            "metricColumn": "none",
+                            "rawQuery": false,
+                            "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",$__interval),\n  max(death) AS \" \",\n  country_name AS \"country_name\"\nFROM covid19\nWHERE\n  $__timeFilter(\"time\")\nGROUP BY 1, country_name\nORDER BY 1",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "death"
+                                        ],
+                                        "type": "column"
+                                    },
+                                    {
+                                        "params": [
+                                            "max"
+                                        ],
+                                        "type": "aggregate"
+                                    },
+                                    {
+                                        "params": [
+                                            " "
+                                        ],
+                                        "type": "alias"
+                                    }
+                                ],
+                                [
+                                    {
+                                        "params": [
+                                            "country_name"
+                                        ],
+                                        "type": "column"
+                                    },
+                                    {
+                                        "params": [
+                                            "country_name"
+                                        ],
+                                        "type": "alias"
+                                    }
+                                ]
+                            ],
+                            "table": "covid19",
+                            "timeColumn": "\"time\"",
+                            "timeColumnType": "timestamp",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "timeFrom": null,
+                    "timeShift": null,
+                    "title": "Deaths by country",
+                    "type": "piechart"
+                }
+            ],
             "title": "Data",
             "type": "row"
-        },
-        {
-            "aliasColors": {
-                "Active": "#8AB8FF",
-                "Death": "#FF7383",
-                "Recovered": "#96D98D"
-            },
-            "breakPoint": "25%",
-            "cacheTimeout": null,
-            "combine": {
-                "label": "Others",
-                "threshold": ".01"
-            },
-            "datasource": "PostgreSQL",
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {}
-                },
-                "overrides": []
-            },
-            "fontSize": "80%",
-            "format": "short",
-            "gridPos": {
-                "h": 13,
-                "w": 12,
-                "x": 0,
-                "y": 17
-            },
-            "id": 24,
-            "interval": "",
-            "legend": {
-                "percentage": true,
-                "show": true,
-                "sort": "current",
-                "sortDesc": true,
-                "values": true
-            },
-            "legendType": "Right side",
-            "links": [],
-            "maxDataPoints": 3,
-            "nullPointMode": "connected",
-            "pieType": "pie",
-            "strokeWidth": 1,
-            "targets": [
-                {
-                    "format": "time_series",
-                    "group": [
-                        {
-                            "params": [
-                                "$__interval",
-                                "none"
-                            ],
-                            "type": "time"
-                        },
-                        {
-                            "params": [
-                                "country_name"
-                            ],
-                            "type": "column"
-                        }
-                    ],
-                    "metricColumn": "none",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  country_name,\n  confirmed\nFROM covid19\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
-                    "refId": "A",
-                    "select": [
-                        [
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "column"
-                            },
-                            {
-                                "params": [
-                                    "max"
-                                ],
-                                "type": "aggregate"
-                            },
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "alias"
-                            }
-                        ],
-                        [
-                            {
-                                "params": [
-                                    "country_name"
-                                ],
-                                "type": "column"
-                            },
-                            {
-                                "params": [
-                                    "country_name"
-                                ],
-                                "type": "alias"
-                            }
-                        ]
-                    ],
-                    "table": "covid19",
-                    "timeColumn": "\"time\"",
-                    "timeColumnType": "timestamp",
-                    "where": [
-                        {
-                            "name": "$__timeFilter",
-                            "params": [],
-                            "type": "macro"
-                        }
-                    ]
-                }
-            ],
-            "timeFrom": null,
-            "timeShift": null,
-            "title": "Confirmed cases by country",
-            "type": "grafana-piechart-panel",
-            "valueName": "current"
-        },
-        {
-            "aliasColors": {
-                "Active": "#8AB8FF",
-                "Death": "#FF7383",
-                "Recovered": "#96D98D"
-            },
-            "breakPoint": "25%",
-            "cacheTimeout": null,
-            "combine": {
-                "label": "Others",
-                "threshold": ".01"
-            },
-            "datasource": "PostgreSQL",
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {}
-                },
-                "overrides": []
-            },
-            "fontSize": "80%",
-            "format": "short",
-            "gridPos": {
-                "h": 13,
-                "w": 12,
-                "x": 12,
-                "y": 17
-            },
-            "id": 23,
-            "interval": "",
-            "legend": {
-                "percentage": true,
-                "show": true,
-                "sort": "current",
-                "sortDesc": true,
-                "values": true
-            },
-            "legendType": "Right side",
-            "links": [],
-            "maxDataPoints": 3,
-            "nullPointMode": "connected",
-            "pieType": "pie",
-            "strokeWidth": 1,
-            "targets": [
-                {
-                    "format": "time_series",
-                    "group": [],
-                    "metricColumn": "none",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  country_name,\n  death\nFROM covid19\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
-                    "refId": "A",
-                    "select": [
-                        [
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "column"
-                            }
-                        ]
-                    ],
-                    "table": "covid19",
-                    "timeColumn": "\"time\"",
-                    "timeColumnType": "timestamp",
-                    "where": [
-                        {
-                            "name": "$__timeFilter",
-                            "params": [],
-                            "type": "macro"
-                        }
-                    ]
-                }
-            ],
-            "timeFrom": null,
-            "timeShift": null,
-            "title": "Death toll by country",
-            "type": "grafana-piechart-panel",
-            "valueName": "current"
         },
         {
             "collapsed": false,
@@ -642,7 +756,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 30
+                "y": 17
             },
             "id": 27,
             "panels": [],
@@ -650,20 +764,34 @@
             "type": "row"
         },
         {
-            "circleMaxSize": 30,
-            "circleMinSize": "1",
-            "colors": [
-                "#73BF69",
-                "rgba(237, 129, 40, 0.89)",
-                "#F2495C",
-                "#B877D9"
-            ],
             "datasource": "PostgreSQL",
-            "decimals": 0,
-            "esMetric": "Count",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null
+                            },
+                            {
+                                "color": "rgba(237, 129, 40, 0.89)",
+                                "value": 1
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 100
+                            },
+                            {
+                                "color": "#B877D9",
+                                "value": 1000
+                            }
+                        ]
+                    }
                 },
                 "overrides": []
             },
@@ -671,205 +799,51 @@
                 "h": 13,
                 "w": 12,
                 "x": 0,
-                "y": 31
+                "y": 18
             },
-            "hideEmpty": false,
-            "hideZero": false,
-            "id": 13,
-            "initialZoom": "1",
-            "jsonUrl": "http://192.168.0.184:5000/countries/",
-            "jsonpCallback": "get",
-            "jsonpUrl": "http://localhost:5000/countries",
-            "locationData": "countries",
-            "mapCenter": "(0°, 0°)",
-            "mapCenterLatitude": 0,
-            "mapCenterLongitude": 0,
-            "maxDataPoints": 1,
-            "mouseWheelZoom": true,
-            "showLegend": true,
-            "stickyLabels": false,
-            "tableQueryOptions": {
-                "geohashField": "geohash",
-                "latitudeField": "latitude",
-                "longitudeField": "longitude",
-                "metricField": "metric",
-                "queryType": "geohash"
-            },
-            "targets": [
-                {
-                    "format": "time_series",
-                    "group": [],
-                    "metricColumn": "none",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  country_code,\n  confirmed\nFROM covid19\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
-                    "refId": "A",
-                    "select": [
-                        [
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "column"
-                            }
-                        ]
-                    ],
-                    "table": "covid19",
-                    "timeColumn": "\"time\"",
-                    "timeColumnType": "timestamp",
-                    "where": [
-                        {
-                            "name": "$__timeFilter",
-                            "params": [],
-                            "type": "macro"
-                        }
-                    ]
-                }
-            ],
-            "thresholds": "50000,100000,500000",
-            "timeFrom": null,
-            "timeShift": null,
-            "title": "Confirmed Cases",
-            "type": "grafana-worldmap-panel",
-            "unitPlural": "",
-            "unitSingle": "",
-            "unitSingular": "",
-            "valueName": "current"
-        },
-        {
-            "circleMaxSize": "",
-            "circleMinSize": "1",
-            "colors": [
-                "#73BF69",
-                "rgba(237, 129, 40, 0.89)",
-                "#F2495C",
-                "#B877D9"
-            ],
-            "datasource": "PostgreSQL",
-            "decimals": 0,
-            "esMetric": "Count",
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {}
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 13,
-                "w": 12,
-                "x": 12,
-                "y": 31
-            },
-            "hideEmpty": false,
-            "hideZero": false,
-            "id": 22,
-            "initialZoom": "1",
-            "jsonUrl": "http://192.168.0.184:5000/countries/",
-            "jsonpCallback": "get",
-            "jsonpUrl": "http://localhost:5000/countries",
-            "locationData": "countries",
-            "mapCenter": "(0°, 0°)",
-            "mapCenterLatitude": 0,
-            "mapCenterLongitude": 0,
-            "maxDataPoints": 1,
-            "mouseWheelZoom": true,
-            "showLegend": true,
-            "stickyLabels": false,
-            "tableQueryOptions": {
-                "geohashField": "geohash",
-                "latitudeField": "latitude",
-                "longitudeField": "longitude",
-                "metricField": "metric",
-                "queryType": "geohash"
-            },
-            "targets": [
-                {
-                    "format": "time_series",
-                    "group": [],
-                    "metricColumn": "none",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  country_code,\n  death\nFROM covid19\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
-                    "refId": "A",
-                    "select": [
-                        [
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "column"
-                            }
-                        ]
-                    ],
-                    "table": "covid19",
-                    "timeColumn": "\"time\"",
-                    "timeColumnType": "timestamp",
-                    "where": [
-                        {
-                            "name": "$__timeFilter",
-                            "params": [],
-                            "type": "macro"
-                        }
-                    ]
-                }
-            ],
-            "thresholds": "5000,10000,50000",
-            "timeFrom": null,
-            "timeShift": null,
-            "title": "Deaths",
-            "type": "grafana-worldmap-panel",
-            "unitPlural": "",
-            "unitSingle": "",
-            "unitSingular": "",
-            "valueName": "current"
-        },
-        {
-            "circleMaxSize": "10",
-            "circleMinSize": "0",
-            "colors": [
-                "#73BF69",
-                "rgba(237, 129, 40, 0.89)",
-                "#F2495C",
-                "#B877D9"
-            ],
-            "datasource": "PostgreSQL",
-            "decimals": 0,
-            "esMetric": "Count",
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {}
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 13,
-                "w": 12,
-                "x": 0,
-                "y": 44
-            },
-            "hideEmpty": false,
-            "hideZero": false,
             "id": 25,
-            "initialZoom": "1",
-            "jsonUrl": "http://192.168.0.184:5000/countries/",
-            "jsonpCallback": "get",
-            "jsonpUrl": "http://localhost:5000/countries",
-            "locationData": "countries",
-            "mapCenter": "(0°, 0°)",
-            "mapCenterLatitude": 0,
-            "mapCenterLongitude": 0,
             "maxDataPoints": 1,
-            "mouseWheelZoom": true,
-            "showLegend": true,
-            "stickyLabels": false,
-            "tableQueryOptions": {
-                "geohashField": "geohash",
-                "latitudeField": "latitude",
-                "longitudeField": "longitude",
-                "metricField": "metric",
-                "queryType": "geohash"
+            "options": {
+                "basemap": {
+                    "config": {},
+                    "type": "default"
+                },
+                "controls": {
+                    "mouseWheelZoom": true,
+                    "showAttribution": true,
+                    "showDebug": false,
+                    "showScale": false,
+                    "showZoom": true
+                },
+                "layers": [
+                    {
+                        "config": {
+                            "blur": 18,
+                            "radius": 29,
+                            "weight": {
+                                "field": "value",
+                                "fixed": 1,
+                                "max": 1,
+                                "min": 0
+                            }
+                        },
+                        "location": {
+                            "lookup": "metric",
+                            "mode": "lookup"
+                        },
+                        "type": "heatmap"
+                    }
+                ],
+                "view": {
+                    "id": "coords",
+                    "lat": 30.587129,
+                    "lon": 9.842367,
+                    "zoom": 2.07
+                }
             },
             "targets": [
                 {
-                    "format": "time_series",
+                    "format": "table",
                     "group": [
                         {
                             "params": [
@@ -923,31 +897,40 @@
                     ]
                 }
             ],
-            "thresholds": "1,100,1000",
             "timeFrom": null,
             "timeShift": null,
             "title": "Evolution",
-            "type": "grafana-worldmap-panel",
-            "unitPlural": "",
-            "unitSingle": "",
-            "unitSingular": "",
-            "valueName": "current"
+            "type": "geomap"
         },
         {
-            "circleMaxSize": 30,
-            "circleMinSize": "1",
-            "colors": [
-                "#73BF69",
-                "rgba(237, 129, 40, 0.89)",
-                "#F2495C",
-                "#B877D9"
-            ],
             "datasource": "PostgreSQL",
-            "decimals": 2,
-            "esMetric": "Count",
             "fieldConfig": {
                 "defaults": {
-                    "custom": {}
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "value": null
+                            },
+                            {
+                                "color": "rgba(237, 129, 40, 0.89)",
+                                "value": 100
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 1000
+                            },
+                            {
+                                "color": "#B877D9",
+                                "value": 10000
+                            }
+                        ]
+                    }
                 },
                 "overrides": []
             },
@@ -955,217 +938,94 @@
                 "h": 13,
                 "w": 12,
                 "x": 12,
-                "y": 44
+                "y": 18
             },
-            "hideEmpty": false,
-            "hideZero": false,
-            "id": 32,
-            "initialZoom": "1",
-            "jsonUrl": "http://192.168.0.184:5000/countries/",
-            "jsonpCallback": "get",
-            "jsonpUrl": "http://localhost:5000/countries",
-            "locationData": "countries",
-            "mapCenter": "(0°, 0°)",
-            "mapCenterLatitude": 0,
-            "mapCenterLongitude": 0,
+            "id": 44,
             "maxDataPoints": 1,
-            "mouseWheelZoom": true,
-            "showLegend": true,
-            "stickyLabels": false,
-            "tableQueryOptions": {
-                "geohashField": "geohash",
-                "latitudeField": "latitude",
-                "longitudeField": "longitude",
-                "metricField": "metric",
-                "queryType": "geohash"
-            },
-            "targets": [
-                {
-                    "format": "time_series",
-                    "group": [],
-                    "metricColumn": "none",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  a.time as \"time\", \n  a.country_code,\n  CAST (100.0 * a.confirmed / b.population AS FLOAT) AS \"confirmed\"\nFROM covid19 a, population b \nWHERE \n  a.country_code = b.country_code and\n  $__timeFilter(\"time\")\nORDER BY 1,2;",
-                    "refId": "A",
-                    "select": [
-                        [
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "column"
-                            }
-                        ]
-                    ],
-                    "table": "covid19",
-                    "timeColumn": "\"time\"",
-                    "timeColumnType": "timestamp",
-                    "where": [
-                        {
-                            "name": "$__timeFilter",
-                            "params": [],
-                            "type": "macro"
-                        }
-                    ]
-                }
-            ],
-            "thresholds": "2,5,10",
-            "timeFrom": null,
-            "timeShift": null,
-            "title": "Infection vs. population (%)",
-            "type": "grafana-worldmap-panel",
-            "unitPlural": "",
-            "unitSingle": "",
-            "unitSingular": "",
-            "valueName": "current"
-        },
-        {
-            "circleMaxSize": "",
-            "circleMinSize": "1",
-            "colors": [
-                "#3274D9",
-                "#56A64B",
-                "#FF780A",
-                "#E02F44"
-            ],
-            "datasource": "PostgreSQL",
-            "decimals": 2,
-            "esMetric": "Count",
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {}
+            "options": {
+                "basemap": {
+                    "config": {},
+                    "type": "default"
                 },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 13,
-                "w": 12,
-                "x": 0,
-                "y": 57
-            },
-            "hideEmpty": false,
-            "hideZero": false,
-            "id": 35,
-            "initialZoom": "1",
-            "jsonUrl": "http://192.168.0.184:5000/countries/",
-            "jsonpCallback": "get",
-            "jsonpUrl": "http://localhost:5000/countries",
-            "locationData": "countries",
-            "mapCenter": "(0°, 0°)",
-            "mapCenterLatitude": 0,
-            "mapCenterLongitude": 0,
-            "maxDataPoints": 1,
-            "mouseWheelZoom": true,
-            "showLegend": true,
-            "stickyLabels": false,
-            "tableQueryOptions": {
-                "geohashField": "geohash",
-                "latitudeField": "latitude",
-                "longitudeField": "longitude",
-                "metricField": "metric",
-                "queryType": "geohash"
-            },
-            "targets": [
-                {
-                    "format": "time_series",
-                    "group": [],
-                    "metricColumn": "none",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  country_code,\n  100.0 * death / confirmed\nFROM covid19\nWHERE\n  $__timeFilter(\"time\")\nORDER BY 1",
-                    "refId": "A",
-                    "select": [
-                        [
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "column"
-                            }
-                        ]
-                    ],
-                    "table": "covid19",
-                    "timeColumn": "\"time\"",
-                    "timeColumnType": "timestamp",
-                    "where": [
-                        {
-                            "name": "$__timeFilter",
-                            "params": [],
-                            "type": "macro"
-                        }
-                    ]
-                }
-            ],
-            "thresholds": "1,2,5",
-            "timeFrom": null,
-            "timeShift": null,
-            "title": "Mortality vs. confirmed cases (%)",
-            "type": "grafana-worldmap-panel",
-            "unitPlural": "",
-            "unitSingle": "",
-            "unitSingular": "",
-            "valueName": "current"
-        },
-        {
-            "circleMaxSize": "",
-            "circleMinSize": "1",
-            "colors": [
-                "#3274D9",
-                "#56A64B",
-                "#FF780A",
-                "#E02F44"
-            ],
-            "datasource": "PostgreSQL",
-            "decimals": 2,
-            "esMetric": "Count",
-            "fieldConfig": {
-                "defaults": {
-                    "custom": {}
+                "controls": {
+                    "mouseWheelZoom": true,
+                    "showAttribution": true,
+                    "showDebug": false,
+                    "showScale": false,
+                    "showZoom": true
                 },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 13,
-                "w": 12,
-                "x": 12,
-                "y": 57
-            },
-            "hideEmpty": false,
-            "hideZero": false,
-            "id": 36,
-            "initialZoom": "1",
-            "jsonUrl": "http://192.168.0.184:5000/countries/",
-            "jsonpCallback": "get",
-            "jsonpUrl": "http://localhost:5000/countries",
-            "locationData": "countries",
-            "mapCenter": "(0°, 0°)",
-            "mapCenterLatitude": 0,
-            "mapCenterLongitude": 0,
-            "maxDataPoints": 1,
-            "mouseWheelZoom": true,
-            "showLegend": true,
-            "stickyLabels": false,
-            "tableQueryOptions": {
-                "geohashField": "geohash",
-                "latitudeField": "latitude",
-                "longitudeField": "longitude",
-                "metricField": "metric",
-                "queryType": "geohash"
+                "layers": [
+                    {
+                        "config": {
+                            "color": {
+                                "field": "value",
+                                "fixed": "dark-green"
+                            },
+                            "fillOpacity": 0.4,
+                            "shape": "circle",
+                            "showLegend": true,
+                            "size": {
+                                "field": "value",
+                                "fixed": 5,
+                                "max": 15,
+                                "min": 2
+                            }
+                        },
+                        "location": {
+                            "lookup": "metric",
+                            "mode": "lookup"
+                        },
+                        "type": "markers"
+                    }
+                ],
+                "view": {
+                    "id": "coords",
+                    "lat": 30.587129,
+                    "lon": 9.842367,
+                    "zoom": 2.07
+                }
             },
             "targets": [
                 {
-                    "format": "time_series",
-                    "group": [],
+                    "format": "table",
+                    "group": [
+                        {
+                            "params": [
+                                "1d",
+                                "none"
+                            ],
+                            "type": "time"
+                        }
+                    ],
                     "metricColumn": "none",
                     "rawQuery": true,
-                    "rawSql": "SELECT\n  \"time\" AS \"time\",\n  a.country_code,\n  1000.0 * death / population\nFROM covid19 a, population b\nWHERE\n  a.country_code = b.country_code AND\n  $__timeFilter(\"time\")\nORDER BY 1",
-                    "refId": "A",
+                    "rawSql": "SELECT\n  $__timeGroupAlias(\"time\",1d),\n  country_code as \"metric\",\n  avg(confirmed-death-recovered) - lag(avg(confirmed-death-recovered)) OVER (PARTITION by country_code ORDER BY $__timeGroup(\"time\",1d)) AS \"value\"\nFROM covid19\nWHERE\n  $__timeFilter(\"time\")\nGROUP BY 1, metric\nORDER BY 1, metric",
+                    "refId": "B",
                     "select": [
                         [
                             {
                                 "params": [
-                                    "confirmed"
+                                    "confirmed-death-recovered"
                                 ],
                                 "type": "column"
+                            },
+                            {
+                                "params": [
+                                    "avg"
+                                ],
+                                "type": "aggregate"
+                            },
+                            {
+                                "params": [
+                                    "delta"
+                                ],
+                                "type": "window"
+                            },
+                            {
+                                "params": [
+                                    "confirmed-death-recovered"
+                                ],
+                                "type": "alias"
                             }
                         ]
                     ],
@@ -1181,19 +1041,14 @@
                     ]
                 }
             ],
-            "thresholds": "0.1,0.5,1.0",
             "timeFrom": null,
             "timeShift": null,
-            "title": "Mortality vs. population (%%)",
-            "type": "grafana-worldmap-panel",
-            "unitPlural": "",
-            "unitSingle": "",
-            "unitSingular": "",
-            "valueName": "current"
+            "title": "Evolution",
+            "type": "geomap"
         }
     ],
-    "refresh": "15m",
-    "schemaVersion": 27,
+    "refresh": false,
+    "schemaVersion": 30,
     "style": "dark",
     "tags": [],
     "templating": {
@@ -1220,5 +1075,5 @@
     "timezone": "",
     "title": "Covid19 - World",
     "uid": "_XF1ESzgz",
-    "version": 15
+    "version": 104
 }
