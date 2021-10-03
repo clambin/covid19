@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/clambin/gotools/rapidapi"
+	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"net/url"
 )
@@ -50,7 +51,7 @@ type populationResponseBody struct {
 // GetPopulation finds the most recent data for a country
 func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string) (population int64, err error) {
 	var body []byte
-	body, err = client.API.CallWithContext(ctx, "/population?country_name="+url.QueryEscape(country))
+	body, err = client.Call(ctx, "/population?country_name="+url.QueryEscape(country))
 
 	var stats populationResponse
 	if err == nil {
@@ -72,7 +73,7 @@ func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string)
 // GetCountries returns all country names that the RapidAPI API supports
 func (client *RapidAPIClient) GetCountries(ctx context.Context) (countries []string, err error) {
 	var body []byte
-	body, err = client.API.CallWithContext(ctx, "/allcountriesname")
+	body, err = client.Call(ctx, "/allcountriesname")
 
 	var stats struct {
 		OK   bool
@@ -93,5 +94,18 @@ func (client *RapidAPIClient) GetCountries(ctx context.Context) (countries []str
 		}
 	}
 
+	return
+}
+
+func (client *RapidAPIClient) Call(ctx context.Context, endpoint string) (body []byte, err error) {
+	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues(endpoint))
+
+	body, err = client.API.CallWithContext(ctx, endpoint)
+
+	timer.ObserveDuration()
+	metricRequestsTotal.WithLabelValues(endpoint).Add(1.0)
+	if err != nil {
+		metricRequestErrorsTotal.WithLabelValues(endpoint).Add(1.0)
+	}
 	return
 }

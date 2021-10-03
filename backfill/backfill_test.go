@@ -2,8 +2,8 @@ package backfill_test
 
 import (
 	"github.com/clambin/covid19/backfill"
-	"github.com/clambin/covid19/coviddb"
-	covidDBMock "github.com/clambin/covid19/coviddb/mocks"
+	"github.com/clambin/covid19/covid/store/mocks"
+	"github.com/clambin/covid19/models"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"math/rand"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestBackfiller_Run(t *testing.T) {
-	db := &covidDBMock.DB{}
+	db := &mocks.CovidStore{}
 
 	server := httptest.NewServer(http.HandlerFunc(covidAPI))
 	defer server.Close()
@@ -23,7 +23,7 @@ func TestBackfiller_Run(t *testing.T) {
 	backFiller.URL = server.URL
 
 	db.On("GetFirstEntry").Return(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC), true, nil)
-	db.On("Add", []coviddb.CountryEntry{
+	db.On("Add", []*models.CountryEntry{
 		{
 			Timestamp: time.Date(2020, 1, 22, 0, 0, 0, 0, time.UTC),
 			Name:      "Belgium",
@@ -41,7 +41,7 @@ func TestBackfiller_Run(t *testing.T) {
 			Deaths:    0,
 		},
 	}).Return(nil)
-	db.On("Add", []coviddb.CountryEntry{{
+	db.On("Add", []*models.CountryEntry{{
 		Timestamp: time.Date(2020, 1, 31, 0, 0, 0, 0, time.UTC),
 		Name:      "Burma",
 		Code:      "MM",
@@ -58,7 +58,6 @@ func TestBackfiller_Run(t *testing.T) {
 }
 
 // covidAPI emulates the Covid API Server
-
 func covidAPI(w http.ResponseWriter, req *http.Request) {
 	// rand.Seed(time.Now().UnixNano())
 	if rand.Intn(10) < 2 {

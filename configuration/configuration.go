@@ -116,10 +116,10 @@ func loadPGEnvironment() PostgresDB {
 		pgDatabase = "covid19"
 	}
 	if pgUser = os.Getenv("pg_user"); pgUser == "" {
-		pgUser = "covid"
+		pgUser = "probe"
 	}
 	if pgPassword = os.Getenv("pg_password"); pgPassword == "" {
-		pgPassword = "covid"
+		pgPassword = "probe"
 	}
 
 	return PostgresDB{

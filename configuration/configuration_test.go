@@ -126,6 +126,6 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 	assert.Equal(t, "postgres", cfg.Postgres.Host)
 	assert.Equal(t, 5432, cfg.Postgres.Port)
 	assert.Equal(t, "covid19", cfg.Postgres.Database)
-	assert.Equal(t, "covid", cfg.Postgres.User)
-	assert.Equal(t, "covid", cfg.Postgres.Password)
+	assert.Equal(t, "probe", cfg.Postgres.User)
+	assert.Equal(t, "probe", cfg.Postgres.Password)
 }

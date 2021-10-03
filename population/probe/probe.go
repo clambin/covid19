@@ -2,27 +2,25 @@ package probe
 
 import (
 	"context"
-	"github.com/clambin/covid19/coviddb"
-	"github.com/clambin/covid19/population/db"
+	"github.com/clambin/covid19/covid/probe/fetcher"
+	"github.com/clambin/covid19/population/store"
 	"golang.org/x/sync/semaphore"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// Probe handle
+// Probe downloads the latest population stats per country and stores them in the database
 type Probe struct {
 	APIClient
-	popDB   db.DB
-	covidDB coviddb.DB
+	store store.PopulationStore
 }
 
-// Create a new Probe handle
-func Create(apiKey string, popDB db.DB, covidDB coviddb.DB) *Probe {
+// New creates a new Probe
+func New(apiKey string, store store.PopulationStore) *Probe {
 	return &Probe{
 		APIClient: NewAPIClient(apiKey),
-		popDB:     popDB,
-		covidDB:   covidDB,
+		store:     store,
 	}
 }
 
@@ -31,19 +29,17 @@ const maxConcurrentJobs = 5
 // Update gets the current population for each supported country and stores it in the database
 func (probe *Probe) Update(ctx context.Context) {
 	start := time.Now()
-	codes, err := probe.covidDB.GetAllCountryCodes()
-	if err != nil {
-		return
-	}
-
 	maxJobs := semaphore.NewWeighted(maxConcurrentJobs)
-	for _, code := range codes {
+	codes := 0
+	for _, code := range countryCodes() {
 		country, ok := countryNames[code]
 
 		if ok == false {
-			log.WithField("code", code).Warning("unknown country code found in covid DB. skipping")
+			log.WithField("code", code).Warning("unsupported country code received from population API. skipping")
 			continue
 		}
+
+		codes++
 
 		_ = maxJobs.Acquire(ctx, 1)
 		go func(ctx context.Context, code, country string) {
@@ -59,16 +55,23 @@ func (probe *Probe) Update(ctx context.Context) {
 
 	_ = maxJobs.Acquire(ctx, maxConcurrentJobs)
 
-	log.Infof("discovered %d country population figures in %v", len(codes), time.Now().Sub(start))
+	log.Infof("discovered %d country population figures in %v", codes, time.Now().Sub(start))
+}
+
+func countryCodes() (codes []string) {
+	for _, code := range fetcher.CountryCodes {
+		codes = append(codes, code)
+	}
+	return
 }
 
 func (probe *Probe) update(ctx context.Context, code, country string) (err error) {
 	var population int64
 	population, err = probe.APIClient.GetPopulation(ctx, country)
 
-	if err == nil {
+	if err == nil && population > 0 {
 		log.WithFields(log.Fields{"country": country, "population": population}).Debug("found population")
-		err = probe.popDB.Add(code, population)
+		err = probe.store.Add(code, population)
 	}
 	return
 }

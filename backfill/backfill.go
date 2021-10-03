@@ -2,7 +2,9 @@ package backfill
 
 import (
 	"encoding/json"
-	"github.com/clambin/covid19/coviddb"
+	"fmt"
+	"github.com/clambin/covid19/covid/store"
+	"github.com/clambin/covid19/models"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
@@ -10,13 +12,13 @@ import (
 
 // Backfiller retrieves historic COVID19 data and adds it to the database
 type Backfiller struct {
-	URL string
-	DB  coviddb.DB
+	URL   string
+	Store store.CovidStore
 }
 
 // Create a new Backfiller object
-func Create(db coviddb.DB) *Backfiller {
-	return &Backfiller{URL: covid19url, DB: db}
+func Create(store store.CovidStore) *Backfiller {
+	return &Backfiller{URL: covid19url, Store: store}
 }
 
 // Run the backfiller.  Get all supported countries from the API
@@ -39,34 +41,47 @@ func (backFiller *Backfiller) Run() error {
 	)
 
 	countries, err = backFiller.getCountries()
-	if err == nil {
-		var found bool
-		if first, found, err = backFiller.DB.GetFirstEntry(); err == nil {
-			log.Debugf("First entry in DB: %s", first.String())
+	if err != nil {
+		return fmt.Errorf("could not retrieve supported countries: %s", err.Error())
+	}
 
-			for slug, details := range countries {
-				realName := lookupCountryName(details.Name)
-				log.Debugf("Getting data for %s (slug: %s)", realName, slug)
-				records := make([]coviddb.CountryEntry, 0)
-				if entries, err = backFiller.getHistoricalData(slug); err == nil {
-					for _, entry := range entries {
-						log.Debugf("Entry date: %s", entry.Date.String())
-						if !found || entry.Date.Before(first) {
-							records = append(records, coviddb.CountryEntry{
-								Timestamp: entry.Date,
-								Code:      details.Code,
-								Name:      realName,
-								Confirmed: entry.Confirmed,
-								Deaths:    entry.Deaths,
-								Recovered: entry.Recovered})
-						}
-					}
-					err = backFiller.DB.Add(records)
-					if err == nil {
-						log.Infof("Received data for %s. %d entries added", realName, len(records))
-					}
-				}
+	var found bool
+	first, found, err = backFiller.Store.GetFirstEntry()
+
+	if err != nil {
+		return fmt.Errorf("failed to get first entry in database: %s", err.Error())
+	}
+
+	log.Debugf("First entry in DB: %s", first.String())
+
+	for slug, details := range countries {
+		records := make([]*models.CountryEntry, 0)
+		realName := lookupCountryName(details.Name)
+		log.Debugf("Getting data for %s (slug: %s)", realName, slug)
+
+		entries, err = backFiller.getHistoricalData(slug)
+
+		if err != nil {
+			log.WithError(err).Warningf("failed to get history for '%s'", slug)
+			continue
+		}
+
+		for _, entry := range entries {
+			log.Debugf("Entry date: %s", entry.Date.String())
+			if !found || entry.Date.Before(first) {
+				records = append(records, &models.CountryEntry{
+					Timestamp: entry.Date,
+					Code:      details.Code,
+					Name:      realName,
+					Confirmed: entry.Confirmed,
+					Deaths:    entry.Deaths,
+					Recovered: entry.Recovered})
 			}
+		}
+
+		err = backFiller.Store.Add(records)
+		if err == nil {
+			log.Infof("Received data for %s. %d entries added", realName, len(records))
 		}
 	}
 	return err
