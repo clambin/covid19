@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"fmt"
 	"github.com/containrrr/shoutrrr"
 	"github.com/containrrr/shoutrrr/pkg/router"
 	"github.com/containrrr/shoutrrr/pkg/types"
@@ -21,24 +20,24 @@ type ShoutrrrSender struct {
 
 // NewNotificationSender creates a new ShoutrrrSender
 func NewNotificationSender(url string) *ShoutrrrSender {
-	sender, err := shoutrrr.CreateSender(url)
+	r, err := shoutrrr.CreateSender(url)
 	if err != nil {
 		log.WithError(err).Error("unable to create shoutrrr sender")
+		return nil
 	}
-	return &ShoutrrrSender{router: sender}
+	return &ShoutrrrSender{router: r}
 }
 
 // Send a notification
 func (s *ShoutrrrSender) Send(title, message string) (err error) {
-	if s.router == nil {
-		return fmt.Errorf("no sender")
-	}
-	params := types.Params{}
-	params.SetTitle(title)
-	errs := s.router.Send(message, &params)
-	for _, e := range errs {
-		if e != nil {
-			return e
+	if s.router != nil {
+		params := types.Params{}
+		params.SetTitle(title)
+		errs := s.router.Send(message, &params)
+		for _, e := range errs {
+			if e != nil {
+				return e
+			}
 		}
 	}
 	return nil
