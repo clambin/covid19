@@ -47,7 +47,7 @@ postgres:
   user: "covid"
   # Password for user. 
   # Alternatively, can be provided through pg_password environment variable
-  password: "its4covid"
+  password: "some-password"
 # Monitor section to configure how new covid data should be retrieved
 monitor:
   # API Key for the APIs. See below.
