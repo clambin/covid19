@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ covid19, backfill ]
+        target: [ covid19-handler, covid19-loader, covid19-population-loader, backfill ]
         platform: [ linux ]
         arch: [ amd64, arm, arm64 ]
     steps:
@@ -76,19 +76,22 @@ jobs:
   docker:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ covid19-handler, covid19-loader, covid19-population-loader ]
     steps:
       - uses: actions/checkout@v2.3.4
       - uses: actions/download-artifact@v2
         with:
-          name: covid19-linux-arm
+          name: ${{ matrix.target }}-linux-arm
           path: ./bld
       - uses: actions/download-artifact@v2
         with:
-          name: covid19-linux-arm64
+          name: ${{ matrix.target }}-linux-arm64
           path: ./bld
       - uses: actions/download-artifact@v2
         with:
-          name: covid19-linux-amd64
+          name: ${{ matrix.target }}-linux-amd64
           path: ./bld
       - name: Fix permissions
         run: chmod +x bld/*
@@ -102,14 +105,14 @@ jobs:
       - uses: docker/metadata-action@v3.5.0
         id: docker_meta
         with:
-          images: ghcr.io/clambin/covid19
+          images: ghcr.io/clambin/${{ matrix.target }}
           tags: |
             type=sha
             type=semver,pattern={{version}}
       - uses: docker/build-push-action@v2.7.0
         with:
           context: .
-          file: ./build/Dockerfile
+          file: ./build/Dockerfile-${{ matrix.target }}
           platforms: linux/amd64,linux/arm,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}

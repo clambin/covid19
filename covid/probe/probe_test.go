@@ -22,7 +22,6 @@ import (
 
 func TestCovid19Probe_Update(t *testing.T) {
 	cfg := &configuration.MonitorConfiguration{
-		Interval: 0,
 		RapidAPIKey: configuration.ValueOrEnvVar{
 			Value: "1234",
 		},

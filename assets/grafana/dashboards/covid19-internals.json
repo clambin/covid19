@@ -22,7 +22,7 @@
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "id": 215,
+    "id": 477,
     "links": [],
     "panels": [
         {
@@ -77,7 +77,32 @@
                     },
                     "unit": "reqps"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "__systemRef": "hideSeriesFrom",
+                        "matcher": {
+                            "id": "byNames",
+                            "options": {
+                                "mode": "exclude",
+                                "names": [
+                                    "covid19"
+                                ],
+                                "prefix": "All except:",
+                                "readOnly": true
+                            }
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hideFrom",
+                                "value": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": true
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
             "gridPos": {
                 "h": 8,
@@ -206,7 +231,7 @@
             "type": "timeseries"
         },
         {
-            "datasource": "Prometheus",
+            "datasource": "PostgreSQL",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -216,9 +241,9 @@
                         "axisLabel": "",
                         "axisPlacement": "auto",
                         "barAlignment": 0,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
+                        "drawStyle": "bars",
+                        "fillOpacity": 99,
+                        "gradientMode": "opacity",
                         "hideFrom": {
                             "legend": false,
                             "tooltip": false,
@@ -230,7 +255,7 @@
                         "scaleDistribution": {
                             "type": "linear"
                         },
-                        "showPoints": "auto",
+                        "showPoints": "never",
                         "spanNulls": false,
                         "stacking": {
                             "group": "A",
@@ -241,6 +266,7 @@
                         }
                     },
                     "mappings": [],
+                    "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -253,8 +279,7 @@
                                 "value": 80
                             }
                         ]
-                    },
-                    "unit": "reqps"
+                    }
                 },
                 "overrides": []
             },
@@ -277,285 +302,47 @@
             },
             "targets": [
                 {
-                    "exemplar": true,
-                    "expr": "avg by (endpoint) (rate(covid_covid_api_requests_total[5m]))",
-                    "interval": "",
-                    "legendFormat": "covid - {{endpoint}}",
-                    "refId": "A"
-                },
-                {
-                    "exemplar": true,
-                    "expr": "avg(rate(covid_population_api_requests_total[5m]))",
-                    "hide": false,
-                    "interval": "",
-                    "legendFormat": "population - {{endpoint}}",
-                    "refId": "B"
-                }
-            ],
-            "title": "API Client request rate",
-            "type": "timeseries"
-        },
-        {
-            "datasource": "Prometheus",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
+                    "format": "time_series",
+                    "group": [
+                        {
+                            "params": [
+                                "$__interval",
+                                "none"
+                            ],
+                            "type": "time"
                         }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
+                    ],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  $__timeGroupAlias(time,$__interval),\n  count(*) AS \"count\"\nFROM covid19\nGROUP BY 1\nORDER BY 1",
+                    "refId": "A",
+                    "select": [
+                        [
                             {
-                                "color": "green",
-                                "value": null
+                                "params": [
+                                    "confirmed"
+                                ],
+                                "type": "column"
                             },
                             {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    },
-                    "unit": "percentunit"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 8
-            },
-            "id": 41,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom"
-                },
-                "tooltip": {
-                    "mode": "single"
-                }
-            },
-            "targets": [
-                {
-                    "exemplar": true,
-                    "expr": "avg by (endpoint) (rate(covid_covid_api_request_errors_total[5m])/rate(covid_covid_api_requests_total[5m]))",
-                    "interval": "",
-                    "legendFormat": "covid - {{endpoint}}",
-                    "refId": "A"
-                },
-                {
-                    "exemplar": true,
-                    "expr": "avg(rate(covid_population_api_request_errors_total[5m])/rate(covid_population_api_requests_total[5m]))",
-                    "hide": false,
-                    "interval": "",
-                    "legendFormat": "population",
-                    "refId": "B"
-                }
-            ],
-            "title": "API Client request error rate",
-            "type": "timeseries"
-        },
-        {
-            "datasource": "Prometheus",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
+                                "params": [
+                                    "avg"
+                                ],
+                                "type": "aggregate"
                             },
                             {
-                                "color": "red",
-                                "value": 80
+                                "params": [
+                                    "confirmed"
+                                ],
+                                "type": "alias"
                             }
                         ]
-                    },
-                    "unit": "s"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 16
-            },
-            "id": 40,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom"
-                },
-                "tooltip": {
-                    "mode": "single"
-                }
-            },
-            "targets": [
-                {
-                    "exemplar": true,
-                    "expr": "avg by (endpoint) (covid_covid_api_latency_sum/covid_covid_api_latency_count)",
-                    "interval": "",
-                    "legendFormat": "covid - {{endpoint}}",
-                    "refId": "A"
-                },
-                {
-                    "exemplar": true,
-                    "expr": "avg(covid_population_api_latency_sum/covid_population_api_latency_count)",
-                    "hide": false,
-                    "interval": "",
-                    "legendFormat": "population - {{endpoint}}",
-                    "refId": "B"
+                    ],
+                    "table": "covid19",
+                    "timeColumn": "time",
+                    "where": []
                 }
             ],
-            "title": "API Client duration",
-            "type": "timeseries"
-        },
-        {
-            "datasource": "Prometheus",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 16
-            },
-            "id": 36,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom"
-                },
-                "tooltip": {
-                    "mode": "single"
-                }
-            },
-            "pluginVersion": "8.0.6",
-            "targets": [
-                {
-                    "exemplar": true,
-                    "expr": "sum(increase(covid_reported_count{app=\"covid19\"}[15m]))",
-                    "interval": "",
-                    "legendFormat": "last reported",
-                    "refId": "A"
-                }
-            ],
-            "timeFrom": null,
-            "timeShift": null,
             "title": "Updates",
             "type": "timeseries"
         }
@@ -568,7 +355,7 @@
         "list": []
     },
     "time": {
-        "from": "now-1h",
+        "from": "now-6h",
         "to": "now"
     },
     "timepicker": {
@@ -587,5 +374,5 @@
     "timezone": "",
     "title": "Covid19 - internals",
     "uid": "jQXLLIzRz",
-    "version": 98
+    "version": 4
 }

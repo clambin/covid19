@@ -1,11 +1,13 @@
 package configuration
 
 import (
+	"github.com/clambin/covid19/version"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/yaml.v3"
 	"os"
+	"path/filepath"
 	"strconv"
-	"time"
 )
 
 // Configuration for covid19 app
@@ -27,7 +29,6 @@ type PostgresDB struct {
 
 // MonitorConfiguration parameters
 type MonitorConfiguration struct {
-	Interval      time.Duration             `yaml:"interval"`
 	RapidAPIKey   ValueOrEnvVar             `yaml:"rapidAPIKey"`
 	Notifications NotificationConfiguration `yaml:"notifications"`
 }
@@ -79,9 +80,7 @@ func LoadConfiguration(content []byte) (*Configuration, error) {
 	configuration := Configuration{
 		Port:     8080,
 		Postgres: loadPGEnvironment(),
-		Monitor: MonitorConfiguration{
-			Interval: 20 * time.Minute,
-		},
+		Monitor:  MonitorConfiguration{},
 	}
 	err := yaml.Unmarshal(content, &configuration)
 
@@ -129,4 +128,37 @@ func loadPGEnvironment() PostgresDB {
 		User:     pgUser,
 		Password: pgPassword,
 	}
+}
+
+// GetConfiguration parses the provided commandline arguments and creates the required configuration
+func GetConfiguration(application string, args []string) (cfg *Configuration) {
+	var (
+		debug          bool
+		configFileName string
+	)
+
+	log.WithField("version", version.BuildVersion).Info(application + " starting")
+	a := kingpin.New(filepath.Base(args[0]), application)
+
+	a.Version(version.BuildVersion)
+	a.HelpFlag.Short('h')
+	a.VersionFlag.Short('v')
+	a.Flag("debug", "Log debug messages").BoolVar(&debug)
+	a.Flag("config", "Configuration file").Required().StringVar(&configFileName)
+
+	_, err := a.Parse(args[1:])
+	if err != nil {
+		a.Usage(os.Args[1:])
+		os.Exit(1)
+	}
+
+	if cfg, err = LoadConfigurationFile(configFileName); err != nil {
+		log.WithField("err", err).Fatal("Failed to read config file")
+	}
+
+	if debug {
+		cfg.Debug = true
+	}
+
+	return
 }

@@ -27,7 +27,7 @@ func New(apiKey string, store store.PopulationStore) *Probe {
 const maxConcurrentJobs = 5
 
 // Update gets the current population for each supported country and stores it in the database
-func (probe *Probe) Update(ctx context.Context) {
+func (probe *Probe) Update(ctx context.Context) (err error) {
 	start := time.Now()
 	maxJobs := semaphore.NewWeighted(maxConcurrentJobs)
 	codes := 0
@@ -56,6 +56,7 @@ func (probe *Probe) Update(ctx context.Context) {
 	_ = maxJobs.Acquire(ctx, maxConcurrentJobs)
 
 	log.Infof("discovered %d country population figures in %v", codes, time.Now().Sub(start))
+	return nil
 }
 
 func countryCodes() (codes []string) {

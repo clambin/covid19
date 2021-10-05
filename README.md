@@ -9,26 +9,21 @@
 A lightweight Covid-19 tracker.
 
 ## Introduction
-This package tracks global Covid-19 data. The basic operation is as follows:
+This package tracks global Covid-19 data. It consists of three executables:
 
-- It retrieves daily updates from a public Covid-19 tracker and stores them in an external Postgres DB
-- Grafana is used to visualize the data
+- covid19-loader retrieves the latest updates from a public Covid-19 tracker and stores them in an external Postgres DB
+- covid19-population-loader retrieves the latest population figures from a public tracker and stores them in an external Postgres DB
+- covid19-handler implements some more complicated logic for the contained Grafana dashboards
+
 
 ## Installation
-A Docker image for the main Covid-19 tracker is available on [ghcr.io](https://github.com/clambin/covid19/pkgs/container/covid19). Images are available for amd64, arm64 & arm32.
+Docker images for the different programs is available on ghcr.io:
 
-Binaries are also available on [github](https://github.com/clambin/covid19/releases).
+- [covid19-loader](https://github.com/clambin/covid19/pkgs/container/covid19-loader)
+- [covid19-population-loader](https://github.com/clambin/covid19/pkgs/container/covid19-population-loader)
+- [covid19-handler](https://github.com/clambin/covid19/pkgs/container/covid19-handler)
 
-Alternatively, you can clone the repository and build from source:
-
-```
-git clone https://github.com/clambin/covid19.git
-cd covid19
-go build cmd/covid19/covid19.go
-go build cmd/backfill/backfill.go
-```
-
-You will need to have Go 1.16 installed on your system.
+Images are available for amd64, arm64 & arm32. Binaries are also available on [github](https://github.com/clambin/covid19/releases).
 
 ## Configuration
 ### Configuration file
@@ -55,9 +50,6 @@ postgres:
   password: "its4covid"
 # Monitor section to configure how new covid data should be retrieved
 monitor:
-  # How ofter new data should be gathered. Default is 20m.
-  # Be kind to API providers and don't put this too low. Data only changes daily anyway
-  interval: 20m
   # API Key for the APIs. See below.
   rapidAPIKey:
     value: "long-rapid-api-key"
@@ -144,25 +136,23 @@ backfill --postgres-host=<postgres-host> \
 
 When sticking to the default port & user, those arguments can be omitted.
 
-## Running covid19
+## Running
 ### Command-line options
-The following command-line arguments can be passed:
+Each program supports the same command-line arguments:
 
 ```
-usage: covid19 --config=CONFIG [<flags>]
-
-covid19
+usage: covid19-loader --config=CONFIG [<flags>]
 
 Flags:
--h, --help           Show context-sensitive help (also try --help-long and --help-man).
--v, --version        Show application version.
+-h, --help       Show context-sensitive help (also try --help-long and --help-man).
+-v, --version    Show application version.
 --debug          Log debug messages
 --config=CONFIG  Configuration file
 ```
 
 ## Grafana
-The repo contains two sample [dashboards](assets/grafana/dashboards). One dashboard provides a view per country.
-The second one provides an overview of cases, evolution, per capita stats across the world.
+The repo contains sample [dashboards](assets/grafana/dashboards). One dashboard provides a view per country.
+A second one provides an overview of cases, evolution, per capita stats across the world.
 
 Feel free to customize as you see fit.
 

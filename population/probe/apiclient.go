@@ -97,6 +97,7 @@ func (client *RapidAPIClient) GetCountries(ctx context.Context) (countries []str
 	return
 }
 
+// Call calls the Population API for the provided endpoint
 func (client *RapidAPIClient) Call(ctx context.Context, endpoint string) (body []byte, err error) {
 	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues(endpoint))
 

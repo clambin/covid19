@@ -3,10 +3,10 @@ package configuration_test
 import (
 	"github.com/clambin/covid19/configuration"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"testing"
-	"time"
 )
 
 func TestLoadConfigurationFile(t *testing.T) {
@@ -61,7 +61,6 @@ grafana:
 		assert.Equal(t, "test", cfg.Postgres.Database)
 		assert.Equal(t, "test19", cfg.Postgres.User)
 		assert.Equal(t, "some-password", cfg.Postgres.Password)
-		assert.Equal(t, 1*time.Hour, cfg.Monitor.Interval)
 		assert.Equal(t, "some-key", cfg.Monitor.RapidAPIKey.Value)
 		assert.True(t, cfg.Monitor.Notifications.Enabled)
 		assert.Equal(t, "https://example.com/123", cfg.Monitor.Notifications.URL.Value)
@@ -122,10 +121,58 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 8080, cfg.Port)
 	assert.False(t, cfg.Debug)
-	assert.Equal(t, 20*time.Minute, cfg.Monitor.Interval)
 	assert.Equal(t, "postgres", cfg.Postgres.Host)
 	assert.Equal(t, 5432, cfg.Postgres.Port)
 	assert.Equal(t, "covid19", cfg.Postgres.Database)
 	assert.Equal(t, "probe", cfg.Postgres.User)
 	assert.Equal(t, "probe", cfg.Postgres.Password)
+}
+
+func TestGetConfiguration(t *testing.T) {
+	f, err := os.CreateTemp("", "")
+	require.NoError(t, err)
+	fName := f.Name()
+
+	_, err = f.WriteString(`
+port: 5000
+debug: false
+postgres:
+  host: localhost
+  port: 5555
+  database: "covid19"
+  user: "covid"
+  password: "some-password"
+monitor:
+  enabled: true
+  rapidAPIKey:
+    value: "some-token"
+  notifications:
+    enabled: true
+    url:
+      value: "some-url"
+    countries:
+      - Belgium
+`)
+	require.NoError(t, err)
+	err = f.Close()
+	require.NoError(t, err)
+
+	args := []string{"foo", "--debug", "--config", fName}
+	cfg := configuration.GetConfiguration("covid19", args)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, 5000, cfg.Port)
+	assert.True(t, cfg.Debug)
+	assert.Equal(t, "localhost", cfg.Postgres.Host)
+	assert.Equal(t, 5555, cfg.Postgres.Port)
+	assert.Equal(t, "covid19", cfg.Postgres.Database)
+	assert.Equal(t, "covid", cfg.Postgres.User)
+	assert.Equal(t, "some-password", cfg.Postgres.Password)
+	assert.Equal(t, "some-token", cfg.Monitor.RapidAPIKey.Get())
+	assert.True(t, cfg.Monitor.Notifications.Enabled)
+	assert.Equal(t, "some-url", cfg.Monitor.Notifications.URL.Get())
+	assert.Equal(t, []string{"Belgium"}, cfg.Monitor.Notifications.Countries)
+
+	err = os.Remove(fName)
+	require.NoError(t, err)
 }

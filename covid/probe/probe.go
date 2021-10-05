@@ -55,9 +55,9 @@ func (probe *Covid19Probe) Update(ctx context.Context) (err error) {
 	var countryStats []*models.CountryEntry
 	countryStats, err = probe.Fetcher.GetCountryStats(ctx)
 	if err == nil {
-		log.WithField("entries", len(countryStats)).Debug("found covid-19 data")
+		log.WithField("entries", len(countryStats)).Info("found covid-19 data")
 		countryStats, err = probe.Saver.SaveNewEntries(countryStats)
-		log.WithField("entries", len(countryStats)).Debug("saved covid-19 data")
+		log.WithField("entries", len(countryStats)).Info("saved covid-19 data")
 	}
 
 	if err != nil {
