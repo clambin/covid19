@@ -7,7 +7,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/clambin/gotools v0.5.2
 	github.com/clambin/grafana-json v0.5.2
-	github.com/containrrr/shoutrrr v0.5.1
+	github.com/containrrr/shoutrrr v0.5.2
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/lib/pq v1.10.3
 	github.com/prometheus/client_golang v1.11.0

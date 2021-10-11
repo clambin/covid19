@@ -71,8 +71,8 @@ github.com/clambin/grafana-json v0.5.2 h1:/teR8ljiBrLkljTaiyDGtbY+nsrx2/zibcypg8
 github.com/clambin/grafana-json v0.5.2/go.mod h1:JwZKRj1rk8AetxnNhMDcmxjsHnwVS2sHG6xxtuyBdDQ=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
-github.com/containrrr/shoutrrr v0.5.1 h1:who87ACg0spQdbImaFMsOSh3g2FWyeN5nmO8tCg3llQ=
-github.com/containrrr/shoutrrr v0.5.1/go.mod h1:XSU8tOIZ1JG8m6OuPozfGLpj6Ed+S8ZrRJaEodQhbzw=
+github.com/containrrr/shoutrrr v0.5.2 h1:97P+wZDpN2gzBKLt4PDP1ZUTLz+k8AJVs40WOu9NNw8=
+github.com/containrrr/shoutrrr v0.5.2/go.mod h1:XSU8tOIZ1JG8m6OuPozfGLpj6Ed+S8ZrRJaEodQhbzw=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
