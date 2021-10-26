@@ -52,7 +52,7 @@ func CreateStackWithStore(cfg *configuration.Configuration, store covidStore.Cov
 		Cache:      &cache.Cache{DB: store, Retention: 20 * time.Minute},
 	}
 
-	server := &grafana_json.Server{Handler: &handler.Handler{Cache: stack.Cache}}
+	server := &grafana_json.Server{Handlers: []grafana_json.Handler{&handler.Handler{Cache: stack.Cache}}}
 	r := server.GetRouter()
 	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	stack.HTTPServer = &http.Server{
