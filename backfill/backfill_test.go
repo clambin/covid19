@@ -19,7 +19,7 @@ func TestBackfiller_Run(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(covidAPI))
 	defer server.Close()
 
-	backFiller := backfill.Create(db)
+	backFiller := backfill.New(db)
 	backFiller.URL = server.URL
 
 	db.On("GetFirstEntry").Return(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC), true, nil)

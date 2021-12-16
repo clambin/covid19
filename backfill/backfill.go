@@ -16,8 +16,8 @@ type Backfiller struct {
 	Store store.CovidStore
 }
 
-// Create a new Backfiller object
-func Create(store store.CovidStore) *Backfiller {
+// New creates a new Backfiller object
+func New(store store.CovidStore) *Backfiller {
 	return &Backfiller{URL: covid19url, Store: store}
 }
 

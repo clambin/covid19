@@ -54,7 +54,7 @@ func main() {
 	if err == nil {
 		var covidDB store.CovidStore
 		covidDB = store.New(DB)
-		app := backfill.Create(covidDB)
+		app := backfill.New(covidDB)
 		err = app.Run()
 	}
 

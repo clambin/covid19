@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/configuration"
 	covidStore "github.com/clambin/covid19/covid/store"
@@ -36,6 +38,7 @@ type Stack struct {
 	Cache           *cache.Cache
 	PopulationStore populationStore.PopulationStore
 	HTTPServer      *http.Server
+	SkipBackfill    bool
 }
 
 // CreateStack creates an application stack for the provided configuration
@@ -75,13 +78,35 @@ func CreateStackWithStores(cfg *configuration.Configuration, covidDB covidStore.
 
 // Run runs the application stack
 func (stack *Stack) Run() {
-	err := stack.HTTPServer.ListenAndServe()
-	if err != http.ErrServerClosed {
+	if stack.SkipBackfill == false {
+		stack.loadIfEmpty()
+	}
+
+	if err := stack.HTTPServer.ListenAndServe(); errors.Is(err, http.ErrServerClosed) == false {
 		log.WithError(err).Fatal("unable to start grafana SimpleJson server")
 	}
 }
 
-// Stop stops the applicayion stack
+// Stop stops the application stack
 func (stack *Stack) Stop() {
 	_ = stack.HTTPServer.Shutdown(context.Background())
+}
+
+func (stack *Stack) loadIfEmpty() {
+	_, found, err := stack.CovidStore.GetFirstEntry()
+
+	if err != nil {
+		log.WithError(err).Fatal("could not access database")
+	}
+
+	if found == false {
+		log.Info("database is empty. backfilling ... ")
+		bf := backfill.New(stack.CovidStore)
+		go func() {
+			err = bf.Run()
+			if err != nil {
+				log.WithError(err).Error("failed to populate database")
+			}
+		}()
+	}
 }
