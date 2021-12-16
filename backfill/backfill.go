@@ -118,8 +118,8 @@ func (backFiller *Backfiller) getCountries() (map[string]struct {
 					}{Name: entry.Country, Code: entry.ISO2}
 				}
 			}
-			_ = resp.Body.Close()
 		}
+		_ = resp.Body.Close()
 	}
 
 	return result, err
