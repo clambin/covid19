@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - fix
+      - filters
   pull_request_target:
 
 jobs:

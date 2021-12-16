@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/covid/probe/fetcher"
-	notifier2 "github.com/clambin/covid19/covid/probe/notifier"
+	"github.com/clambin/covid19/covid/probe/notifier"
 	"github.com/clambin/covid19/covid/probe/saver"
 	"github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
@@ -19,7 +19,7 @@ import (
 type Covid19Probe struct {
 	fetcher.Fetcher
 	saver.Saver
-	notifier2.Notifier
+	notifier.Notifier
 	newUpdates map[string]int
 	lock       sync.RWMutex
 }
@@ -30,10 +30,10 @@ const (
 
 // New creates a new Covid19Probe
 func New(cfg *configuration.MonitorConfiguration, db store.CovidStore) *Covid19Probe {
-	var n notifier2.Notifier
+	var n notifier.Notifier
 	if cfg.Notifications.Enabled {
-		n = notifier2.NewNotifier(
-			notifier2.NewNotificationSender(cfg.Notifications.URL.Get()),
+		n = notifier.NewNotifier(
+			notifier.NewNotificationSender(cfg.Notifications.URL.Get()),
 			cfg.Notifications.Countries,
 			db)
 	}

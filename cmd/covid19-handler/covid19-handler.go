@@ -8,6 +8,7 @@ import (
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/handler"
+	populationStore "github.com/clambin/covid19/population/store"
 	grafana_json "github.com/clambin/grafana-json"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
@@ -31,9 +32,10 @@ func main() {
 
 // Stack groups the different components that make up the application
 type Stack struct {
-	CovidStore covidStore.CovidStore
-	Cache      *cache.Cache
-	HTTPServer *http.Server
+	CovidStore      covidStore.CovidStore
+	Cache           *cache.Cache
+	PopulationStore populationStore.PopulationStore
+	HTTPServer      *http.Server
 }
 
 // CreateStack creates an application stack for the provided configuration
@@ -42,17 +44,26 @@ func CreateStack(cfg *configuration.Configuration) (stack *Stack) {
 	if err != nil {
 		panic(err)
 	}
-	return CreateStackWithStore(cfg, covidStore.New(dbh))
+	return CreateStackWithStores(cfg, covidStore.New(dbh), populationStore.New(dbh))
 }
 
-// CreateStackWithStore creates an application stack for the provided configuration and Covid-19 store
-func CreateStackWithStore(cfg *configuration.Configuration, store covidStore.CovidStore) (stack *Stack) {
+// CreateStackWithStores creates an application stack for the provided configuration and Covid-19 store
+func CreateStackWithStores(cfg *configuration.Configuration, covidDB covidStore.CovidStore, populationStore populationStore.PopulationStore) (stack *Stack) {
 	stack = &Stack{
-		CovidStore: store,
-		Cache:      &cache.Cache{DB: store, Retention: 20 * time.Minute},
+		CovidStore:      covidDB,
+		PopulationStore: populationStore,
+		Cache:           &cache.Cache{DB: covidDB, Retention: 20 * time.Minute},
 	}
 
-	server := &grafana_json.Server{Handlers: []grafana_json.Handler{&handler.Handler{Cache: stack.Cache}}}
+	server := &grafana_json.Server{
+		Name: "covid19",
+		Handlers: []grafana_json.Handler{
+			&handler.Handler{
+				Cache:           stack.Cache,
+				PopulationStore: populationStore,
+			},
+		},
+	}
 	r := server.GetRouter()
 	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	stack.HTTPServer = &http.Server{

@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/clambin/covid19/configuration"
-	"github.com/clambin/covid19/covid/store/mocks"
+	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
+	mockPopulationStore "github.com/clambin/covid19/population/store/mocks"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"os"
@@ -51,8 +52,9 @@ func TestCovidHandler(t *testing.T) {
 			Port:  8080,
 			Debug: false,
 		}
-		store := &mocks.CovidStore{}
-		stack = CreateStackWithStore(cfg, store)
+		covidStore := &mockCovidStore.CovidStore{}
+		populationStore := &mockPopulationStore.PopulationStore{}
+		stack = CreateStackWithStores(cfg, covidStore, populationStore)
 	}
 
 	go stack.Run()

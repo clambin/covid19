@@ -20,13 +20,17 @@
         ]
     },
     "editable": true,
-    "gnetId": null,
+    "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
     "id": 477,
     "links": [],
+    "liveNow": false,
     "panels": [
         {
-            "datasource": "Prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -37,7 +41,7 @@
                         "axisPlacement": "auto",
                         "barAlignment": 0,
                         "drawStyle": "line",
-                        "fillOpacity": 10,
+                        "fillOpacity": 0,
                         "gradientMode": "none",
                         "hideFrom": {
                             "legend": false,
@@ -51,7 +55,7 @@
                             "type": "linear"
                         },
                         "showPoints": "never",
-                        "spanNulls": true,
+                        "spanNulls": false,
                         "stacking": {
                             "group": "A",
                             "mode": "none"
@@ -61,7 +65,6 @@
                         }
                     },
                     "mappings": [],
-                    "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -74,43 +77,17 @@
                                 "value": 80
                             }
                         ]
-                    },
-                    "unit": "reqps"
-                },
-                "overrides": [
-                    {
-                        "__systemRef": "hideSeriesFrom",
-                        "matcher": {
-                            "id": "byNames",
-                            "options": {
-                                "mode": "exclude",
-                                "names": [
-                                    "covid19"
-                                ],
-                                "prefix": "All except:",
-                                "readOnly": true
-                            }
-                        },
-                        "properties": [
-                            {
-                                "id": "custom.hideFrom",
-                                "value": {
-                                    "legend": false,
-                                    "tooltip": false,
-                                    "viz": true
-                                }
-                            }
-                        ]
                     }
-                ]
+                },
+                "overrides": []
             },
             "gridPos": {
                 "h": 8,
-                "w": 12,
+                "w": 9,
                 "x": 0,
                 "y": 0
             },
-            "id": 33,
+            "id": 45,
             "options": {
                 "legend": {
                     "calcs": [],
@@ -121,31 +98,27 @@
                     "mode": "single"
                 }
             },
-            "pluginVersion": "8.0.6",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
                     "exemplar": true,
-                    "expr": "sum(rate(grafana_datasource_request_duration_seconds_count{datasource=\"covid19api\"}[5m]))",
+                    "expr": "avg by (target) (rate(grafana_api_query_duration_seconds_count{app=~\"covid19\"}[5m]))",
                     "interval": "",
-                    "legendFormat": "covid19",
+                    "legendFormat": "{{target}}",
                     "refId": "A"
-                },
-                {
-                    "exemplar": true,
-                    "expr": "sum(rate(grafana_datasource_request_duration_seconds_count{datasource=\"sciensano\"}[5m]))",
-                    "hide": false,
-                    "interval": "",
-                    "legendFormat": "sciensano",
-                    "refId": "B"
                 }
             ],
-            "timeFrom": null,
-            "timeShift": null,
-            "title": "Handler Requests",
+            "title": "Handler requests",
             "type": "timeseries"
         },
         {
-            "datasource": "Prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "",
             "fieldConfig": {
                 "defaults": {
@@ -170,7 +143,7 @@
                         "scaleDistribution": {
                             "type": "linear"
                         },
-                        "showPoints": "auto",
+                        "showPoints": "never",
                         "spanNulls": false,
                         "stacking": {
                             "group": "A",
@@ -200,8 +173,8 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 12,
-                "x": 12,
+                "w": 9,
+                "x": 9,
                 "y": 0
             },
             "id": 37,
@@ -218,20 +191,26 @@
             "pluginVersion": "8.0.6",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
                     "exemplar": true,
-                    "expr": "sum by (app,target) (grafana_api_query_duration_seconds_sum / grafana_api_query_duration_seconds_count)",
+                    "expr": "sum by (app,target) (grafana_api_query_duration_seconds_sum{app=\"covid19\"} / grafana_api_query_duration_seconds_count{app=\"covid19\"})",
                     "interval": "",
-                    "legendFormat": "{{app}}:{{target}}",
+                    "legendFormat": "{{target}}",
                     "refId": "A"
                 }
             ],
-            "timeFrom": null,
-            "timeShift": null,
-            "title": "Handler Performance",
+            "title": "Handler latency",
             "type": "timeseries"
         },
         {
-            "datasource": "PostgreSQL",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "description": "",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -241,9 +220,9 @@
                         "axisLabel": "",
                         "axisPlacement": "auto",
                         "barAlignment": 0,
-                        "drawStyle": "bars",
-                        "fillOpacity": 99,
-                        "gradientMode": "opacity",
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
                         "hideFrom": {
                             "legend": false,
                             "tooltip": false,
@@ -266,7 +245,96 @@
                         }
                     },
                     "mappings": [],
-                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 18,
+                "y": 0
+            },
+            "id": 46,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "pluginVersion": "8.0.6",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "avg by (target) (grafana_api_query_failed_count{app=\"covid19\"} / grafana_api_query_duration_seconds_count{app=\"covid19\"})",
+                    "interval": "",
+                    "legendFormat": "{{target}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Handler error rate",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -285,8 +353,114 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 12,
+                "w": 8,
                 "x": 0,
+                "y": 8
+            },
+            "id": 41,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "hidden",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "avg(go_goroutines{app=\"covid19\"})",
+                    "interval": "",
+                    "legendFormat": "",
+                    "refId": "A"
+                }
+            ],
+            "title": "Go routines",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "left",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "duration"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.axisPlacement",
+                                "value": "right"
+                            },
+                            {
+                                "id": "unit",
+                                "value": "s"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 8,
                 "y": 8
             },
             "id": 39,
@@ -302,60 +476,167 @@
             },
             "targets": [
                 {
-                    "format": "time_series",
-                    "group": [
-                        {
-                            "params": [
-                                "$__interval",
-                                "none"
-                            ],
-                            "type": "time"
-                        }
-                    ],
-                    "metricColumn": "none",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  $__timeGroupAlias(time,$__interval),\n  count(*) AS \"count\"\nFROM covid19\nGROUP BY 1\nORDER BY 1",
-                    "refId": "A",
-                    "select": [
-                        [
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "column"
-                            },
-                            {
-                                "params": [
-                                    "avg"
-                                ],
-                                "type": "aggregate"
-                            },
-                            {
-                                "params": [
-                                    "confirmed"
-                                ],
-                                "type": "alias"
-                            }
-                        ]
-                    ],
-                    "table": "covid19",
-                    "timeColumn": "time",
-                    "where": []
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "go_gc_duration_seconds_sum{app=\"covid19\"} / go_gc_duration_seconds_count",
+                    "interval": "",
+                    "legendFormat": "duration",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "rate(go_memstats_mallocs_total{app=\"covid19\"}[5m])",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "allocs",
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "rate(go_memstats_frees_total{app=\"covid19\"}[5m])",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "frees",
+                    "refId": "C"
                 }
             ],
-            "title": "Updates",
+            "title": "GC",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "bytes"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 8
+            },
+            "id": 43,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "go_memstats_sys_bytes{app=\"covid19\"}",
+                    "interval": "",
+                    "legendFormat": "sys",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "go_memstats_alloc_bytes{app=\"covid19\"}",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "alloc",
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "go_memstats_heap_inuse_bytes{app=\"covid19\"}",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "heap",
+                    "refId": "C"
+                }
+            ],
+            "title": "memory",
             "type": "timeseries"
         }
     ],
     "refresh": "30s",
-    "schemaVersion": 30,
+    "schemaVersion": 33,
     "style": "dark",
     "tags": [],
     "templating": {
         "list": []
     },
     "time": {
-        "from": "now-6h",
+        "from": "now-30m",
         "to": "now"
     },
     "timepicker": {
@@ -374,5 +655,6 @@
     "timezone": "",
     "title": "Covid19 - internals",
     "uid": "jQXLLIzRz",
-    "version": 4
+    "version": 79,
+    "weekStart": ""
 }
