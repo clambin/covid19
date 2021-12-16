@@ -12,9 +12,6 @@ func (handler *Handler) handleCumulative(args *grafana_json.TableQueryArgs) (res
 		totals, err = handler.getTotalsForCountry(args)
 	} else {
 		totals, err = handler.Cache.GetTotals(args.Range.To)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	if err == nil {

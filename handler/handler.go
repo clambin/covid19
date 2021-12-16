@@ -25,26 +25,6 @@ var Targets = []string{
 	"country-deaths-population",
 }
 
-// required targets
-//
-// + confirmed / dead for a country per day
-//   -> incremental
-// + confirmed / dead for a country, cumulative
-//   -> cumulative
-// + confirmed / dead in total, per day
-//   -> incremental
-// + confirmed / dead in total, cumulative
-//   -> cumulative
-// - total confirmed by country
-//   -> confirmed
-// - total dead by country
-//   -> dead
-// - delta active by country (7-day average)
-//   -> active
-// - confirmed / dead per capita by country, cumulative
-//   -> confirmed_capita
-//   -> dead_capita
-
 // Endpoints tells the server which endpoints we have implemented
 func (handler *Handler) Endpoints() grafana_json.Endpoints {
 	return grafana_json.Endpoints{

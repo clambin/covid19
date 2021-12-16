@@ -41,10 +41,11 @@ func (handler *Handler) TableQuery(_ context.Context, target string, args *grafa
 	}
 
 	log.WithFields(log.Fields{
+		"err":    err,
 		"target": target,
 		"time":   time.Now().Sub(start),
 		"count":  dataLen,
-	}).Info("query table")
+	}).Info("table query")
 
 	return
 }
