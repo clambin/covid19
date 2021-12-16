@@ -67,8 +67,8 @@ github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMn
 github.com/clambin/gotools v0.4.4/go.mod h1:CfrY8mU4ckUA/VTfBJ4qWZMGt6K/IJ2qn96eM0gwGLM=
 github.com/clambin/gotools v0.5.2 h1:z6d0JgxJjBssa/6j6aPyPhhmeKA17xg7LF26zHpnzVc=
 github.com/clambin/gotools v0.5.2/go.mod h1:CfrY8mU4ckUA/VTfBJ4qWZMGt6K/IJ2qn96eM0gwGLM=
-github.com/clambin/grafana-json v0.6.0 h1:EbgRhgUtYy2DefYBZdUpo4Zy0bhhCH0RWn7+jpPLVzo=
-github.com/clambin/grafana-json v0.6.0/go.mod h1:JwZKRj1rk8AetxnNhMDcmxjsHnwVS2sHG6xxtuyBdDQ=
+github.com/clambin/grafana-json v0.7.0 h1:mAc2rNqf9BntGKjM/IWl1AGFmjh+UzvTEN+UDz0t8Io=
+github.com/clambin/grafana-json v0.7.0/go.mod h1:JwZKRj1rk8AetxnNhMDcmxjsHnwVS2sHG6xxtuyBdDQ=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/containrrr/shoutrrr v0.5.2 h1:97P+wZDpN2gzBKLt4PDP1ZUTLz+k8AJVs40WOu9NNw8=
@@ -266,7 +266,6 @@ github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/9
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
-github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
