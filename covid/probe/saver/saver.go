@@ -11,7 +11,7 @@ import (
 // Saver stores new entries in the database
 //go:generate mockery --name Saver
 type Saver interface {
-	SaveNewEntries(entries []*models.CountryEntry) (newEntries []*models.CountryEntry, err error)
+	SaveNewEntries(entries []models.CountryEntry) (newEntries []models.CountryEntry, err error)
 }
 
 // StoreSaver implements the Saver interface for CovidStore
@@ -22,7 +22,7 @@ type StoreSaver struct {
 var _ Saver = &StoreSaver{}
 
 // SaveNewEntries takes a list of entries and adds any newer stats to the database
-func (storeSaver *StoreSaver) SaveNewEntries(entries []*models.CountryEntry) (newEntries []*models.CountryEntry, err error) {
+func (storeSaver *StoreSaver) SaveNewEntries(entries []models.CountryEntry) (newEntries []models.CountryEntry, err error) {
 	newEntries, err = storeSaver.getNewRecords(entries)
 	if err != nil {
 		err = fmt.Errorf("failed to process Covid figures: %s", err.Error())
@@ -40,10 +40,10 @@ func (storeSaver *StoreSaver) SaveNewEntries(entries []*models.CountryEntry) (ne
 	return
 }
 
-func (storeSaver *StoreSaver) getNewRecords(entries []*models.CountryEntry) (newEntries []*models.CountryEntry, err error) {
+func (storeSaver *StoreSaver) getNewRecords(entries []models.CountryEntry) (newEntries []models.CountryEntry, err error) {
 	countries := getCountries(entries)
 
-	var latest map[string]*models.CountryEntry
+	var latest map[string]models.CountryEntry
 	latest, err = storeSaver.Store.GetLatestForCountries(countries)
 
 	for _, entry := range entries {
@@ -57,7 +57,7 @@ func (storeSaver *StoreSaver) getNewRecords(entries []*models.CountryEntry) (new
 	return
 }
 
-func getCountries(entries []*models.CountryEntry) (countries []string) {
+func getCountries(entries []models.CountryEntry) (countries []string) {
 	uniqueCountries := make(map[string]struct{})
 	for _, entry := range entries {
 		uniqueCountries[entry.Name] = struct{}{}

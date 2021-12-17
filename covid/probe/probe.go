@@ -52,7 +52,7 @@ func New(cfg *configuration.MonitorConfiguration, db store.CovidStore) *Covid19P
 
 // Update gets new COVID-19 stats for each country and, if they are new, adds them to the database
 func (probe *Covid19Probe) Update(ctx context.Context) (err error) {
-	var countryStats []*models.CountryEntry
+	var countryStats []models.CountryEntry
 	countryStats, err = probe.Fetcher.GetCountryStats(ctx)
 	if err == nil {
 		log.WithField("entries", len(countryStats)).Info("found covid-19 data")

@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var dbContents = []*models.CountryEntry{
+var dbContents = []models.CountryEntry{
 	{
 		Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 		Code:      "A",
@@ -44,7 +44,7 @@ var dbContents = []*models.CountryEntry{
 	},
 }
 
-func filterByName(input []*models.CountryEntry, name string) (output []*models.CountryEntry) {
+func filterByName(input []models.CountryEntry, name string) (output []models.CountryEntry) {
 	for _, entry := range input {
 		if entry.Name == name {
 			output = append(output, entry)

@@ -55,7 +55,7 @@ func (backFiller *Backfiller) Run() error {
 	log.Debugf("First entry in DB: %s", first.String())
 
 	for slug, details := range countries {
-		records := make([]*models.CountryEntry, 0)
+		records := make([]models.CountryEntry, 0)
 		realName := lookupCountryName(details.Name)
 		log.Debugf("Getting data for %s (slug: %s)", realName, slug)
 
@@ -69,7 +69,7 @@ func (backFiller *Backfiller) Run() error {
 		for _, entry := range entries {
 			log.Debugf("Entry date: %s", entry.Date.String())
 			if !found || entry.Date.Before(first) {
-				records = append(records, &models.CountryEntry{
+				records = append(records, models.CountryEntry{
 					Timestamp: entry.Date,
 					Code:      details.Code,
 					Name:      realName,

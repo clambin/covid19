@@ -15,11 +15,11 @@ type CovidStore struct {
 }
 
 // Add provides a mock function with given fields: entries
-func (_m *CovidStore) Add(entries []*models.CountryEntry) error {
+func (_m *CovidStore) Add(entries []models.CountryEntry) error {
 	ret := _m.Called(entries)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]*models.CountryEntry) error); ok {
+	if rf, ok := ret.Get(0).(func([]models.CountryEntry) error); ok {
 		r0 = rf(entries)
 	} else {
 		r0 = ret.Error(0)
@@ -29,15 +29,15 @@ func (_m *CovidStore) Add(entries []*models.CountryEntry) error {
 }
 
 // GetAll provides a mock function with given fields:
-func (_m *CovidStore) GetAll() ([]*models.CountryEntry, error) {
+func (_m *CovidStore) GetAll() ([]models.CountryEntry, error) {
 	ret := _m.Called()
 
-	var r0 []*models.CountryEntry
-	if rf, ok := ret.Get(0).(func() []*models.CountryEntry); ok {
+	var r0 []models.CountryEntry
+	if rf, ok := ret.Get(0).(func() []models.CountryEntry); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.CountryEntry)
+			r0 = ret.Get(0).([]models.CountryEntry)
 		}
 	}
 
@@ -75,15 +75,15 @@ func (_m *CovidStore) GetAllCountryNames() ([]string, error) {
 }
 
 // GetAllForCountryName provides a mock function with given fields: name
-func (_m *CovidStore) GetAllForCountryName(name string) ([]*models.CountryEntry, error) {
+func (_m *CovidStore) GetAllForCountryName(name string) ([]models.CountryEntry, error) {
 	ret := _m.Called(name)
 
-	var r0 []*models.CountryEntry
-	if rf, ok := ret.Get(0).(func(string) []*models.CountryEntry); ok {
+	var r0 []models.CountryEntry
+	if rf, ok := ret.Get(0).(func(string) []models.CountryEntry); ok {
 		r0 = rf(name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.CountryEntry)
+			r0 = ret.Get(0).([]models.CountryEntry)
 		}
 	}
 
@@ -126,15 +126,15 @@ func (_m *CovidStore) GetFirstEntry() (time.Time, bool, error) {
 }
 
 // GetLatestForCountries provides a mock function with given fields: countryNames
-func (_m *CovidStore) GetLatestForCountries(countryNames []string) (map[string]*models.CountryEntry, error) {
+func (_m *CovidStore) GetLatestForCountries(countryNames []string) (map[string]models.CountryEntry, error) {
 	ret := _m.Called(countryNames)
 
-	var r0 map[string]*models.CountryEntry
-	if rf, ok := ret.Get(0).(func([]string) map[string]*models.CountryEntry); ok {
+	var r0 map[string]models.CountryEntry
+	if rf, ok := ret.Get(0).(func([]string) map[string]models.CountryEntry); ok {
 		r0 = rf(countryNames)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]*models.CountryEntry)
+			r0 = ret.Get(0).(map[string]models.CountryEntry)
 		}
 	}
 
@@ -149,15 +149,15 @@ func (_m *CovidStore) GetLatestForCountries(countryNames []string) (map[string]*
 }
 
 // GetLatestForCountriesByTime provides a mock function with given fields: countryNames, endTime
-func (_m *CovidStore) GetLatestForCountriesByTime(countryNames []string, endTime time.Time) (map[string]*models.CountryEntry, error) {
+func (_m *CovidStore) GetLatestForCountriesByTime(countryNames []string, endTime time.Time) (map[string]models.CountryEntry, error) {
 	ret := _m.Called(countryNames, endTime)
 
-	var r0 map[string]*models.CountryEntry
-	if rf, ok := ret.Get(0).(func([]string, time.Time) map[string]*models.CountryEntry); ok {
+	var r0 map[string]models.CountryEntry
+	if rf, ok := ret.Get(0).(func([]string, time.Time) map[string]models.CountryEntry); ok {
 		r0 = rf(countryNames, endTime)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]*models.CountryEntry)
+			r0 = ret.Get(0).(map[string]models.CountryEntry)
 		}
 	}
 

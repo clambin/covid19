@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - okteto
+    - callbyvalue
 
 jobs:
   test:

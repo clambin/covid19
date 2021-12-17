@@ -28,7 +28,7 @@ func (handler *Handler) handleLatestCountryStats(args grafana_json.QueryRequestR
 		return
 	}
 
-	var entries map[string]*models.CountryEntry
+	var entries map[string]models.CountryEntry
 	if args.To.IsZero() {
 		entries, err = handler.Cache.DB.GetLatestForCountries(names)
 	} else {

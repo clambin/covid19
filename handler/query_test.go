@@ -22,10 +22,10 @@ func BenchmarkHandlerTableQuery(b *testing.B) {
 		{code: "NL", name: "Netherlands"},
 		{code: "UK", name: "United Kingdom"}}
 	timestamp := time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
-	entries := make([]*models.CountryEntry, 0)
+	entries := make([]models.CountryEntry, 0)
 	for i := 0; i < 365; i++ {
 		for _, country := range countries {
-			entries = append(entries, &models.CountryEntry{
+			entries = append(entries, models.CountryEntry{
 				Timestamp: timestamp,
 				Code:      country.code,
 				Name:      country.name,

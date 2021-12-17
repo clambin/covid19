@@ -23,7 +23,7 @@ func TestBackfiller_Run(t *testing.T) {
 	backFiller.URL = server.URL
 
 	db.On("GetFirstEntry").Return(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC), true, nil)
-	db.On("Add", []*models.CountryEntry{
+	db.On("Add", []models.CountryEntry{
 		{
 			Timestamp: time.Date(2020, 1, 22, 0, 0, 0, 0, time.UTC),
 			Name:      "Belgium",
@@ -41,7 +41,7 @@ func TestBackfiller_Run(t *testing.T) {
 			Deaths:    0,
 		},
 	}).Return(nil)
-	db.On("Add", []*models.CountryEntry{{
+	db.On("Add", []models.CountryEntry{{
 		Timestamp: time.Date(2020, 1, 31, 0, 0, 0, 0, time.UTC),
 		Name:      "Burma",
 		Code:      "MM",

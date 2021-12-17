@@ -3,8 +3,10 @@ package handler_test
 import (
 	"context"
 	"github.com/clambin/covid19/cache"
+	"github.com/clambin/covid19/covid/probe/fetcher"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/handler"
+	"github.com/clambin/covid19/models"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -45,4 +47,43 @@ func TestEvolution(t *testing.T) {
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
+}
+
+func BenchmarkHandler_TableQuery_Evolution(b *testing.B) {
+	var bigData []models.CountryEntry
+	timestamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < 2*365; i++ {
+		for name, code := range fetcher.CountryCodes {
+			bigData = append(bigData, models.CountryEntry{
+				Timestamp: timestamp,
+				Code:      code,
+				Name:      name,
+			})
+		}
+	}
+
+	dbh := &mockCovidStore.CovidStore{}
+	dbh.On("GetAll").Return(bigData, nil)
+
+	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
+	h := handler.Handler{Cache: c}
+
+	args := grafanaJson.TableQueryArgs{
+		CommonQueryArgs: grafanaJson.CommonQueryArgs{
+			Range: grafanaJson.QueryRequestRange{
+				To: time.Now(),
+			},
+		},
+	}
+
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < 100; i++ {
+		_, err := h.TableQuery(ctx, "evolution", &args)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 }

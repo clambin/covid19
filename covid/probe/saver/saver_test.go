@@ -17,7 +17,7 @@ func TestStoreSaver_SaveNewEntries(t *testing.T) {
 	db.
 		On("GetLatestForCountries", []string{"Belgium", "US"}).
 		Return(
-			map[string]*models.CountryEntry{
+			map[string]models.CountryEntry{
 				"Belgium": {Timestamp: timeStamp, Name: "Belgium", Code: "BE", Confirmed: 10, Deaths: 2, Recovered: 1},
 				"US":      {Timestamp: timeStamp, Name: "US", Code: "US", Confirmed: 100, Deaths: 20, Recovered: 10},
 			},
@@ -25,13 +25,13 @@ func TestStoreSaver_SaveNewEntries(t *testing.T) {
 		).
 		Once()
 	db.
-		On("Add", []*models.CountryEntry{{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10}}).
+		On("Add", []models.CountryEntry{{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10}}).
 		Return(nil).
 		Once()
 
 	s := saver.StoreSaver{Store: db}
 
-	newEntries, err := s.SaveNewEntries([]*models.CountryEntry{
+	newEntries, err := s.SaveNewEntries([]models.CountryEntry{
 		{Timestamp: timeStamp.Add(-24 * time.Hour), Name: "Belgium", Code: "BE", Confirmed: 8, Deaths: 1, Recovered: 0},
 		{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10},
 	})
@@ -52,7 +52,7 @@ func TestStoreSaver_SaveNewEntries_Errors(t *testing.T) {
 
 	s := saver.StoreSaver{Store: db}
 
-	_, err := s.SaveNewEntries([]*models.CountryEntry{
+	_, err := s.SaveNewEntries([]models.CountryEntry{
 		{Timestamp: timeStamp.Add(-24 * time.Hour), Name: "Belgium", Code: "BE", Confirmed: 8, Deaths: 1, Recovered: 0},
 		{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10},
 	})
@@ -62,7 +62,7 @@ func TestStoreSaver_SaveNewEntries_Errors(t *testing.T) {
 	db.
 		On("GetLatestForCountries", []string{"Belgium", "US"}).
 		Return(
-			map[string]*models.CountryEntry{
+			map[string]models.CountryEntry{
 				"Belgium": {Timestamp: timeStamp, Name: "Belgium", Code: "BE", Confirmed: 10, Deaths: 2, Recovered: 1},
 				"US":      {Timestamp: timeStamp, Name: "US", Code: "US", Confirmed: 100, Deaths: 20, Recovered: 10},
 			},
@@ -70,11 +70,11 @@ func TestStoreSaver_SaveNewEntries_Errors(t *testing.T) {
 		).
 		Once()
 	db.
-		On("Add", []*models.CountryEntry{{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10}}).
+		On("Add", []models.CountryEntry{{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10}}).
 		Return(fmt.Errorf("unable to store records")).
 		Once()
 
-	_, err = s.SaveNewEntries([]*models.CountryEntry{
+	_, err = s.SaveNewEntries([]models.CountryEntry{
 		{Timestamp: timeStamp.Add(-24 * time.Hour), Name: "Belgium", Code: "BE", Confirmed: 8, Deaths: 1, Recovered: 0},
 		{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10},
 	})

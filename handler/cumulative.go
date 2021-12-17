@@ -29,7 +29,7 @@ func (handler *Handler) getTotalsForCountry(args *grafana_json.TableQueryArgs) (
 		return
 	}
 
-	var entries []*models.CountryEntry
+	var entries []models.CountryEntry
 	entries, err = handler.Cache.DB.GetAllForCountryName(countryName)
 
 	if err != nil {

@@ -16,15 +16,15 @@ type Fetcher struct {
 }
 
 // GetCountryStats provides a mock function with given fields: ctx
-func (_m *Fetcher) GetCountryStats(ctx context.Context) ([]*models.CountryEntry, error) {
+func (_m *Fetcher) GetCountryStats(ctx context.Context) ([]models.CountryEntry, error) {
 	ret := _m.Called(ctx)
 
-	var r0 []*models.CountryEntry
-	if rf, ok := ret.Get(0).(func(context.Context) []*models.CountryEntry); ok {
+	var r0 []models.CountryEntry
+	if rf, ok := ret.Get(0).(func(context.Context) []models.CountryEntry); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.CountryEntry)
+			r0 = ret.Get(0).([]models.CountryEntry)
 		}
 	}
 

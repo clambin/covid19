@@ -13,11 +13,11 @@ type Notifier struct {
 }
 
 // Notify provides a mock function with given fields: entries
-func (_m *Notifier) Notify(entries []*models.CountryEntry) error {
+func (_m *Notifier) Notify(entries []models.CountryEntry) error {
 	ret := _m.Called(entries)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]*models.CountryEntry) error); ok {
+	if rf, ok := ret.Get(0).(func([]models.CountryEntry) error); ok {
 		r0 = rf(entries)
 	} else {
 		r0 = ret.Error(0)

@@ -13,20 +13,20 @@ type Saver struct {
 }
 
 // SaveNewEntries provides a mock function with given fields: entries
-func (_m *Saver) SaveNewEntries(entries []*models.CountryEntry) ([]*models.CountryEntry, error) {
+func (_m *Saver) SaveNewEntries(entries []models.CountryEntry) ([]models.CountryEntry, error) {
 	ret := _m.Called(entries)
 
-	var r0 []*models.CountryEntry
-	if rf, ok := ret.Get(0).(func([]*models.CountryEntry) []*models.CountryEntry); ok {
+	var r0 []models.CountryEntry
+	if rf, ok := ret.Get(0).(func([]models.CountryEntry) []models.CountryEntry); ok {
 		r0 = rf(entries)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.CountryEntry)
+			r0 = ret.Get(0).([]models.CountryEntry)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func([]*models.CountryEntry) error); ok {
+	if rf, ok := ret.Get(1).(func([]models.CountryEntry) error); ok {
 		r1 = rf(entries)
 	} else {
 		r1 = ret.Error(1)

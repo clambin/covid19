@@ -7,7 +7,7 @@ import (
 )
 
 // GetTotalCases calculates the total cases across all countries over time
-func GetTotalCases(rows []*models.CountryEntry) (result []Entry) {
+func GetTotalCases(rows []models.CountryEntry) (result []Entry) {
 	var confirmed, recovered, deaths int64
 
 	// Helper data structure to keep running count
@@ -19,10 +19,10 @@ func GetTotalCases(rows []*models.CountryEntry) (result []Entry) {
 	}
 
 	// Group data by timestamp
-	timeMap := make(map[time.Time][]*models.CountryEntry)
+	timeMap := make(map[time.Time][]models.CountryEntry)
 	for _, row := range rows {
 		if timeMap[row.Timestamp] == nil {
-			timeMap[row.Timestamp] = make([]*models.CountryEntry, 0, 300)
+			timeMap[row.Timestamp] = make([]models.CountryEntry, 0, 300)
 		}
 		timeMap[row.Timestamp] = append(timeMap[row.Timestamp], row)
 	}

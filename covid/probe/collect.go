@@ -35,7 +35,7 @@ func (probe *Covid19Probe) Collect(ch chan<- prometheus.Metric) {
 	log.WithField("duration", time.Now().Sub(start)).Debug("prometheus scrape done")
 }
 
-func (probe *Covid19Probe) setCountryUpdates(newEntries []*models.CountryEntry) {
+func (probe *Covid19Probe) setCountryUpdates(newEntries []models.CountryEntry) {
 	probe.lock.Lock()
 	defer probe.lock.Unlock()
 

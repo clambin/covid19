@@ -84,7 +84,7 @@ func TestBackfill(t *testing.T) {
 	stack := CreateStackWithStores(cfg, covidStore, populationStore)
 
 	covidStore.On("GetFirstEntry").Return(time.Time{}, false, nil)
-	covidStore.On("Add", mock.AnythingOfType("[]*models.CountryEntry")).Return(nil)
+	covidStore.On("Add", mock.AnythingOfType("[]models.CountryEntry")).Return(nil)
 
 	go stack.Run()
 

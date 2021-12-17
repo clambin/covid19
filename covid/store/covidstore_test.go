@@ -67,7 +67,7 @@ func getDBEnv() (map[string]string, bool) {
 func TestDB(t *testing.T) {
 	first := time.Date(2021, 12, 15, 0, 0, 0, 0, time.UTC)
 	last := first.Add(24 * time.Hour)
-	newEntries := []*models.CountryEntry{
+	newEntries := []models.CountryEntry{
 		{
 			Timestamp: first,
 			Code:      "??",
@@ -129,7 +129,7 @@ func TestDB(t *testing.T) {
 	require.Len(t, countryNames, 1)
 	assert.Equal(t, "???", countryNames[0])
 
-	var latest map[string]*models.CountryEntry
+	var latest map[string]models.CountryEntry
 	latest, err = covidStore.GetLatestForCountries([]string{"???"})
 	require.NoError(t, err)
 	entry, found := latest["???"]

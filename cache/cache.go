@@ -63,7 +63,7 @@ func (cache *Cache) updateMaybe() (err error) {
 		cache.expiry = time.Now().Add(cache.Retention)
 	}
 	cache.once.Do(func() {
-		var entries []*models.CountryEntry
+		var entries []models.CountryEntry
 		if entries, err = cache.DB.GetAll(); err == nil {
 			cache.totals = GetTotalCases(entries)
 			cache.deltas = GetTotalDeltas(cache.totals)

@@ -14,7 +14,7 @@ import (
 // Fetcher retrieves COVID-19 stats from the rapidAPI server
 //go:generate mockery --name Fetcher
 type Fetcher interface {
-	GetCountryStats(ctx context.Context) (countryEntry []*models.CountryEntry, err error)
+	GetCountryStats(ctx context.Context) (countryEntry []models.CountryEntry, err error)
 }
 
 // CountryStats contains total figures for one country
@@ -34,7 +34,7 @@ type Client struct {
 }
 
 // GetCountryStats called the API to retrieve the latest COVID-19 stats
-func (client *Client) GetCountryStats(ctx context.Context) (countryEntry []*models.CountryEntry, err error) {
+func (client *Client) GetCountryStats(ctx context.Context) (countryEntry []models.CountryEntry, err error) {
 	var stats statsResponse
 	stats, err = client.getStats(ctx)
 
@@ -47,7 +47,7 @@ func (client *Client) GetCountryStats(ctx context.Context) (countryEntry []*mode
 	return
 }
 
-func (client *Client) filterUnsupportedCountries(stats *statsResponse) (entries []*models.CountryEntry) {
+func (client *Client) filterUnsupportedCountries(stats *statsResponse) (entries []models.CountryEntry) {
 	for _, entry := range stats.Data.Covid19Stats {
 		code, found := CountryCodes[entry.Country]
 
@@ -57,7 +57,7 @@ func (client *Client) filterUnsupportedCountries(stats *statsResponse) (entries 
 				continue
 			}
 		}
-		entries = append(entries, &models.CountryEntry{
+		entries = append(entries, models.CountryEntry{
 			Timestamp: entry.LastUpdate,
 			Code:      code,
 			Name:      entry.Country,
@@ -69,13 +69,13 @@ func (client *Client) filterUnsupportedCountries(stats *statsResponse) (entries 
 	return
 }
 
-func sumByCountry(entries []*models.CountryEntry) (sum []*models.CountryEntry) {
-	summed := make(map[string]*models.CountryEntry)
+func sumByCountry(entries []models.CountryEntry) (sum []models.CountryEntry) {
+	summed := make(map[string]models.CountryEntry)
 
 	for _, entry := range entries {
 		sumEntry, ok := summed[entry.Code]
 		if ok == false {
-			sumEntry = &models.CountryEntry{
+			sumEntry = models.CountryEntry{
 				Timestamp: entry.Timestamp,
 				Code:      entry.Code,
 				Name:      entry.Name,

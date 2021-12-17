@@ -39,7 +39,7 @@ func (handler *Handler) handleEvolution(args *grafana_json.TableQueryArgs) (resp
 }
 
 func (handler *Handler) getLatestEntries(end time.Time) (confirmed map[string][]int64, err error) {
-	var entries []*models.CountryEntry
+	var entries []models.CountryEntry
 	entries, err = handler.Cache.DB.GetAll()
 
 	if err != nil {

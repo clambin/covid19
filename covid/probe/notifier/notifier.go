@@ -10,20 +10,20 @@ import (
 // Notifier will send notifications when we receive new updates for selected countries
 //go:generate mockery --name Notifier
 type Notifier interface {
-	Notify(entries []*models.CountryEntry) (err error)
+	Notify(entries []models.CountryEntry) (err error)
 }
 
 // RealNotifier will send notifications when we receive new updates for selected countries
 type RealNotifier struct {
 	Sender        NotificationSender
-	lastDBEntries map[string]*models.CountryEntry
+	lastDBEntries map[string]models.CountryEntry
 }
 
 var _ Notifier = &RealNotifier{}
 
 // NewNotifier creates a new RealNotifier
 func NewNotifier(sender NotificationSender, countries []string, db store.CovidStore) *RealNotifier {
-	lastDBEntries := make(map[string]*models.CountryEntry)
+	lastDBEntries := make(map[string]models.CountryEntry)
 
 	entries, err := db.GetLatestForCountries(countries)
 	if err != nil {
@@ -41,7 +41,7 @@ func NewNotifier(sender NotificationSender, countries []string, db store.CovidSt
 }
 
 // Notify sends notification when we receive updates for selected countries
-func (notifier *RealNotifier) Notify(entries []*models.CountryEntry) (err error) {
+func (notifier *RealNotifier) Notify(entries []models.CountryEntry) (err error) {
 	for _, record := range entries {
 		lastDBEntry, ok := notifier.lastDBEntries[record.Name]
 

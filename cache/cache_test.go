@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	testData = []*models.CountryEntry{
+	testData = []models.CountryEntry{
 		{
 			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			Code:      "BE",

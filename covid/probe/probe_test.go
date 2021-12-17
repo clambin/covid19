@@ -35,7 +35,7 @@ func TestCovid19Probe_Update(t *testing.T) {
 	db.
 		On("GetLatestForCountries", []string{"Belgium", "US"}).
 		Return(
-			map[string]*models.CountryEntry{
+			map[string]models.CountryEntry{
 				"Belgium": {Timestamp: timeStamp, Name: "Belgium", Code: "BE", Confirmed: 10, Deaths: 2, Recovered: 1},
 				"US":      {Timestamp: timeStamp, Name: "US", Code: "US", Confirmed: 100, Deaths: 20, Recovered: 10},
 			},
@@ -51,11 +51,11 @@ func TestCovid19Probe_Update(t *testing.T) {
 	p.Saver = s
 	p.Notifier = n
 
-	countryStats := []*models.CountryEntry{
+	countryStats := []models.CountryEntry{
 		{Timestamp: timeStamp.Add(-24 * time.Hour), Name: "Belgium", Code: "BE", Confirmed: 8, Deaths: 1, Recovered: 1},
 		{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 15},
 	}
-	newCountryStats := []*models.CountryEntry{{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 15}}
+	newCountryStats := []models.CountryEntry{{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 15}}
 
 	f.
 		On("GetCountryStats", mock.AnythingOfType("*context.emptyCtx")).
@@ -110,11 +110,11 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 	require.Error(t, err)
 
 	timeStamp := time.Now()
-	countryStats := []*models.CountryEntry{
+	countryStats := []models.CountryEntry{
 		{Timestamp: timeStamp.Add(-24 * time.Hour), Name: "Belgium", Code: "BE", Confirmed: 8, Deaths: 1, Recovered: 1},
 		{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 15},
 	}
-	newCountryStats := []*models.CountryEntry{{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 15}}
+	newCountryStats := []models.CountryEntry{{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 15}}
 
 	f.
 		On("GetCountryStats", mock.AnythingOfType("*context.emptyCtx")).

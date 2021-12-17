@@ -18,7 +18,7 @@ import (
 func TestConfirmedByCountry(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
-	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]*models.CountryEntry{
+	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
 		"A": {Timestamp: time.Now(), Confirmed: 3},
 		"B": {Timestamp: time.Now(), Confirmed: 10},
 	}, nil)
@@ -56,7 +56,7 @@ func TestConfirmedByCountry(t *testing.T) {
 func TestDeathsByCountry(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
-	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]*models.CountryEntry{
+	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
 		"A": {Timestamp: time.Now(), Deaths: 0},
 		"B": {Timestamp: time.Now(), Deaths: 1},
 	}, nil)
@@ -97,7 +97,7 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 		Return([]string{"Belgium", "US"}, nil)
 	dbh.
 		On("GetLatestForCountriesByTime", []string{"Belgium", "US"}, time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
-		Return(map[string]*models.CountryEntry{
+		Return(map[string]models.CountryEntry{
 			"Belgium": {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Confirmed: 200},
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
 		}, nil)
@@ -145,7 +145,7 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 		Return([]string{"Belgium", "US"}, nil)
 	dbh.
 		On("GetLatestForCountriesByTime", []string{"Belgium", "US"}, time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
-		Return(map[string]*models.CountryEntry{
+		Return(map[string]models.CountryEntry{
 			"Belgium": {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Deaths: 200},
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Deaths: 200},
 		}, nil)
