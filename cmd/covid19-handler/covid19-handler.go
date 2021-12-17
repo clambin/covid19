@@ -103,8 +103,10 @@ func (stack *Stack) loadIfEmpty() {
 		log.Info("database is empty. backfilling ... ")
 		bf := backfill.New(stack.CovidStore)
 		go func() {
-			err = bf.Run()
-			if err != nil {
+			start := time.Now()
+			if err = bf.Run(); err == nil {
+				log.Infof("historic data loaded in %s", time.Now().Sub(start).String())
+			} else {
 				log.WithError(err).Error("failed to populate database")
 			}
 		}()

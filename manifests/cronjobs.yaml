@@ -1,0 +1,65 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: "covid19-loader"
+  labels:
+    app: covid19
+spec:
+  schedule: "0 6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+          - name: config
+            configMap:
+              name: "covid19-config"
+          containers:
+          - name: loader
+            image: ghcr.io/clambin/covid19-loader
+            args:
+              - --config=/etc/covid19/covid19.yml
+            envFrom:
+              - secretRef:
+                  name: covid19
+            resources:
+              requests:
+                cpu: 30m
+                memory: 32Mi
+            volumeMounts:
+            - name: config
+              mountPath: /etc/covid19
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: "covid19-population-loader"
+  labels:
+    app: covid19
+spec:
+  schedule: "0 5 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+          - name: config
+            configMap:
+              name: covid19-config
+          containers:
+          - name: loader
+            image: ghcr.io/clambin/covid19-population-loader
+            args:
+              - --config=/etc/covid19/covid19.yml
+            envFrom:
+              - secretRef:
+                  name: covid19
+            resources:
+              requests:
+                cpu: 30m
+                memory: 32Mi
+            volumeMounts:
+            - name: config
+              mountPath: /etc/covid19

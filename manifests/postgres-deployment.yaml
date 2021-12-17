@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: postgres
+        image: postgres:12-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres
+              key: password
+        resources:
+          requests:
+            cpu: 75m
+            memory: 150Mi
+          limits:
+            memory: 300Mi
+        volumeMounts:
+        - name: postgres-db
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-db
+        persistentVolumeClaim:
+          claimName: pvc-postgres-db
+---

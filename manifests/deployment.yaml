@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: covid19-handler
+  labels:
+    app: covid19
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: covid19
+  template:
+    metadata:
+      labels:
+        app: covid19
+    spec:
+      volumes:
+        - name: config
+          configMap:
+            name: covid19-config
+      containers:
+        - name: covid19
+          image: "ghcr.io/clambin/covid19-handler"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config=/etc/covid19/covid19.yml
+          envFrom:
+            - secretRef:
+                name: postgres
+            - secretRef:
+                name: covid19
+          ports:
+            - containerPort: 5000
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+          resources:
+            requests:
+              cpu: 30m
+              memory: 32Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/covid19
