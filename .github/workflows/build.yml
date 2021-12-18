@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - callbyvalue
+    - maps
 
 jobs:
   test:

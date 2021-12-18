@@ -97,6 +97,29 @@ func (_m *CovidStore) GetAllForCountryName(name string) ([]models.CountryEntry, 
 	return r0, r1
 }
 
+// GetAllForRange provides a mock function with given fields: from, to
+func (_m *CovidStore) GetAllForRange(from time.Time, to time.Time) ([]models.CountryEntry, error) {
+	ret := _m.Called(from, to)
+
+	var r0 []models.CountryEntry
+	if rf, ok := ret.Get(0).(func(time.Time, time.Time) []models.CountryEntry); ok {
+		r0 = rf(from, to)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.CountryEntry)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(time.Time, time.Time) error); ok {
+		r1 = rf(from, to)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetFirstEntry provides a mock function with given fields:
 func (_m *CovidStore) GetFirstEntry() (time.Time, bool, error) {
 	ret := _m.Called()

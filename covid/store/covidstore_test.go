@@ -119,6 +119,11 @@ func TestDB(t *testing.T) {
 	assert.Equal(t, int64(5), entries[1].Deaths)
 	assert.Equal(t, int64(4), entries[1].Recovered)
 
+	entries, err = covidStore.GetAllForRange(first, first)
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.True(t, entries[0].Timestamp.Equal(first))
+
 	entries, err = covidStore.GetAllForCountryName("???")
 	require.NoError(t, err)
 	assert.Len(t, entries, 2)

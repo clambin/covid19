@@ -19,21 +19,24 @@ var dbContents = []models.CountryEntry{
 		Name:      "A",
 		Confirmed: 1,
 		Recovered: 0,
-		Deaths:    0},
+		Deaths:    0,
+	},
 	{
 		Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
 		Code:      "B",
 		Name:      "B",
 		Confirmed: 3,
 		Recovered: 0,
-		Deaths:    0},
+		Deaths:    0,
+	},
 	{
 		Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
 		Code:      "A",
 		Name:      "A",
 		Confirmed: 3,
 		Recovered: 1,
-		Deaths:    0},
+		Deaths:    0,
+	},
 	{
 		Timestamp: time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
 		Code:      "B",
@@ -66,6 +69,7 @@ func TestCovidHandler_Search(t *testing.T) {
 		"country-deaths",
 		"country-confirmed-population",
 		"country-deaths-population",
+		"country-deaths-vs-confirmed",
 	}, targets)
 
 }
