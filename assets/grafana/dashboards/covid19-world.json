@@ -55,6 +55,94 @@
                     "custom": {
                         "axisLabel": "",
                         "axisPlacement": "auto",
+                        "barAlignment": 1,
+                        "drawStyle": "bars",
+                        "fillOpacity": 22,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 4,
+                "x": 0,
+                "y": 1
+            },
+            "id": 54,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "grafana-simple-json-datasource",
+                        "uid": "gitTkX27z"
+                    },
+                    "refId": "A",
+                    "target": "updates",
+                    "type": "table"
+                }
+            ],
+            "title": "updates",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "grafana-simple-json-datasource",
+                "uid": "gitTkX27z"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
                         "barAlignment": 0,
                         "drawStyle": "line",
                         "fillOpacity": 30,
@@ -131,8 +219,8 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 12,
-                "x": 0,
+                "w": 8,
+                "x": 4,
                 "y": 1
             },
             "id": 51,
@@ -249,18 +337,16 @@
             },
             "gridPos": {
                 "h": 8,
-                "w": 12,
+                "w": 8,
                 "x": 12,
                 "y": 1
             },
             "id": 52,
             "options": {
                 "legend": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "displayMode": "table",
-                    "placement": "right"
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
                 },
                 "tooltip": {
                     "mode": "single"
@@ -279,6 +365,101 @@
             ],
             "title": "Total cases (stacked)",
             "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "grafana-simple-json-datasource",
+                "uid": "gitTkX27z"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        }
+                    },
+                    "mappings": [],
+                    "unit": "short"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "deaths"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "confirmed"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "green",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 4,
+                "x": 20,
+                "y": 1
+            },
+            "id": 55,
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "values": [
+                        "percent",
+                        "value"
+                    ]
+                },
+                "pieType": "pie",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "grafana-simple-json-datasource",
+                        "uid": "gitTkX27z"
+                    },
+                    "refId": "A",
+                    "target": "cumulative",
+                    "type": "table"
+                }
+            ],
+            "title": "Total cases",
+            "type": "piechart"
         },
         {
             "datasource": {
@@ -380,6 +561,7 @@
             "links": [],
             "maxDataPoints": 3,
             "options": {
+                "displayLabels": [],
                 "legend": {
                     "displayMode": "table",
                     "placement": "right",
@@ -864,7 +1046,7 @@
         "list": []
     },
     "time": {
-        "from": "now-2y",
+        "from": "now-7d",
         "to": "now"
     },
     "timepicker": {
@@ -882,8 +1064,8 @@
         ]
     },
     "timezone": "",
-    "title": "Covid19 - World Maps",
+    "title": "Covid19 - World",
     "uid": "_K_l6Tn7k",
-    "version": 131,
+    "version": 137,
     "weekStart": ""
 }

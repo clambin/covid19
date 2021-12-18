@@ -70,6 +70,7 @@ func TestCovidHandler_Search(t *testing.T) {
 		"country-confirmed-population",
 		"country-deaths-population",
 		"country-deaths-vs-confirmed",
+		"updates",
 	}, targets)
 
 }

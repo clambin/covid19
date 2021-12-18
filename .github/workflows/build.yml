@@ -4,7 +4,7 @@ on:
   push:
     branches:
     - master
-    - maps
+    - updates
 
 jobs:
   test:

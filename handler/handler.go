@@ -24,6 +24,7 @@ var Targets = []string{
 	"country-confirmed-population",
 	"country-deaths-population",
 	"country-deaths-vs-confirmed",
+	"updates",
 }
 
 // Endpoints tells the server which endpoints we have implemented

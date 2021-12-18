@@ -30,6 +30,8 @@ func (handler *Handler) TableQuery(_ context.Context, target string, args *grafa
 		response, err = handler.handleDeathsByCountryByPopulation(args)
 	case "country-deaths-vs-confirmed":
 		response, err = handler.handleMortalityVsConfirmed(args)
+	case "updates":
+		response, err = handler.handleUpdates(args)
 	default:
 		err = fmt.Errorf("%s does not implement table query", target)
 	}
