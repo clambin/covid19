@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ covid19-handler, covid19-loader, covid19-population-loader, backfill ]
+        target: [ covid19-handler, covid19-loader, covid19-population-loader ]
         os: [ linux ]
         arch: [ amd64, arm, arm64 ]
     steps:

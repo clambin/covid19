@@ -13,7 +13,7 @@ This package tracks global Covid-19 data. It consists of three executables:
 
 - covid19-loader retrieves the latest updates from a public Covid-19 tracker and stores them in an external Postgres DB
 - covid19-population-loader retrieves the latest population figures from a public tracker and stores them in an external Postgres DB
-- covid19-handler implements some more complicated logic for the contained Grafana dashboards
+- covid19-handler implements the targets for the contained Grafana dashboards
 
 
 ## Installation
@@ -84,15 +84,14 @@ Add this key to the configuration file above and subscribe to the following two 
 The first one offers the latest Covid-19 statistics. The second one provides population figures for each country.
 
 ## Grafana data sources
-Both Postgres and the covid19 Grafana data source will need to be configured in Grafana. 
-This can be done manually through the Grafana admin UI, or through a datasource provisioning file, e.g.
+The covid19 Grafana data source will need to be configured in Grafana. This can be done manually through the Grafana admin UI, or through a datasource provisioning file, e.g.
 
 ```
 apiVersion: 1
 datasources:
   - id: 5
     orgid: 1
-    name: covid19api
+    name: covid19
     type: grafana-simple-json-datasource
     access: proxy
     # URL of covid19 server
@@ -106,35 +105,7 @@ datasources:
     isdefault: false
     jsondata: {}
     securejsondata: null
-  - id: 3
-    orgId: 1
-    name: PostgreSQL
-    type: postgres
-    # URL of Postgres DB server
-    url: postgres.default:5432
-    # Database name, as defined above
-    database: covid19
-    # Database userm as defined above
-    user: grafana
-    secureJsonData:
-      # Database user password
-      password: "your-password-here"
-    jsonData:
-      sslmode: "disable"
 ```
-
-### Backfilling historical data
-Covid19 only adds new data for the current day. For new installations, historical data will need to be added manually. 
-Use the provided utility to do this:
-
-```
-backfill --postgres-host=<postgres-host> \
-         --postgres-port=<postgres-port> \
-         --postgres-user=<postgres-user>
-         --postgres-password=<postgres-password>
-```
-
-When sticking to the default port & user, those arguments can be omitted.
 
 ## Running
 ### Command-line options
@@ -153,8 +124,6 @@ Flags:
 ## Grafana
 The repo contains sample [dashboards](assets/grafana/dashboards). One dashboard provides a view per country.
 A second one provides an overview of cases, evolution, per capita stats across the world.
-
-Feel free to customize as you see fit.
 
 ## Authors
 
