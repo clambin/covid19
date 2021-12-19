@@ -5,18 +5,30 @@ import (
 	"github.com/clambin/covid19/cache"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/handler"
+	"github.com/clambin/covid19/models"
 	grafanaJson "github.com/clambin/grafana-json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sort"
 	"testing"
 	"time"
 )
 
 func TestHandler_Updates(t *testing.T) {
+	dbContents2 := append(dbContents, models.CountryEntry{
+		Timestamp: time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC),
+		Code:      "A",
+		Name:      "A",
+		Confirmed: 3,
+		Recovered: 1,
+		Deaths:    0,
+	})
+	sort.Slice(dbContents2, func(i, j int) bool { return dbContents2[i].Timestamp.Before(dbContents2[j].Timestamp) })
+
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.
 		On("GetAll").
-		Return(dbContents, nil)
+		Return(dbContents2, nil)
 
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}

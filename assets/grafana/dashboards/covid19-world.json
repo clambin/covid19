@@ -127,7 +127,7 @@
                     "type": "table"
                 }
             ],
-            "title": "updates",
+            "title": "Updates",
             "type": "timeseries"
         },
         {
@@ -1038,7 +1038,7 @@
             "type": "geomap"
         }
     ],
-    "refresh": "",
+    "refresh": false,
     "schemaVersion": 34,
     "style": "dark",
     "tags": [],
@@ -1046,7 +1046,7 @@
         "list": []
     },
     "time": {
-        "from": "now-7d",
+        "from": "now-2y",
         "to": "now"
     },
     "timepicker": {

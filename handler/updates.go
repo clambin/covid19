@@ -14,6 +14,7 @@ func (handler *Handler) handleUpdates(args *grafana_json.TableQueryArgs) (respon
 		return
 	}
 
+	last := make(map[string]models.CountryEntry)
 	updates := make(map[time.Time]int)
 
 	for _, entry := range entries {
@@ -21,9 +22,13 @@ func (handler *Handler) handleUpdates(args *grafana_json.TableQueryArgs) (respon
 			break
 		}
 
-		count, _ := updates[entry.Timestamp]
-		count++
-		updates[entry.Timestamp] = count
+		previous, _ := last[entry.Code]
+		if entry.Confirmed != previous.Confirmed || entry.Deaths != previous.Deaths || entry.Recovered != previous.Recovered {
+			count, _ := updates[entry.Timestamp]
+			count++
+			updates[entry.Timestamp] = count
+		}
+		last[entry.Code] = entry
 	}
 
 	timestamps := getUniqueSortedTimestamps(updates)
