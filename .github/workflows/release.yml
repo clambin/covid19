@@ -62,7 +62,7 @@ jobs:
           TARGET: ${{ matrix.target }}
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
-          RELEASE_VERSION: ${{ steps.vars.outputs.branch }}
+          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
         run: |
           CGO_ENABLED=0 \
             go build \
