@@ -47,7 +47,7 @@ jobs:
     strategy:
       matrix:
         target: [ covid19-handler, covid19-loader, covid19-population-loader ]
-        platform: [ linux ]
+        os: [ linux ]
         arch: [ amd64, arm, arm64 ]
     steps:
       - uses: actions/checkout@v2.4.0
@@ -71,7 +71,7 @@ jobs:
               cmd/$TARGET/$TARGET.go
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.target }}-${{ matrix.platform }}-${{ matrix.arch }}
+          name: ${{ matrix.target }}-${{ matrix.os }}-${{ matrix.arch }}
           path: ./bld/*
   docker:
     needs: build
