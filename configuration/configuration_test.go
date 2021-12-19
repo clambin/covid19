@@ -1,6 +1,7 @@
 package configuration_test
 
 import (
+	"bou.ke/monkey"
 	"github.com/clambin/covid19/configuration"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -124,8 +125,8 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 	assert.Equal(t, "postgres", cfg.Postgres.Host)
 	assert.Equal(t, 5432, cfg.Postgres.Port)
 	assert.Equal(t, "covid19", cfg.Postgres.Database)
-	assert.Equal(t, "probe", cfg.Postgres.User)
-	assert.Equal(t, "probe", cfg.Postgres.Password)
+	assert.Equal(t, "covid", cfg.Postgres.User)
+	assert.Equal(t, "covid", cfg.Postgres.Password)
 }
 
 func TestGetConfiguration(t *testing.T) {
@@ -175,4 +176,13 @@ monitor:
 
 	err = os.Remove(fName)
 	require.NoError(t, err)
+}
+
+func TestGetConfiguration_Invalid(t *testing.T) {
+	var exited bool
+	monkey.Patch(os.Exit, func(int) { exited = true })
+	args := []string{"foo", "--?"}
+	_ = configuration.GetConfiguration("covid19", args)
+	assert.True(t, exited)
+	monkey.Unpatch(os.Exit)
 }

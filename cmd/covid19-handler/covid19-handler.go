@@ -43,7 +43,7 @@ type Stack struct {
 
 // CreateStack creates an application stack for the provided configuration
 func CreateStack(cfg *configuration.Configuration) (stack *Stack) {
-	dbh, err := db.NewWithConfiguration(&cfg.Postgres)
+	dbh, err := db.NewWithConfiguration(cfg.Postgres)
 	if err != nil {
 		panic(err)
 	}

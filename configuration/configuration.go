@@ -7,7 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 // Configuration for covid19 app
@@ -16,15 +15,6 @@ type Configuration struct {
 	Debug    bool                 `yaml:"debug"`
 	Postgres PostgresDB           `yaml:"postgres"`
 	Monitor  MonitorConfiguration `yaml:"monitor"`
-}
-
-// PostgresDB configuration parameters
-type PostgresDB struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Database string `yaml:"database"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
 }
 
 // MonitorConfiguration parameters
@@ -79,13 +69,13 @@ func LoadConfigurationFile(fileName string) (configuration *Configuration, err e
 func LoadConfiguration(content []byte) (*Configuration, error) {
 	configuration := Configuration{
 		Port:     8080,
-		Postgres: loadPGEnvironment(),
+		Postgres: LoadPGEnvironmentWithDefaults(),
 		Monitor:  MonitorConfiguration{},
 	}
 	err := yaml.Unmarshal(content, &configuration)
 
 	if err == nil {
-		// make postgres password a ValueOrEnvVar too
+		// TODO: make postgres password a ValueOrEnvVar too
 		configuration.Monitor.RapidAPIKey.Set()
 		configuration.Monitor.Notifications.URL.Set()
 	}
@@ -93,41 +83,6 @@ func LoadConfiguration(content []byte) (*Configuration, error) {
 	log.WithField("err", err).Debug("LoadConfiguration")
 
 	return &configuration, err
-}
-
-// loadPGEnvironment loads Postgres config from environment variables
-func loadPGEnvironment() PostgresDB {
-	var (
-		err        error
-		pgHost     string
-		pgPort     int
-		pgDatabase string
-		pgUser     string
-		pgPassword string
-	)
-	if pgHost = os.Getenv("pg_host"); pgHost == "" {
-		pgHost = "postgres"
-	}
-	if pgPort, err = strconv.Atoi(os.Getenv("pg_port")); err != nil || pgPort == 0 {
-		pgPort = 5432
-	}
-	if pgDatabase = os.Getenv("pg_database"); pgDatabase == "" {
-		pgDatabase = "covid19"
-	}
-	if pgUser = os.Getenv("pg_user"); pgUser == "" {
-		pgUser = "probe"
-	}
-	if pgPassword = os.Getenv("pg_password"); pgPassword == "" {
-		pgPassword = "probe"
-	}
-
-	return PostgresDB{
-		Host:     pgHost,
-		Port:     pgPort,
-		Database: pgDatabase,
-		User:     pgUser,
-		Password: pgPassword,
-	}
 }
 
 // GetConfiguration parses the provided commandline arguments and creates the required configuration
@@ -148,7 +103,7 @@ func GetConfiguration(application string, args []string) (cfg *Configuration) {
 
 	_, err := a.Parse(args[1:])
 	if err != nil {
-		a.Usage(os.Args[1:])
+		a.Usage(args[1:])
 		os.Exit(1)
 	}
 

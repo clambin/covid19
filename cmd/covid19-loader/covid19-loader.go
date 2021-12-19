@@ -17,7 +17,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	dbh, err := db.NewWithConfiguration(&cfg.Postgres)
+	dbh, err := db.NewWithConfiguration(cfg.Postgres)
 	if err != nil {
 		panic(err)
 	}

@@ -3,30 +3,27 @@ package store_test
 import (
 	"bou.ke/monkey"
 	"fmt"
+	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
-	"strconv"
 	"testing"
 	"time"
 )
 
 func TestMain(m *testing.M) {
-	values, ok := getDBEnv()
-	if ok == false {
+	pg := configuration.LoadPGEnvironment()
+
+	if !pg.IsValid() {
 		fmt.Println("Could not find all DB env variables. Skipping this test")
 		return
 	}
 
-	port, err := strconv.Atoi(values["pg_port"])
-	if err != nil {
-		panic(fmt.Sprintf("invalid port specified: %s\n", values["pg_port"]))
-	}
-
-	DB, err = db.New(values["pg_host"], port, values["pg_database"], values["pg_user"], values["pg_password"])
+	var err error
+	DB, err = db.NewWithConfiguration(pg)
 	if err != nil {
 		panic(fmt.Sprintf("unable to connect to database: %s", err.Error()))
 	}
@@ -45,24 +42,6 @@ var (
 	DB         *db.DB
 	covidStore store.CovidStore
 )
-
-func getDBEnv() (map[string]string, bool) {
-	values := make(map[string]string, 0)
-	envVars := []string{"pg_host", "pg_port", "pg_database", "pg_user", "pg_password"}
-
-	ok := true
-	for _, envVar := range envVars {
-		value, found := os.LookupEnv(envVar)
-		if found {
-			values[envVar] = value
-		} else {
-			ok = false
-			break
-		}
-	}
-
-	return values, ok
-}
 
 func TestDB(t *testing.T) {
 	first := time.Date(2021, 12, 15, 0, 0, 0, 0, time.UTC)
