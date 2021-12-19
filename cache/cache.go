@@ -13,7 +13,7 @@ import (
 type Cache struct {
 	DB        store.CovidStore
 	Retention time.Duration
-	lock      sync.RWMutex
+	lock      sync.Mutex
 	expiry    time.Time
 	once      *sync.Once
 	totals    []Entry
@@ -37,8 +37,8 @@ func (cache *Cache) GetTotals(endTime time.Time) (totals []Entry, err error) {
 		return
 	}
 
-	cache.lock.RLock()
-	defer cache.lock.RUnlock()
+	cache.lock.Lock()
+	defer cache.lock.Unlock()
 	return filterEntries(cache.totals, endTime), nil
 }
 
@@ -50,14 +50,14 @@ func (cache *Cache) GetDeltas(endTime time.Time) (deltas []Entry, err error) {
 		return
 	}
 
-	cache.lock.RLock()
-	defer cache.lock.RUnlock()
+	cache.lock.Lock()
+	defer cache.lock.Unlock()
 	return filterEntries(cache.deltas, endTime), nil
 }
 
 func (cache *Cache) updateMaybe() (err error) {
-	cache.lock.RLock()
-	defer cache.lock.RUnlock()
+	cache.lock.Lock()
+	defer cache.lock.Unlock()
 	if cache.once == nil || time.Now().After(cache.expiry) {
 		cache.once = &sync.Once{}
 		cache.expiry = time.Now().Add(cache.Retention)

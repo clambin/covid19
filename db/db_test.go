@@ -24,7 +24,7 @@ func getDBEnv() (map[string]string, bool) {
 }
 
 func TestDB_Stub(t *testing.T) {
-	store, err := db.New("localhost", 5432, "test", "test", "test")
+	store, err := db.New("127.0.0.1", 5432, "test", "test", "test")
 	assert.NoError(t, err)
 
 	err = store.Handle.Ping()
