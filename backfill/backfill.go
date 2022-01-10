@@ -25,58 +25,38 @@ func New(store store.CovidStore) *Backfiller {
 // Then add any historical record that is older than the first
 // record in the DB
 func (backFiller *Backfiller) Run() error {
-	var (
-		err       error
-		countries map[string]struct {
-			Name string
-			Code string
-		}
-		entries []struct {
-			Confirmed int64
-			Recovered int64
-			Deaths    int64
-			Date      time.Time
-		}
-		first time.Time
-	)
 
-	countries, err = backFiller.getCountries()
+	countries, err := backFiller.getCountries()
 	if err != nil {
 		return fmt.Errorf("could not retrieve supported countries: %s", err.Error())
 	}
-
-	var found bool
-	first, found, err = backFiller.Store.GetFirstEntry()
-
-	if err != nil {
-		return fmt.Errorf("failed to get first entry in database: %s", err.Error())
-	}
-
-	log.Debugf("First entry in DB: %s", first.String())
 
 	for slug, details := range countries {
 		records := make([]models.CountryEntry, 0)
 		realName := lookupCountryName(details.Name)
 		log.Debugf("Getting data for %s (slug: %s)", realName, slug)
 
+		var entries []struct {
+			Confirmed int64
+			Recovered int64
+			Deaths    int64
+			Date      time.Time
+		}
 		entries, err = backFiller.getHistoricalData(slug)
 
 		if err != nil {
-			log.WithError(err).Warningf("failed to get history for '%s'", slug)
+			log.WithError(err).WithField("country", slug).Warning("failed to get history")
 			continue
 		}
 
 		for _, entry := range entries {
-			log.Debugf("Entry date: %s", entry.Date.String())
-			if !found || entry.Date.Before(first) {
-				records = append(records, models.CountryEntry{
-					Timestamp: entry.Date,
-					Code:      details.Code,
-					Name:      realName,
-					Confirmed: entry.Confirmed,
-					Deaths:    entry.Deaths,
-					Recovered: entry.Recovered})
-			}
+			records = append(records, models.CountryEntry{
+				Timestamp: entry.Date.Add(24 * time.Hour),
+				Code:      details.Code,
+				Name:      realName,
+				Confirmed: entry.Confirmed,
+				Deaths:    entry.Deaths,
+				Recovered: entry.Recovered})
 		}
 
 		err = backFiller.Store.Add(records)
@@ -89,17 +69,10 @@ func (backFiller *Backfiller) Run() error {
 
 const covid19url = "https://api.covid19api.com"
 
-func (backFiller *Backfiller) getCountries() (map[string]struct {
-	Name string
-	Code string
-}, error) {
-	var result = map[string]struct {
-		Name string
-		Code string
-	}{}
-
+func (backFiller *Backfiller) getCountries() (result map[string]struct{ Name, Code string }, err error) {
 	req, _ := http.NewRequest(http.MethodGet, backFiller.URL+"/countries", nil)
-	resp, err := backFiller.slowCall(req)
+	var resp *http.Response
+	resp, err = backFiller.slowCall(req)
 
 	if err == nil {
 		if resp.StatusCode == http.StatusOK {
@@ -111,6 +84,7 @@ func (backFiller *Backfiller) getCountries() (map[string]struct {
 
 			decoder := json.NewDecoder(resp.Body)
 			if err = decoder.Decode(&stats); err == nil {
+				result = make(map[string]struct{ Name, Code string })
 				for _, entry := range stats {
 					result[entry.Slug] = struct {
 						Name string
@@ -125,21 +99,15 @@ func (backFiller *Backfiller) getCountries() (map[string]struct {
 	return result, err
 }
 
-func (backFiller *Backfiller) getHistoricalData(slug string) ([]struct {
+func (backFiller *Backfiller) getHistoricalData(slug string) (stats []struct {
 	Confirmed int64
 	Recovered int64
 	Deaths    int64
 	Date      time.Time
-}, error) {
-	var stats []struct {
-		Confirmed int64
-		Recovered int64
-		Deaths    int64
-		Date      time.Time
-	}
-
+}, err error) {
 	req, _ := http.NewRequest(http.MethodGet, backFiller.URL+"/total/country/"+slug, nil)
-	resp, err := backFiller.slowCall(req)
+	var resp *http.Response
+	resp, err = backFiller.slowCall(req)
 
 	if err == nil {
 		if resp.StatusCode == http.StatusOK {
@@ -162,13 +130,14 @@ func (backFiller *Backfiller) slowCall(req *http.Request) (resp *http.Response, 
 	for err == nil && resp.StatusCode == http.StatusTooManyRequests {
 		_ = resp.Body.Close()
 
-		if waitTime < 5*time.Second {
-			waitTime *= 2
-		}
 		log.WithField("waitTime", waitTime).Debug("429 recv'd. Slowing down")
 		time.Sleep(waitTime)
 
 		resp, err = client.Do(req)
+
+		if waitTime < 5*time.Second {
+			waitTime *= 2
+		}
 	}
 
 	return

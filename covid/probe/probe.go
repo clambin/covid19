@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sync"
+	"time"
 )
 
 // Covid19Probe gets new COVID-19 stats for each country and, if they are new, adds them to the database
@@ -52,6 +53,8 @@ func New(cfg *configuration.MonitorConfiguration, db store.CovidStore) *Covid19P
 
 // Update gets new COVID-19 stats for each country and, if they are new, adds them to the database
 func (probe *Covid19Probe) Update(ctx context.Context) (err error) {
+	start := time.Now()
+
 	var countryStats []models.CountryEntry
 	countryStats, err = probe.Fetcher.GetCountryStats(ctx)
 	if err == nil {
@@ -72,5 +75,8 @@ func (probe *Covid19Probe) Update(ctx context.Context) (err error) {
 	}
 
 	probe.setCountryUpdates(countryStats)
+
+	log.Infof("discovered %d country figures in %v", len(countryStats), time.Since(start))
+
 	return
 }

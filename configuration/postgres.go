@@ -14,6 +14,7 @@ type PostgresDB struct {
 	Password string `yaml:"password"`
 }
 
+// LoadPGEnvironmentWithDefaults creates a Postgres config with default settings
 func LoadPGEnvironmentWithDefaults() (config PostgresDB) {
 	config = LoadPGEnvironment()
 	if config.Host == "" {
@@ -58,6 +59,7 @@ func LoadPGEnvironment() PostgresDB {
 	}
 }
 
+// IsValid checks if the postgres configuration is valid
 func (pg PostgresDB) IsValid() bool {
 	return pg.Host != "" &&
 		pg.Port != 0 &&

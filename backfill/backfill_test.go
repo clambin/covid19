@@ -22,10 +22,9 @@ func TestBackfiller_Run(t *testing.T) {
 	backFiller := backfill.New(db)
 	backFiller.URL = server.URL
 
-	db.On("GetFirstEntry").Return(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC), true, nil)
 	db.On("Add", []models.CountryEntry{
 		{
-			Timestamp: time.Date(2020, 1, 22, 0, 0, 0, 0, time.UTC),
+			Timestamp: time.Date(2020, 1, 23, 0, 0, 0, 0, time.UTC),
 			Name:      "Belgium",
 			Code:      "BE",
 			Confirmed: 0,
@@ -33,7 +32,7 @@ func TestBackfiller_Run(t *testing.T) {
 			Deaths:    0,
 		},
 		{
-			Timestamp: time.Date(2020, 2, 4, 0, 0, 0, 0, time.UTC),
+			Timestamp: time.Date(2020, 2, 5, 0, 0, 0, 0, time.UTC),
 			Name:      "Belgium",
 			Code:      "BE",
 			Confirmed: 1,
@@ -42,7 +41,7 @@ func TestBackfiller_Run(t *testing.T) {
 		},
 	}).Return(nil)
 	db.On("Add", []models.CountryEntry{{
-		Timestamp: time.Date(2020, 1, 31, 0, 0, 0, 0, time.UTC),
+		Timestamp: time.Date(2020, 2, 1, 0, 0, 0, 0, time.UTC),
 		Name:      "Burma",
 		Code:      "MM",
 		Confirmed: 8,

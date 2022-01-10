@@ -55,7 +55,7 @@ func (probe *Probe) Update(ctx context.Context) (err error) {
 
 	_ = maxJobs.Acquire(ctx, maxConcurrentJobs)
 
-	log.Infof("discovered %d country population figures in %v", codes, time.Now().Sub(start))
+	log.Infof("discovered %d country population figures in %v", codes, time.Since(start))
 	return nil
 }
 

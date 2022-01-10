@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - nancy
   pull_request:
     branches:
       - develop
