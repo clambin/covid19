@@ -46,10 +46,17 @@ func (notifier *RealNotifier) Notify(entries []models.CountryEntry) (err error) 
 		lastDBEntry, ok := notifier.lastDBEntries[record.Name]
 
 		if ok == false {
+			log.WithError(err).Warning("failed to get last DB entry")
 			continue
 		}
 
 		if !record.Timestamp.After(lastDBEntry.Timestamp) {
+			continue
+		}
+
+		if record.Confirmed == lastDBEntry.Confirmed &&
+			record.Deaths == lastDBEntry.Deaths &&
+			record.Recovered == lastDBEntry.Recovered {
 			continue
 		}
 

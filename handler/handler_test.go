@@ -60,7 +60,7 @@ func TestCovidHandler_Search(t *testing.T) {
 	store := &mockCovidStore.CovidStore{}
 	c := &cache.Cache{DB: store, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
-	targets := h.Search()
+	targets := h.Endpoints().Search()
 	assert.Equal(t, []string{
 		"incremental",
 		"cumulative",

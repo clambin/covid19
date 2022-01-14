@@ -29,6 +29,11 @@ func TestNotifier_Notify(t *testing.T) {
 	err := n.Notify([]models.CountryEntry{})
 	assert.NoError(t, err)
 
+	err = n.Notify([]models.CountryEntry{
+		{Name: "Belgium", Code: "BE", Timestamp: timestamp.Add(24 * time.Hour), Confirmed: 5, Recovered: 1, Deaths: 0},
+	})
+	assert.NoError(t, err)
+
 	sender.On("Send", "New probe data for Belgium", "Confirmed: 5, deaths: 1, recovered: 4").Return(nil).Once()
 	err = n.Notify([]models.CountryEntry{
 		{Name: "Belgium", Code: "BE", Timestamp: timestamp.Add(24 * time.Hour), Confirmed: 10, Recovered: 5, Deaths: 1},
