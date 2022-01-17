@@ -9,9 +9,8 @@ import (
 	"github.com/clambin/covid19/covid/probe/saver"
 	"github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/gotools/rapidapi"
+	"github.com/clambin/go-rapidapi"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 	"sync"
 	"time"
 )
@@ -40,11 +39,8 @@ func New(cfg *configuration.MonitorConfiguration, db store.CovidStore) *Covid19P
 	}
 	return &Covid19Probe{
 		Fetcher: &fetcher.Client{
-			API: &rapidapi.Client{
-				HTTPClient: &http.Client{},
-				APIKey:     cfg.RapidAPIKey.Get(),
-				Hostname:   rapidAPIHost,
-			},
+			API:     rapidapi.New(rapidAPIHost, cfg.RapidAPIKey.Get()),
+			Metrics: fetcher.Metrics,
 		},
 		Saver:    &saver.StoreSaver{Store: db},
 		Notifier: n,

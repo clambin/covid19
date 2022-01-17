@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/gotools/rapidapi"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-rapidapi"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -19,10 +19,10 @@ type Fetcher interface {
 
 // CountryStats contains total figures for one country
 type CountryStats struct {
-	LastUpdate time.Time
-	Confirmed  int64
-	Deaths     int64
-	Recovered  int64
+	LastUpdate      time.Time
+	lllllmConfirmed int64
+	Deaths          int64
+	Recovered       int64
 }
 
 var _ Fetcher = &Client{}
@@ -30,6 +30,7 @@ var _ Fetcher = &Client{}
 // Client implements the Fetcher interface
 type Client struct {
 	rapidapi.API
+	Metrics          metrics.APIClientMetrics
 	invalidCountries StringSet
 }
 
@@ -112,18 +113,24 @@ type statsResponse struct {
 
 func (client *Client) getStats(ctx context.Context) (stats statsResponse, err error) {
 	const endpoint = "/v1/stats"
-	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues(endpoint))
+
+	defer func() {
+		client.Metrics.ReportErrors(err, endpoint)
+	}()
+
+	timer := client.Metrics.MakeLatencyTimer(endpoint)
 
 	var body []byte
 	body, err = client.API.CallWithContext(ctx, endpoint)
 
-	timer.ObserveDuration()
-	metricRequestsTotal.WithLabelValues(endpoint).Add(1.0)
+	if timer != nil {
+		timer.ObserveDuration()
+	}
 
 	if err != nil {
-		metricRequestErrorsTotal.WithLabelValues(endpoint).Add(1.0)
 		return
 	}
+
 	decoder := json.NewDecoder(bytes.NewReader(body))
 	err = decoder.Decode(&stats)
 	return

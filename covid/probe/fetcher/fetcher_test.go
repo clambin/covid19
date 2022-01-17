@@ -2,12 +2,13 @@ package fetcher_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/clambin/covid19/covid/probe/fetcher"
-	"github.com/clambin/gotools/rapidapi/mocks"
+	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-rapidapi/mocks"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
-
-	// "github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -15,8 +16,7 @@ import (
 
 func TestGetCountryStats(t *testing.T) {
 	mockAPI := &mocks.API{}
-	client := fetcher.Client{}
-	client.API = mockAPI
+	client := fetcher.Client{API: mockAPI}
 
 	mockAPI.
 		On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
@@ -24,8 +24,8 @@ func TestGetCountryStats(t *testing.T) {
 		Once()
 
 	response, err := client.GetCountryStats(context.Background())
-	require.Equal(t, nil, err)
-	require.Equal(t, 2, len(response))
+	require.NoError(t, err)
+	require.Len(t, response, 2)
 
 	indexBE := 0
 	indexUS := 1
@@ -48,11 +48,59 @@ func TestGetCountryStats(t *testing.T) {
 
 	mockAPI.
 		On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
-		Return([]byte(goodResponse), fmt.Errorf("500 - Internal Server Error")).
+		Return([]byte(``), fmt.Errorf("500 - Internal Server Error")).
 		Once()
 
 	_, err = client.GetCountryStats(context.Background())
 	require.Error(t, err)
+}
+
+func TestGetCountryStats_Metrics(t *testing.T) {
+	mockAPI := &mocks.API{}
+	client := fetcher.Client{
+		API:     mockAPI,
+		Metrics: fetcher.Metrics,
+	}
+
+	mockAPI.
+		On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
+		Return([]byte(goodResponse), nil).
+		Once()
+
+	_, err := client.GetCountryStats(context.Background())
+	require.NoError(t, err)
+
+	ch := make(chan prometheus.Metric)
+	go client.Metrics.Errors.Collect(ch)
+
+	m := <-ch
+	assert.Zero(t, metrics.MetricValue(m).GetCounter().GetValue())
+
+	ch = make(chan prometheus.Metric)
+	go client.Metrics.Latency.Collect(ch)
+
+	m = <-ch
+	assert.Equal(t, uint64(1), metrics.MetricValue(m).GetSummary().GetSampleCount())
+
+	mockAPI.
+		On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
+		Return([]byte(``), errors.New("unavailable")).
+		Once()
+
+	_, err = client.GetCountryStats(context.Background())
+	require.Error(t, err)
+
+	ch = make(chan prometheus.Metric)
+	go client.Metrics.Errors.Collect(ch)
+
+	m = <-ch
+	assert.Equal(t, 1.0, metrics.MetricValue(m).GetCounter().GetValue())
+
+	ch = make(chan prometheus.Metric)
+	go client.Metrics.Latency.Collect(ch)
+
+	m = <-ch
+	assert.Equal(t, uint64(2), metrics.MetricValue(m).GetSummary().GetSampleCount())
 
 }
 

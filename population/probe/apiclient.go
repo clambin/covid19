@@ -5,9 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/gotools/rapidapi"
+	"github.com/clambin/go-rapidapi"
 	"github.com/prometheus/client_golang/prometheus"
-	"net/http"
 	"net/url"
 )
 
@@ -28,11 +27,7 @@ const rapidAPIHost = "world-population.p.rapidapi.com"
 // NewAPIClient creates a new Population API Client
 func NewAPIClient(apiKey string) *RapidAPIClient {
 	return &RapidAPIClient{
-		API: &rapidapi.Client{
-			HTTPClient: &http.Client{},
-			Hostname:   rapidAPIHost,
-			APIKey:     apiKey,
-		},
+		API: rapidapi.New(rapidAPIHost, apiKey),
 	}
 }
 

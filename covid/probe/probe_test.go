@@ -11,7 +11,7 @@ import (
 	mockSaver "github.com/clambin/covid19/covid/probe/saver/mocks"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/gotools/metrics"
+	"github.com/clambin/go-metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

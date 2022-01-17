@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/covid19/population/probe"
-	"github.com/clambin/gotools/rapidapi/mocks"
+	"github.com/clambin/go-rapidapi/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
