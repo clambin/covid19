@@ -7,7 +7,7 @@ import (
 	"github.com/clambin/covid19/handler"
 	"github.com/clambin/covid19/models"
 	mockPopulationStore "github.com/clambin/covid19/population/store/mocks"
-	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -26,14 +26,7 @@ func TestConfirmedByCountry(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
-				To: time.Now(),
-			},
-		},
-	}
-
+	args := simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 	ctx := context.Background()
 
 	response, err := h.TableQuery(ctx, "country-confirmed", &args)
@@ -41,13 +34,13 @@ func TestConfirmedByCountry(t *testing.T) {
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 1)
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "A",
-		Data: grafanaJson.TableQueryResponseNumberColumn{3.0},
+		Data: simplejson.TableQueryResponseNumberColumn{3.0},
 	}, response.Columns[1])
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "B",
-		Data: grafanaJson.TableQueryResponseNumberColumn{10.0},
+		Data: simplejson.TableQueryResponseNumberColumn{10.0},
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -64,27 +57,20 @@ func TestDeathsByCountry(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
-				To: time.Now(),
-			},
-		},
-	}
-
+	args := simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 	ctx := context.Background()
 
 	response, err := h.TableQuery(ctx, "country-deaths", &args)
 	require.NoError(t, err)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 1)
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "A",
-		Data: grafanaJson.TableQueryResponseNumberColumn{0.0},
+		Data: simplejson.TableQueryResponseNumberColumn{0.0},
 	}, response.Columns[1])
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "B",
-		Data: grafanaJson.TableQueryResponseNumberColumn{1.0},
+		Data: simplejson.TableQueryResponseNumberColumn{1.0},
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -111,14 +97,7 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c, PopulationStore: dbh2}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
-				To: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC),
-			},
-		},
-	}
-
+	args := simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)}}}
 	ctx := context.Background()
 
 	response, err := h.TableQuery(ctx, "country-confirmed-population", &args)
@@ -126,13 +105,13 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "country",
-		Data: grafanaJson.TableQueryResponseStringColumn{"BE", "US"},
+		Data: simplejson.TableQueryResponseStringColumn{"BE", "US"},
 	}, response.Columns[1])
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "confirmed",
-		Data: grafanaJson.TableQueryResponseNumberColumn{20.0, 10.0},
+		Data: simplejson.TableQueryResponseNumberColumn{20.0, 10.0},
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -159,14 +138,7 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c, PopulationStore: dbh2}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
-				To: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC),
-			},
-		},
-	}
-
+	args := simplejson.TableQueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)}}}
 	ctx := context.Background()
 
 	response, err := h.TableQuery(ctx, "country-deaths-population", &args)
@@ -174,13 +146,13 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "country",
-		Data: grafanaJson.TableQueryResponseStringColumn{"BE", "US"},
+		Data: simplejson.TableQueryResponseStringColumn{"BE", "US"},
 	}, response.Columns[1])
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "deaths",
-		Data: grafanaJson.TableQueryResponseNumberColumn{20.0, 10.0},
+		Data: simplejson.TableQueryResponseNumberColumn{20.0, 10.0},
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)

@@ -11,7 +11,7 @@ import (
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/handler"
 	populationStore "github.com/clambin/covid19/population/store"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"net/http"
@@ -58,9 +58,9 @@ func CreateStackWithStores(cfg *configuration.Configuration, covidDB covidStore.
 		Cache:           &cache.Cache{DB: covidDB, Retention: 20 * time.Minute},
 	}
 
-	server := &grafana_json.Server{
+	server := &simplejson.Server{
 		Name: "covid19",
-		Handlers: []grafana_json.Handler{
+		Handlers: []simplejson.Handler{
 			&handler.Handler{
 				Cache:           stack.Cache,
 				PopulationStore: populationStore,

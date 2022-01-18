@@ -5,7 +5,6 @@ go 1.17
 require (
 	bou.ke/monkey v1.0.2
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
-	github.com/clambin/grafana-json v0.8.1
 	github.com/containrrr/shoutrrr v0.5.2
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/lib/pq v1.10.4
@@ -23,8 +22,9 @@ require (
 )
 
 require (
-	github.com/clambin/go-metrics v0.2.0
+	github.com/clambin/go-metrics v0.2.1
 	github.com/clambin/go-rapidapi v0.2.0
+	github.com/clambin/simplejson v0.9.1
 )
 
 require (

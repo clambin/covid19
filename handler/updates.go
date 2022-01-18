@@ -2,12 +2,12 @@ package handler
 
 import (
 	"github.com/clambin/covid19/models"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	"sort"
 	"time"
 )
 
-func (handler *Handler) handleUpdates(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleUpdates(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var entries []models.CountryEntry
 	entries, err = handler.Cache.DB.GetAll()
 	if err != nil {
@@ -37,10 +37,10 @@ func (handler *Handler) handleUpdates(args *grafana_json.TableQueryArgs) (respon
 		updateCount = append(updateCount, float64(updates[timestamp]))
 	}
 
-	return &grafana_json.TableQueryResponse{
-		Columns: []grafana_json.TableQueryResponseColumn{
-			{Text: "timestamp", Data: grafana_json.TableQueryResponseTimeColumn(timestamps)},
-			{Text: "updates", Data: grafana_json.TableQueryResponseNumberColumn(updateCount)},
+	return &simplejson.TableQueryResponse{
+		Columns: []simplejson.TableQueryResponseColumn{
+			{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn(timestamps)},
+			{Text: "updates", Data: simplejson.TableQueryResponseNumberColumn(updateCount)},
 		},
 	}, nil
 }

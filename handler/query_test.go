@@ -6,7 +6,7 @@ import (
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/handler"
 	"github.com/clambin/covid19/models"
-	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -43,9 +43,9 @@ func BenchmarkHandlerTableQuery(b *testing.B) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	tableArgs := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
+	tableArgs := simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				From: time.Now(),
 				To:   time.Now(),
 			},

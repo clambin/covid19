@@ -6,7 +6,7 @@ import (
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/handler"
 	"github.com/clambin/covid19/models"
-	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sort"
@@ -33,7 +33,7 @@ func TestHandler_Updates(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{}
+	args := simplejson.TableQueryArgs{}
 
 	ctx := context.Background()
 
@@ -41,17 +41,17 @@ func TestHandler_Updates(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 2)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
-	assert.Equal(t, grafanaJson.TableQueryResponseTimeColumn{
+	assert.Equal(t, simplejson.TableQueryResponseTimeColumn{
 		time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
 		time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
 	}, response.Columns[0].Data)
 	assert.Equal(t, "updates", response.Columns[1].Text)
-	assert.Equal(t, grafanaJson.TableQueryResponseNumberColumn{1, 2, 1}, response.Columns[1].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 2, 1}, response.Columns[1].Data)
 
-	args = grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
+	args = simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				To: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
 			},
 		},
@@ -60,10 +60,10 @@ func TestHandler_Updates(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 2)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
-	assert.Equal(t, grafanaJson.TableQueryResponseTimeColumn{
+	assert.Equal(t, simplejson.TableQueryResponseTimeColumn{
 		time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
 	}, response.Columns[0].Data)
 	assert.Equal(t, "updates", response.Columns[1].Text)
-	assert.Equal(t, grafanaJson.TableQueryResponseNumberColumn{1, 2}, response.Columns[1].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 2}, response.Columns[1].Data)
 }

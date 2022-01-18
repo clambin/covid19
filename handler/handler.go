@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/clambin/covid19/cache"
 	populationStore "github.com/clambin/covid19/population/store"
-	"github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 )
 
 // Handler implements business logic for APIServer
@@ -28,8 +28,8 @@ var Targets = []string{
 }
 
 // Endpoints tells the server which endpoints we have implemented
-func (handler *Handler) Endpoints() grafana_json.Endpoints {
-	return grafana_json.Endpoints{
+func (handler *Handler) Endpoints() simplejson.Endpoints {
+	return simplejson.Endpoints{
 		Search:     handler.Search,
 		TableQuery: handler.TableQuery,
 		TagKeys:    handler.TagKeys,

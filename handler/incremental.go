@@ -3,10 +3,10 @@ package handler
 import (
 	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/models"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 )
 
-func (handler *Handler) handleIncremental(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleIncremental(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var deltas []cache.Entry
 	if len(args.AdHocFilters) > 0 {
 		deltas, err = handler.getDeltasForCountry(args)
@@ -20,7 +20,7 @@ func (handler *Handler) handleIncremental(args *grafana_json.TableQueryArgs) (re
 	return
 }
 
-func (handler *Handler) getDeltasForCountry(args *grafana_json.TableQueryArgs) (deltas []cache.Entry, err error) {
+func (handler *Handler) getDeltasForCountry(args *simplejson.TableQueryArgs) (deltas []cache.Entry, err error) {
 	var countryName string
 	countryName, err = evaluateAhHocFilter(args.AdHocFilters)
 

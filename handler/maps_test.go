@@ -7,7 +7,7 @@ import (
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/handler"
 	"github.com/clambin/covid19/models"
-	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -28,9 +28,9 @@ func TestEvolution(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
+	args := simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				To: dbContents[len(dbContents)-1].Timestamp,
 			},
 		},
@@ -43,13 +43,13 @@ func TestEvolution(t *testing.T) {
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "country",
-		Data: grafanaJson.TableQueryResponseStringColumn{"A", "B"},
+		Data: simplejson.TableQueryResponseStringColumn{"A", "B"},
 	}, response.Columns[1])
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "increase",
-		Data: grafanaJson.TableQueryResponseNumberColumn{1.0, 3.5},
+		Data: simplejson.TableQueryResponseNumberColumn{1.0, 3.5},
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -60,7 +60,7 @@ func TestEvolution_NoEndDate(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{}
+	args := simplejson.TableQueryArgs{}
 	ctx := context.Background()
 
 	dbContents2 := []models.CountryEntry{
@@ -83,13 +83,13 @@ func TestEvolution_NoEndDate(t *testing.T) {
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "country",
-		Data: grafanaJson.TableQueryResponseStringColumn{"A", "B"},
+		Data: simplejson.TableQueryResponseStringColumn{"A", "B"},
 	}, response.Columns[1])
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "increase",
-		Data: grafanaJson.TableQueryResponseNumberColumn{1.0, 3.5},
+		Data: simplejson.TableQueryResponseNumberColumn{1.0, 3.5},
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -108,9 +108,9 @@ func TestEvolution_NoData(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
+	args := simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				To: time.Date(2020, time.October, 31, 0, 0, 0, 0, time.UTC),
 			},
 		},
@@ -154,9 +154,9 @@ func TestMortalityVsConfirmed(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
+	args := simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				To: time.Now(),
 			},
 		},
@@ -169,13 +169,13 @@ func TestMortalityVsConfirmed(t *testing.T) {
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "country",
-		Data: grafanaJson.TableQueryResponseStringColumn{"A", "B"},
+		Data: simplejson.TableQueryResponseStringColumn{"A", "B"},
 	}, response.Columns[1])
-	assert.Equal(t, grafanaJson.TableQueryResponseColumn{
+	assert.Equal(t, simplejson.TableQueryResponseColumn{
 		Text: "ratio",
-		Data: grafanaJson.TableQueryResponseNumberColumn{0.1, 0.05},
+		Data: simplejson.TableQueryResponseNumberColumn{0.1, 0.05},
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -201,9 +201,9 @@ func BenchmarkHandler_TableQuery_Evolution(b *testing.B) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
+	args := simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				To: timestamp,
 			},
 		},

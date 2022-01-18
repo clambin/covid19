@@ -3,7 +3,7 @@ package handler
 import (
 	"github.com/clambin/covid19/covid/probe/fetcher"
 	"github.com/clambin/covid19/models"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	"time"
 )
 
@@ -12,15 +12,15 @@ const (
 	countryDeaths
 )
 
-func (handler *Handler) handleLatestConfirmedByCountry(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleLatestConfirmedByCountry(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	return handler.handleLatestCountryStats(args.Range, countryConfirmed)
 }
 
-func (handler *Handler) handleLatestDeathsByCountry(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleLatestDeathsByCountry(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	return handler.handleLatestCountryStats(args.Range, countryDeaths)
 }
 
-func (handler *Handler) handleLatestCountryStats(args grafana_json.QueryRequestRange, mode int) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleLatestCountryStats(args simplejson.Range, mode int) (response *simplejson.TableQueryResponse, err error) {
 	var names []string
 	names, err = handler.Cache.DB.GetAllCountryNames()
 
@@ -40,15 +40,15 @@ func (handler *Handler) handleLatestCountryStats(args grafana_json.QueryRequestR
 	}
 
 	var timestamp time.Time
-	response = &grafana_json.TableQueryResponse{}
+	response = &simplejson.TableQueryResponse{}
 
 	for _, name := range names {
 		entry := entries[name]
 		if timestamp.IsZero() {
 			timestamp = entry.Timestamp
-			response.Columns = append(response.Columns, grafana_json.TableQueryResponseColumn{
+			response.Columns = append(response.Columns, simplejson.TableQueryResponseColumn{
 				Text: "timestamp",
-				Data: grafana_json.TableQueryResponseTimeColumn([]time.Time{timestamp}),
+				Data: simplejson.TableQueryResponseTimeColumn([]time.Time{timestamp}),
 			})
 		}
 
@@ -60,24 +60,24 @@ func (handler *Handler) handleLatestCountryStats(args grafana_json.QueryRequestR
 			value = float64(entry.Deaths)
 		}
 
-		response.Columns = append(response.Columns, grafana_json.TableQueryResponseColumn{
+		response.Columns = append(response.Columns, simplejson.TableQueryResponseColumn{
 			Text: name,
-			Data: grafana_json.TableQueryResponseNumberColumn([]float64{value}),
+			Data: simplejson.TableQueryResponseNumberColumn([]float64{value}),
 		})
 	}
 
 	return
 }
 
-func (handler *Handler) handleConfirmedByCountryByPopulation(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleConfirmedByCountryByPopulation(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	return handler.handleCountryStatsByPopulation(args, countryConfirmed)
 }
 
-func (handler *Handler) handleDeathsByCountryByPopulation(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleDeathsByCountryByPopulation(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	return handler.handleCountryStatsByPopulation(args, countryDeaths)
 }
 
-func (handler *Handler) handleCountryStatsByPopulation(args *grafana_json.TableQueryArgs, mode int) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleCountryStatsByPopulation(args *simplejson.TableQueryArgs, mode int) (response *simplejson.TableQueryResponse, err error) {
 	if response, err = handler.handleLatestCountryStats(args.Range, mode); err != nil {
 		return
 	}
@@ -90,21 +90,21 @@ func (handler *Handler) handleCountryStatsByPopulation(args *grafana_json.TableQ
 	}
 
 	// calculate figure by country population
-	for index := range response.Columns[0].Data.(grafana_json.TableQueryResponseTimeColumn) {
-		name := response.Columns[1].Data.(grafana_json.TableQueryResponseStringColumn)[index]
-		count := response.Columns[2].Data.(grafana_json.TableQueryResponseNumberColumn)[index]
+	for index := range response.Columns[0].Data.(simplejson.TableQueryResponseTimeColumn) {
+		name := response.Columns[1].Data.(simplejson.TableQueryResponseStringColumn)[index]
+		count := response.Columns[2].Data.(simplejson.TableQueryResponseNumberColumn)[index]
 
 		code, codeFound := fetcher.CountryCodes[name]
 		if codeFound == false {
 			code = name
 		}
-		response.Columns[1].Data.(grafana_json.TableQueryResponseStringColumn)[index] = code
+		response.Columns[1].Data.(simplejson.TableQueryResponseStringColumn)[index] = code
 
 		var rate float64
 		if pop, popFound := population[code]; popFound {
 			rate = count / float64(pop)
 		}
-		response.Columns[2].Data.(grafana_json.TableQueryResponseNumberColumn)[index] = rate
+		response.Columns[2].Data.(simplejson.TableQueryResponseNumberColumn)[index] = rate
 	}
 
 	// fix column name
@@ -118,7 +118,7 @@ func (handler *Handler) handleCountryStatsByPopulation(args *grafana_json.TableQ
 	return
 }
 
-func (handler *Handler) pivotResponse(input *grafana_json.TableQueryResponse) (output *grafana_json.TableQueryResponse) {
+func (handler *Handler) pivotResponse(input *simplejson.TableQueryResponse) (output *simplejson.TableQueryResponse) {
 	// pivot from:
 	// Columns {
 	//		timestamp column
@@ -137,22 +137,22 @@ func (handler *Handler) pivotResponse(input *grafana_json.TableQueryResponse) (o
 		values       []float64
 	)
 
-	timestamp := input.Columns[0].Data.(grafana_json.TableQueryResponseTimeColumn)[0]
+	timestamp := input.Columns[0].Data.(simplejson.TableQueryResponseTimeColumn)[0]
 
 	for _, col := range input.Columns[1:] {
 		countryName := col.Text
-		value := col.Data.(grafana_json.TableQueryResponseNumberColumn)[0]
+		value := col.Data.(simplejson.TableQueryResponseNumberColumn)[0]
 
 		timestamps = append(timestamps, timestamp)
 		countryNames = append(countryNames, countryName)
 		values = append(values, value)
 	}
 
-	return &grafana_json.TableQueryResponse{
-		Columns: []grafana_json.TableQueryResponseColumn{
-			{Text: "timestamp", Data: grafana_json.TableQueryResponseTimeColumn(timestamps)},
-			{Text: "country", Data: grafana_json.TableQueryResponseStringColumn(countryNames)},
-			{Text: "???", Data: grafana_json.TableQueryResponseNumberColumn(values)},
+	return &simplejson.TableQueryResponse{
+		Columns: []simplejson.TableQueryResponseColumn{
+			{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn(timestamps)},
+			{Text: "country", Data: simplejson.TableQueryResponseStringColumn(countryNames)},
+			{Text: "???", Data: simplejson.TableQueryResponseNumberColumn(values)},
 		},
 	}
 }

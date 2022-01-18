@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/covid19/cache"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 // TableQuery returns the table response for the provided target`
-func (handler *Handler) TableQuery(_ context.Context, target string, args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) TableQuery(_ context.Context, target string, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	start := time.Now()
 
 	switch target {
@@ -39,7 +39,7 @@ func (handler *Handler) TableQuery(_ context.Context, target string, args *grafa
 	var dataLen int
 	if response != nil && len(response.Columns) > 0 {
 		switch data := response.Columns[0].Data.(type) {
-		case grafana_json.TableQueryResponseTimeColumn:
+		case simplejson.TableQueryResponseTimeColumn:
 			dataLen = len(data)
 		}
 	}
@@ -54,7 +54,7 @@ func (handler *Handler) TableQuery(_ context.Context, target string, args *grafa
 	return
 }
 
-func buildResponse(entries []cache.Entry, window grafana_json.QueryRequestRange) *grafana_json.TableQueryResponse {
+func buildResponse(entries []cache.Entry, window simplejson.Range) *simplejson.TableQueryResponse {
 	var (
 		timestamps []time.Time
 		confirmed  []float64
@@ -72,16 +72,16 @@ func buildResponse(entries []cache.Entry, window grafana_json.QueryRequestRange)
 		deaths = append(deaths, float64(entry.Deaths))
 	}
 
-	return &grafana_json.TableQueryResponse{
-		Columns: []grafana_json.TableQueryResponseColumn{
-			{Text: "timestamp", Data: grafana_json.TableQueryResponseTimeColumn(timestamps)},
-			{Text: "deaths", Data: grafana_json.TableQueryResponseNumberColumn(deaths)},
-			{Text: "confirmed", Data: grafana_json.TableQueryResponseNumberColumn(confirmed)},
+	return &simplejson.TableQueryResponse{
+		Columns: []simplejson.TableQueryResponseColumn{
+			{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn(timestamps)},
+			{Text: "deaths", Data: simplejson.TableQueryResponseNumberColumn(deaths)},
+			{Text: "confirmed", Data: simplejson.TableQueryResponseNumberColumn(confirmed)},
 		},
 	}
 }
 
-func evaluateAhHocFilter(adHocFilters []grafana_json.AdHocFilter) (name string, err error) {
+func evaluateAhHocFilter(adHocFilters []simplejson.AdHocFilter) (name string, err error) {
 	if len(adHocFilters) != 1 {
 		err = fmt.Errorf("only one ad hoc filter supported. got %d", len(adHocFilters))
 	} else if adHocFilters[0].Key != "Country Name" {

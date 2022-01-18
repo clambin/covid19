@@ -5,7 +5,7 @@ import (
 	"github.com/clambin/covid19/cache"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/handler"
-	grafanaJson "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,9 +20,9 @@ func TestCumulative(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
+	args := simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				To: time.Now(),
 			},
 		},
@@ -36,8 +36,8 @@ func TestCumulative(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		require.Len(t, response.Columns[i].Data, 3)
 	}
-	assert.Equal(t, grafanaJson.TableQueryResponseNumberColumn{0, 0, 1}, response.Columns[1].Data)
-	assert.Equal(t, grafanaJson.TableQueryResponseNumberColumn{1, 6, 13}, response.Columns[2].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{0, 0, 1}, response.Columns[1].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 6, 13}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
@@ -49,12 +49,12 @@ func TestCumulativeForCountry(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := handler.Handler{Cache: c}
 
-	args := grafanaJson.TableQueryArgs{
-		CommonQueryArgs: grafanaJson.CommonQueryArgs{
-			Range: grafanaJson.QueryRequestRange{
+	args := simplejson.TableQueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				To: time.Now(),
 			},
-			AdHocFilters: []grafanaJson.AdHocFilter{
+			AdHocFilters: []simplejson.AdHocFilter{
 				{
 					Key:      "Country Name",
 					Operator: "=",
@@ -72,8 +72,8 @@ func TestCumulativeForCountry(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		require.Len(t, response.Columns[i].Data, 2)
 	}
-	assert.Equal(t, grafanaJson.TableQueryResponseNumberColumn{0, 0}, response.Columns[1].Data)
-	assert.Equal(t, grafanaJson.TableQueryResponseNumberColumn{1, 3}, response.Columns[2].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{0, 0}, response.Columns[1].Data)
+	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 3}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }

@@ -2,14 +2,14 @@ package handler
 
 import (
 	"github.com/clambin/covid19/models"
-	grafana_json "github.com/clambin/grafana-json"
+	"github.com/clambin/simplejson"
 	"sort"
 	"time"
 )
 
 const evolutionWindow = 7
 
-func (handler *Handler) handleEvolution(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleEvolution(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var entries map[string][]int64
 	entries, err = handler.getLatestEntries(args.Range.To)
 	if err != nil {
@@ -29,11 +29,11 @@ func (handler *Handler) handleEvolution(args *grafana_json.TableQueryArgs) (resp
 		values = append(values, increases[name])
 	}
 
-	return &grafana_json.TableQueryResponse{
-		Columns: []grafana_json.TableQueryResponseColumn{
-			{Text: "timestamp", Data: grafana_json.TableQueryResponseTimeColumn(timestamps)},
-			{Text: "country", Data: grafana_json.TableQueryResponseStringColumn(names)},
-			{Text: "increase", Data: grafana_json.TableQueryResponseNumberColumn(values)},
+	return &simplejson.TableQueryResponse{
+		Columns: []simplejson.TableQueryResponseColumn{
+			{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn(timestamps)},
+			{Text: "country", Data: simplejson.TableQueryResponseStringColumn(names)},
+			{Text: "increase", Data: simplejson.TableQueryResponseNumberColumn(values)},
 		},
 	}, nil
 }
@@ -91,7 +91,7 @@ func getSortedCountryNames(averages map[string]float64) (names []string) {
 	return
 }
 
-func (handler *Handler) handleMortalityVsConfirmed(args *grafana_json.TableQueryArgs) (response *grafana_json.TableQueryResponse, err error) {
+func (handler *Handler) handleMortalityVsConfirmed(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var countryNames []string
 	countryNames, err = handler.Cache.DB.GetAllCountryNames()
 	if err != nil {
@@ -123,18 +123,18 @@ func (handler *Handler) handleMortalityVsConfirmed(args *grafana_json.TableQuery
 		ratios = append(ratios, ratio)
 	}
 
-	return &grafana_json.TableQueryResponse{Columns: []grafana_json.TableQueryResponseColumn{
+	return &simplejson.TableQueryResponse{Columns: []simplejson.TableQueryResponseColumn{
 		{
 			Text: "timestamp",
-			Data: grafana_json.TableQueryResponseTimeColumn(timestamps),
+			Data: simplejson.TableQueryResponseTimeColumn(timestamps),
 		},
 		{
 			Text: "country",
-			Data: grafana_json.TableQueryResponseStringColumn(countryCodes),
+			Data: simplejson.TableQueryResponseStringColumn(countryCodes),
 		},
 		{
 			Text: "ratio",
-			Data: grafana_json.TableQueryResponseNumberColumn(ratios),
+			Data: simplejson.TableQueryResponseNumberColumn(ratios),
 		},
 	}}, nil
 }
