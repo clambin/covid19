@@ -23,7 +23,7 @@ require (
 )
 
 require (
-	github.com/clambin/go-metrics v0.2.0
+	github.com/clambin/go-metrics v0.2.1
 	github.com/clambin/go-rapidapi v0.2.0
 )
 
