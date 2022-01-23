@@ -28,6 +28,29 @@ func (_m *CovidStore) Add(entries []models.CountryEntry) error {
 	return r0
 }
 
+// CountEntriesByTime provides a mock function with given fields: from, to
+func (_m *CovidStore) CountEntriesByTime(from time.Time, to time.Time) (map[time.Time]int, error) {
+	ret := _m.Called(from, to)
+
+	var r0 map[time.Time]int
+	if rf, ok := ret.Get(0).(func(time.Time, time.Time) map[time.Time]int); ok {
+		r0 = rf(from, to)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[time.Time]int)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(time.Time, time.Time) error); ok {
+		r1 = rf(from, to)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetAll provides a mock function with given fields:
 func (_m *CovidStore) GetAll() ([]models.CountryEntry, error) {
 	ret := _m.Called()

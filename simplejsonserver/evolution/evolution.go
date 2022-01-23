@@ -1,15 +1,31 @@
-package handler
+package evolution
 
 import (
+	"context"
+	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson"
 	"sort"
 	"time"
 )
 
-const evolutionWindow = 7
+// Window is the number of past days that will be used to calculate the average
+const Window = 7
 
-func (handler *Handler) handleEvolution(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+// Handler calculates the 7-day average increase in confirmed cases by country
+type Handler struct {
+	CovidDB covidStore.CovidStore
+}
+
+var _ simplejson.Handler = &Handler{}
+
+func (handler Handler) Endpoints() (endpoints simplejson.Endpoints) {
+	return simplejson.Endpoints{
+		TableQuery: handler.tableQuery,
+	}
+}
+
+func (handler *Handler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
 	var entries map[string][]int64
 	entries, err = handler.getLatestEntries(args.Range.To)
 	if err != nil {
@@ -42,9 +58,9 @@ func (handler *Handler) getLatestEntries(end time.Time) (confirmed map[string][]
 	var entries []models.CountryEntry
 
 	if end.IsZero() {
-		entries, err = handler.Cache.DB.GetAll()
+		entries, err = handler.CovidDB.GetAll()
 	} else {
-		entries, err = handler.Cache.DB.GetAllForRange(end.Add(-evolutionWindow*24*time.Hour), end)
+		entries, err = handler.CovidDB.GetAllForRange(end.Add(-Window*24*time.Hour), end)
 	}
 
 	if err != nil || len(entries) == 0 {
@@ -52,7 +68,7 @@ func (handler *Handler) getLatestEntries(end time.Time) (confirmed map[string][]
 	}
 
 	if end.IsZero() {
-		start := entries[len(entries)-1].Timestamp.Add(-evolutionWindow * 24 * time.Hour)
+		start := entries[len(entries)-1].Timestamp.Add(-Window * 24 * time.Hour)
 
 		for len(entries) > 0 && entries[0].Timestamp.Before(start) {
 			entries = entries[1:]
@@ -89,52 +105,4 @@ func getSortedCountryNames(averages map[string]float64) (names []string) {
 	}
 	sort.Strings(names)
 	return
-}
-
-func (handler *Handler) handleMortalityVsConfirmed(args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
-	var countryNames []string
-	countryNames, err = handler.Cache.DB.GetAllCountryNames()
-	if err != nil {
-		return
-	}
-
-	var entries map[string]models.CountryEntry
-	entries, err = handler.Cache.DB.GetLatestForCountriesByTime(countryNames, args.Range.To)
-	if err != nil {
-		return
-	}
-
-	var timestamps []time.Time
-	var countryCodes []string
-	var ratios []float64
-
-	for _, countryName := range countryNames {
-		entry, ok := entries[countryName]
-		if ok == false {
-			continue
-		}
-
-		timestamps = append(timestamps, entry.Timestamp)
-		countryCodes = append(countryCodes, entry.Code)
-		var ratio float64
-		if entry.Confirmed > 0 {
-			ratio = float64(entry.Deaths) / float64(entry.Confirmed)
-		}
-		ratios = append(ratios, ratio)
-	}
-
-	return &simplejson.TableQueryResponse{Columns: []simplejson.TableQueryResponseColumn{
-		{
-			Text: "timestamp",
-			Data: simplejson.TableQueryResponseTimeColumn(timestamps),
-		},
-		{
-			Text: "country",
-			Data: simplejson.TableQueryResponseStringColumn(countryCodes),
-		},
-		{
-			Text: "ratio",
-			Data: simplejson.TableQueryResponseNumberColumn(ratios),
-		},
-	}}, nil
 }

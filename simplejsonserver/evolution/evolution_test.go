@@ -1,12 +1,11 @@
-package handler_test
+package evolution_test
 
 import (
 	"context"
-	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/covid/probe/fetcher"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
-	"github.com/clambin/covid19/handler"
 	"github.com/clambin/covid19/models"
+	"github.com/clambin/covid19/simplejsonserver/evolution"
 	"github.com/clambin/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -25,8 +24,7 @@ func TestEvolution(t *testing.T) {
 		).
 		Return(dbContents, nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := handler.Handler{Cache: c}
+	h := evolution.Handler{CovidDB: dbh}
 
 	args := simplejson.TableQueryArgs{
 		Args: simplejson.Args{
@@ -38,7 +36,7 @@ func TestEvolution(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := h.TableQuery(ctx, "evolution", &args)
+	response, err := h.Endpoints().TableQuery(ctx, &args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
@@ -57,8 +55,7 @@ func TestEvolution(t *testing.T) {
 
 func TestEvolution_NoEndDate(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := handler.Handler{Cache: c}
+	h := evolution.Handler{CovidDB: dbh}
 
 	args := simplejson.TableQueryArgs{}
 	ctx := context.Background()
@@ -78,7 +75,7 @@ func TestEvolution_NoEndDate(t *testing.T) {
 		On("GetAll").
 		Return(dbContents2, nil)
 
-	response, err := h.TableQuery(ctx, "evolution", &args)
+	response, err := h.Endpoints().TableQuery(ctx, &args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
@@ -105,8 +102,7 @@ func TestEvolution_NoData(t *testing.T) {
 		).
 		Return([]models.CountryEntry{}, nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := handler.Handler{Cache: c}
+	h := evolution.Handler{CovidDB: dbh}
 
 	args := simplejson.TableQueryArgs{
 		Args: simplejson.Args{
@@ -117,66 +113,12 @@ func TestEvolution_NoData(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	response, err := h.TableQuery(ctx, "evolution", &args)
+	response, err := h.Endpoints().TableQuery(ctx, &args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	for _, column := range response.Columns {
 		assert.Empty(t, column.Data)
 	}
-
-	mock.AssertExpectationsForObjects(t, dbh)
-}
-
-func TestMortalityVsConfirmed(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
-	dbh.
-		On("GetAllCountryNames").
-		Return([]string{"AA", "BB"}, nil)
-	dbh.
-		On("GetLatestForCountriesByTime", []string{"AA", "BB"}, mock.AnythingOfType("time.Time")).
-		Return(map[string]models.CountryEntry{
-			"AA": {
-				Timestamp: time.Date(2021, 12, 17, 0, 0, 0, 0, time.UTC),
-				Code:      "A",
-				Name:      "AA",
-				Confirmed: 100,
-				Deaths:    10,
-			},
-			"BB": {
-				Timestamp: time.Date(2021, 12, 17, 0, 0, 0, 0, time.UTC),
-				Code:      "B",
-				Name:      "BB",
-				Confirmed: 200,
-				Deaths:    10,
-			},
-		}, nil)
-
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := handler.Handler{Cache: c}
-
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
-				To: time.Now(),
-			},
-		},
-	}
-
-	ctx := context.Background()
-
-	response, err := h.TableQuery(ctx, "country-deaths-vs-confirmed", &args)
-	require.NoError(t, err)
-	require.Len(t, response.Columns, 3)
-	assert.Equal(t, "timestamp", response.Columns[0].Text)
-	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, simplejson.TableQueryResponseColumn{
-		Text: "country",
-		Data: simplejson.TableQueryResponseStringColumn{"A", "B"},
-	}, response.Columns[1])
-	assert.Equal(t, simplejson.TableQueryResponseColumn{
-		Text: "ratio",
-		Data: simplejson.TableQueryResponseNumberColumn{0.1, 0.05},
-	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
@@ -198,8 +140,7 @@ func BenchmarkHandler_TableQuery_Evolution(b *testing.B) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetAllForRange", timestamp.Add(-7*24*time.Hour), timestamp).Return(bigData, nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := handler.Handler{Cache: c}
+	h := evolution.Handler{CovidDB: dbh}
 
 	args := simplejson.TableQueryArgs{
 		Args: simplejson.Args{
@@ -212,11 +153,46 @@ func BenchmarkHandler_TableQuery_Evolution(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < 100; i++ {
-		_, err := h.TableQuery(ctx, "evolution", &args)
+	for i := 0; i < b.N; i++ {
+		_, err := h.Endpoints().TableQuery(ctx, &args)
 		if err != nil {
 			panic(err)
 		}
 	}
 
+}
+
+var dbContents = []models.CountryEntry{
+	{
+		Timestamp: time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC),
+		Code:      "A",
+		Name:      "A",
+		Confirmed: 1,
+		Recovered: 0,
+		Deaths:    0,
+	},
+	{
+		Timestamp: time.Date(2022, time.January, 2, 0, 0, 0, 0, time.UTC),
+		Code:      "B",
+		Name:      "B",
+		Confirmed: 3,
+		Recovered: 0,
+		Deaths:    0,
+	},
+	{
+		Timestamp: time.Date(2022, time.January, 2, 0, 0, 0, 0, time.UTC),
+		Code:      "A",
+		Name:      "A",
+		Confirmed: 3,
+		Recovered: 1,
+		Deaths:    0,
+	},
+	{
+		Timestamp: time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC),
+		Code:      "B",
+		Name:      "B",
+		Confirmed: 10,
+		Recovered: 5,
+		Deaths:    1,
+	},
 }

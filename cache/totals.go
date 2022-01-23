@@ -18,21 +18,8 @@ func GetTotalCases(rows []models.CountryEntry) (result []Entry) {
 		Active    int64
 	}
 
-	// Group data by timestamp
-	timeMap := make(map[time.Time][]models.CountryEntry)
-	for _, row := range rows {
-		if timeMap[row.Timestamp] == nil {
-			timeMap[row.Timestamp] = make([]models.CountryEntry, 0, 300)
-		}
-		timeMap[row.Timestamp] = append(timeMap[row.Timestamp], row)
-	}
-
-	// Get all unique timestamps
-	timestamps := make([]time.Time, 0, len(timeMap))
-	for timestamp := range timeMap {
-		timestamps = append(timestamps, timestamp)
-	}
-	sort.Slice(timestamps, func(i, j int) bool { return timestamps[i].Before(timestamps[j]) })
+	timeMap := groupData(rows)
+	timestamps := getUniqueTimestamps(timeMap)
 
 	// Go through each timestamp, record running total for each country & compute total cases
 	countryMap := make(map[string]covidData)
@@ -58,7 +45,26 @@ func GetTotalCases(rows []models.CountryEntry) (result []Entry) {
 	return
 }
 
-// GetTotalDeltas calculates deltas of cases returned by GetTotalCases
+func groupData(rows []models.CountryEntry) (timeMap map[time.Time][]models.CountryEntry) {
+	timeMap = make(map[time.Time][]models.CountryEntry, 365)
+	for _, row := range rows {
+		if timeMap[row.Timestamp] == nil {
+			timeMap[row.Timestamp] = make([]models.CountryEntry, 0, 193)
+		}
+		timeMap[row.Timestamp] = append(timeMap[row.Timestamp], row)
+	}
+	return
+}
+
+func getUniqueTimestamps(timeMap map[time.Time][]models.CountryEntry) (timestamps []time.Time) {
+	timestamps = make([]time.Time, 0, len(timeMap))
+	for timestamp := range timeMap {
+		timestamps = append(timestamps, timestamp)
+	}
+	sort.Slice(timestamps, func(i, j int) bool { return timestamps[i].Before(timestamps[j]) })
+	return
+}
+
 func GetTotalDeltas(entries []Entry) (result []Entry) {
 	current := Entry{}
 	for _, entry := range entries {

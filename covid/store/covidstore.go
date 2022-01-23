@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
@@ -21,6 +22,7 @@ type CovidStore interface {
 	GetFirstEntry() (first time.Time, found bool, err error)
 	Add(entries []models.CountryEntry) (err error)
 	GetAllCountryNames() (names []string, err error)
+	CountEntriesByTime(from, to time.Time) (count map[time.Time]int, err error)
 }
 
 var _ CovidStore = &PGCovidStore{}
@@ -187,6 +189,31 @@ func (store *PGCovidStore) doLookup(statement string) (names []string, err error
 			}
 		}
 		_ = rows.Close()
+	}
+
+	return
+}
+
+// CountEntriesByTime counts updates per timestamp
+func (store *PGCovidStore) CountEntriesByTime(from, to time.Time) (updates map[time.Time]int, err error) {
+	var rows *sql.Rows
+	rows, err = store.DB.Handle.Query(fmt.Sprintf(`SELECT time, COUNT(*) FROM covid19 %s GROUP BY time`, makeTimestampClause(from, to)))
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return updates, nil
+	}
+	if err != nil {
+		return
+	}
+
+	updates = make(map[time.Time]int)
+	for rows.Next() {
+		var timestamp time.Time
+		var count int
+
+		if rows.Scan(&timestamp, &count) == nil {
+			updates[timestamp] = count
+		}
 	}
 
 	return

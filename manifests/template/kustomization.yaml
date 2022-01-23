@@ -20,7 +20,7 @@ secretGenerator:
   name: covid19
   type: Opaque
 images:
-- name: ghcr.io/clambin/covid19-handler
+- name: ghcr.io/clambin/covid19-handlers
   newTag: $TAG      
 - name: ghcr.io/clambin/covid19-loader
   newTag: $TAG      

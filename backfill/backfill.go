@@ -23,7 +23,7 @@ func New(store store.CovidStore) *Backfiller {
 
 // Run the backfiller.  Get all supported countries from the API
 // Then add any historical record that is older than the first
-// record in the DB
+// record in the CovidDB
 func (backFiller *Backfiller) Run() error {
 
 	countries, err := backFiller.getCountries()

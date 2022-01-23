@@ -105,7 +105,7 @@
                         "uid": "PBFA97CFB590B2093"
                     },
                     "exemplar": true,
-                    "expr": "avg by (target) (rate(grafana_api_query_duration_seconds_count{app=~\"covid19\"}[5m]))",
+                    "expr": "avg by (target) (rate(simplejson_query_duration_seconds_count{app=~\"covid19\"}[2m]))",
                     "interval": "",
                     "legendFormat": "{{target}}",
                     "refId": "A"
@@ -196,7 +196,7 @@
                         "uid": "PBFA97CFB590B2093"
                     },
                     "exemplar": true,
-                    "expr": "sum by (app,target) (grafana_api_query_duration_seconds_sum{app=\"covid19\"} / grafana_api_query_duration_seconds_count{app=\"covid19\"})",
+                    "expr": "sum by (app,target) (simplejson_query_duration_seconds_sum{app=\"covid19\"} / simplejson_query_duration_seconds_count{app=\"covid19\"})",
                     "interval": "",
                     "legendFormat": "{{target}}",
                     "refId": "A"
@@ -287,7 +287,7 @@
                         "uid": "PBFA97CFB590B2093"
                     },
                     "exemplar": true,
-                    "expr": "avg by (target) (grafana_api_query_failed_count{app=\"covid19\"} / grafana_api_query_duration_seconds_count{app=\"covid19\"})",
+                    "expr": "avg by (target) (simplejson_query_failed_count{app=\"covid19\"} / simplejson_query_duration_seconds_count{app=\"covid19\"})",
                     "interval": "",
                     "legendFormat": "{{target}}",
                     "refId": "A"
@@ -376,9 +376,22 @@
                     },
                     "exemplar": true,
                     "expr": "avg(go_goroutines{app=\"covid19\"})",
+                    "hide": true,
                     "interval": "",
                     "legendFormat": "",
                     "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (go_goroutines{app_kubernetes_io_name=\"covid19\"})",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "",
+                    "refId": "B"
                 }
             ],
             "title": "Go routines",
@@ -482,6 +495,7 @@
                     },
                     "exemplar": true,
                     "expr": "go_gc_duration_seconds_sum{app=\"covid19\"} / go_gc_duration_seconds_count",
+                    "hide": true,
                     "interval": "",
                     "legendFormat": "duration",
                     "refId": "A"
@@ -492,8 +506,8 @@
                         "uid": "PBFA97CFB590B2093"
                     },
                     "exemplar": true,
-                    "expr": "rate(go_memstats_mallocs_total{app=\"covid19\"}[5m])",
-                    "hide": false,
+                    "expr": "rate(go_memstats_mallocs_total{app=\"covid19\"}[2m])",
+                    "hide": true,
                     "interval": "",
                     "legendFormat": "allocs",
                     "refId": "B"
@@ -504,11 +518,47 @@
                         "uid": "PBFA97CFB590B2093"
                     },
                     "exemplar": true,
-                    "expr": "rate(go_memstats_frees_total{app=\"covid19\"}[5m])",
-                    "hide": false,
+                    "expr": "rate(go_memstats_frees_total{app=\"covid19\"}[2m])",
+                    "hide": true,
                     "interval": "",
                     "legendFormat": "frees",
                     "refId": "C"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (go_gc_duration_seconds_sum{app_kubernetes_io_name=\"covid19\"} / go_gc_duration_seconds_count)",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "duration",
+                    "refId": "D"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (rate(go_memstats_frees_total{app_kubernetes_io_name=\"covid19\"}[2m]))",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "frees",
+                    "refId": "E"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (rate(go_memstats_mallocs_total{app_kubernetes_io_name=\"covid19\"}[2m]))",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "allocs",
+                    "refId": "F"
                 }
             ],
             "title": "GC",
@@ -595,6 +645,7 @@
                     },
                     "exemplar": true,
                     "expr": "go_memstats_sys_bytes{app=\"covid19\"}",
+                    "hide": true,
                     "interval": "",
                     "legendFormat": "sys",
                     "refId": "A"
@@ -606,7 +657,7 @@
                     },
                     "exemplar": true,
                     "expr": "go_memstats_alloc_bytes{app=\"covid19\"}",
-                    "hide": false,
+                    "hide": true,
                     "interval": "",
                     "legendFormat": "alloc",
                     "refId": "B"
@@ -618,25 +669,161 @@
                     },
                     "exemplar": true,
                     "expr": "go_memstats_heap_inuse_bytes{app=\"covid19\"}",
-                    "hide": false,
+                    "hide": true,
                     "interval": "",
                     "legendFormat": "heap",
                     "refId": "C"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (go_memstats_sys_bytes{app_kubernetes_io_name=\"covid19\"})",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "sys",
+                    "refId": "D"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (go_memstats_alloc_bytes{app_kubernetes_io_name=\"covid19\"})",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "alloc",
+                    "refId": "E"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (go_memstats_heap_inuse_bytes{app_kubernetes_io_name=\"covid19\"})",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "heap",
+                    "refId": "F"
                 }
             ],
             "title": "memory",
             "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 16
+            },
+            "id": 48,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (go_sql_in_use_connections{app_kubernetes_io_name=\"covid19\"})",
+                    "interval": "",
+                    "legendFormat": "in use",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "exemplar": true,
+                    "expr": "sum by (app_kubernetes_io_name) (go_sql_open_connections{app_kubernetes_io_name=\"covid19\"})",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "open",
+                    "refId": "B"
+                }
+            ],
+            "title": "database connections",
+            "type": "timeseries"
         }
     ],
     "refresh": "30s",
-    "schemaVersion": 33,
+    "schemaVersion": 34,
     "style": "dark",
     "tags": [],
     "templating": {
         "list": []
     },
     "time": {
-        "from": "now-30m",
+        "from": "now-1h",
         "to": "now"
     },
     "timepicker": {
@@ -655,6 +842,6 @@
     "timezone": "",
     "title": "Covid19 - internals",
     "uid": "jQXLLIzRz",
-    "version": 79,
+    "version": 123,
     "weekStart": ""
 }

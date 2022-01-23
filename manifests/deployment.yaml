@@ -20,7 +20,7 @@ spec:
             name: covid19-config
       containers:
         - name: covid19
-          image: "ghcr.io/clambin/covid19-handler"
+          image: "ghcr.io/clambin/covid19-handlers"
           imagePullPolicy: IfNotPresent
           args:
             - --config=/etc/covid19/covid19.yml

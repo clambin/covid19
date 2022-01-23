@@ -9,9 +9,8 @@ import (
 	"github.com/clambin/covid19/configuration"
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/db"
-	"github.com/clambin/covid19/handler"
 	populationStore "github.com/clambin/covid19/population/store"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/covid19/simplejsonserver"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"net/http"
@@ -20,7 +19,7 @@ import (
 )
 
 func main() {
-	cfg := configuration.GetConfiguration("covid19-handler", os.Args)
+	cfg := configuration.GetConfiguration("covid19-handlers", os.Args)
 
 	if cfg.Debug {
 		log.SetLevel(log.DebugLevel)
@@ -58,15 +57,7 @@ func CreateStackWithStores(cfg *configuration.Configuration, covidDB covidStore.
 		Cache:           &cache.Cache{DB: covidDB, Retention: 20 * time.Minute},
 	}
 
-	server := &simplejson.Server{
-		Name: "covid19",
-		Handlers: []simplejson.Handler{
-			&handler.Handler{
-				Cache:           stack.Cache,
-				PopulationStore: populationStore,
-			},
-		},
-	}
+	server := simplejsonserver.MakeServer(stack.CovidStore, stack.PopulationStore, stack.Cache)
 	r := server.GetRouter()
 	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	stack.HTTPServer = &http.Server{

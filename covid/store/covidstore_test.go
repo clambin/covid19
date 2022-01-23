@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 	pg := configuration.LoadPGEnvironment()
 
 	if !pg.IsValid() {
-		fmt.Println("Could not find all DB env variables. Skipping this test")
+		fmt.Println("Could not find all CovidDB env variables. Skipping this test")
 		return
 	}
 
@@ -131,6 +131,14 @@ func TestDB(t *testing.T) {
 	assert.Equal(t, int64(3), entry.Confirmed)
 	assert.Equal(t, int64(2), entry.Deaths)
 	assert.Equal(t, int64(1), entry.Recovered)
+
+	updates, err := covidStore.CountEntriesByTime(first, last)
+	require.NoError(t, err)
+	assert.Len(t, updates, 2)
+	for ts, value := range updates {
+		assert.True(t, ts.Equal(first) || ts.Equal(last))
+		assert.Equal(t, 1, value)
+	}
 }
 
 func TestNew_Failure(t *testing.T) {
