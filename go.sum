@@ -69,12 +69,6 @@ github.com/clambin/go-metrics v0.2.1 h1:TlnrXbZ4lEv6KLYdtdFKCZYre8Mf9sBlWlItcdn1
 github.com/clambin/go-metrics v0.2.1/go.mod h1:oEEJTGR660AzsIlFsEP2qRVJMYrSUAFvhcrhrRk5Vdk=
 github.com/clambin/go-rapidapi v0.2.0 h1:xNsMAhL9o3HXF4dvurwhnYwAWmAnn5J/ykf+JjGSdTU=
 github.com/clambin/go-rapidapi v0.2.0/go.mod h1:jIgXVGiR0D5wopGCdhUpLatsBOeEix8Ydz7pKooJu1g=
-github.com/clambin/simplejson v0.9.1 h1:IyaGA65CjTJ39HRqgY8sIktlVOyn82/l/8UAfswhsmU=
-github.com/clambin/simplejson v0.9.1/go.mod h1:XOQ0qJfEWyORtvIqsevdP74sQZOvCsPsk1+qZvOD/2Y=
-github.com/clambin/simplejson v0.9.2-0.20220119135212-6445c4f3b628 h1:MGwKQdMLluhSl1GD6b7kiPwNYAgRPCbY3WRgvAkNwz4=
-github.com/clambin/simplejson v0.9.2-0.20220119135212-6445c4f3b628/go.mod h1:XOQ0qJfEWyORtvIqsevdP74sQZOvCsPsk1+qZvOD/2Y=
-github.com/clambin/simplejson v0.10.0 h1:R0t+ZIiNIS/BVZpYHisBZFif4+h2VpeIkPDrBHjFEZA=
-github.com/clambin/simplejson v0.10.0/go.mod h1:pCXn+m1QLJdX7Vk2rGazKvWNsnG2sji4jx5rQHkULYU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/containrrr/shoutrrr v0.5.2 h1:97P+wZDpN2gzBKLt4PDP1ZUTLz+k8AJVs40WOu9NNw8=
