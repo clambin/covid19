@@ -6,7 +6,8 @@ import (
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/evolution"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -26,29 +27,17 @@ func TestEvolution(t *testing.T) {
 
 	h := evolution.Handler{CovidDB: dbh}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
-				To: dbContents[len(dbContents)-1].Timestamp,
-			},
-		},
-	}
+	args := query.Args{Args: common.Args{Range: common.Range{To: dbContents[len(dbContents)-1].Timestamp}}}
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, simplejson.TableQueryResponseColumn{
-		Text: "country",
-		Data: simplejson.TableQueryResponseStringColumn{"A", "B"},
-	}, response.Columns[1])
-	assert.Equal(t, simplejson.TableQueryResponseColumn{
-		Text: "increase",
-		Data: simplejson.TableQueryResponseNumberColumn{1.0, 3.5},
-	}, response.Columns[2])
+	assert.Equal(t, query.Column{Text: "country", Data: query.StringColumn{"A", "B"}}, response.Columns[1])
+	assert.Equal(t, query.Column{Text: "increase", Data: query.NumberColumn{1.0, 3.5}}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
@@ -57,7 +46,7 @@ func TestEvolution_NoEndDate(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	h := evolution.Handler{CovidDB: dbh}
 
-	args := simplejson.TableQueryArgs{}
+	args := query.Args{}
 	ctx := context.Background()
 
 	dbContents2 := []models.CountryEntry{
@@ -75,23 +64,16 @@ func TestEvolution_NoEndDate(t *testing.T) {
 		On("GetAll").
 		Return(dbContents2, nil)
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, simplejson.TableQueryResponseColumn{
-		Text: "country",
-		Data: simplejson.TableQueryResponseStringColumn{"A", "B"},
-	}, response.Columns[1])
-	assert.Equal(t, simplejson.TableQueryResponseColumn{
-		Text: "increase",
-		Data: simplejson.TableQueryResponseNumberColumn{1.0, 3.5},
-	}, response.Columns[2])
+	assert.Equal(t, query.Column{Text: "country", Data: query.StringColumn{"A", "B"}}, response.Columns[1])
+	assert.Equal(t, query.Column{Text: "increase", Data: query.NumberColumn{1.0, 3.5}}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
-
 func TestEvolution_NoData(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.
@@ -104,16 +86,10 @@ func TestEvolution_NoData(t *testing.T) {
 
 	h := evolution.Handler{CovidDB: dbh}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
-				To: time.Date(2020, time.October, 31, 0, 0, 0, 0, time.UTC),
-			},
-		},
-	}
+	args := query.Args{Args: common.Args{Range: common.Range{To: time.Date(2020, time.October, 31, 0, 0, 0, 0, time.UTC)}}}
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	for _, column := range response.Columns {
@@ -142,19 +118,13 @@ func BenchmarkHandler_TableQuery_Evolution(b *testing.B) {
 
 	h := evolution.Handler{CovidDB: dbh}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
-				To: timestamp,
-			},
-		},
-	}
+	args := query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}
 
 	ctx := context.Background()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.Endpoints().TableQuery(ctx, &args)
+		_, err := h.Endpoints().TableQuery(ctx, args)
 		if err != nil {
 			panic(err)
 		}

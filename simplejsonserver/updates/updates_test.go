@@ -4,7 +4,8 @@ import (
 	"context"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/simplejsonserver/updates"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -22,8 +23,8 @@ func TestHandler_Updates(t *testing.T) {
 
 	h := updates.Handler{CovidDB: dbh}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{Range: simplejson.Range{
+	args := query.Args{
+		Args: common.Args{Range: common.Range{
 			From: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
 			To:   time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC),
 		}},
@@ -31,14 +32,14 @@ func TestHandler_Updates(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 2)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
-	assert.Equal(t, simplejson.TableQueryResponseTimeColumn{
+	assert.Equal(t, query.TimeColumn{
 		time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
 		time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC),
 	}, response.Columns[0].Data)
 	assert.Equal(t, "updates", response.Columns[1].Text)
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 5}, response.Columns[1].Data)
+	assert.Equal(t, query.NumberColumn{1, 5}, response.Columns[1].Data)
 }

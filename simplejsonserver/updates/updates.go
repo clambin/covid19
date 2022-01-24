@@ -3,7 +3,8 @@ package updates
 import (
 	"context"
 	covidStore "github.com/clambin/covid19/covid/store"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 	"sort"
 	"time"
 )
@@ -21,7 +22,7 @@ func (handler Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (handler *Handler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var entries map[time.Time]int
 	entries, err = handler.CovidDB.CountEntriesByTime(args.Range.From, args.Range.To)
 	if err != nil {
@@ -34,10 +35,10 @@ func (handler *Handler) tableQuery(_ context.Context, args *simplejson.TableQuer
 		updateCount = append(updateCount, float64(entries[timestamp]))
 	}
 
-	return &simplejson.TableQueryResponse{
-		Columns: []simplejson.TableQueryResponseColumn{
-			{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn(timestamps)},
-			{Text: "updates", Data: simplejson.TableQueryResponseNumberColumn(updateCount)},
+	return &query.TableResponse{
+		Columns: []query.Column{
+			{Text: "timestamp", Data: query.TimeColumn(timestamps)},
+			{Text: "updates", Data: query.NumberColumn(updateCount)},
 		},
 	}, nil
 }

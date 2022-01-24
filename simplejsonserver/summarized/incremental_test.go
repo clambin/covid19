@@ -5,7 +5,8 @@ import (
 	"github.com/clambin/covid19/cache"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,24 +21,18 @@ func TestIncrementalHandler_Global(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := summarized.IncrementalHandler{Cache: c}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
-				To: time.Now(),
-			},
-		},
-	}
+	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	for i := 0; i < 3; i++ {
 		require.Len(t, response.Columns[i].Data, 3)
 	}
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{0, 0, 1}, response.Columns[1].Data)
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 5, 7}, response.Columns[2].Data)
+	assert.Equal(t, query.NumberColumn{0, 0, 1}, response.Columns[1].Data)
+	assert.Equal(t, query.NumberColumn{1, 5, 7}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
@@ -49,12 +44,12 @@ func TestIncrementalHandler_Country(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := summarized.IncrementalHandler{Cache: c}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
+	args := query.Args{
+		Args: common.Args{
+			Range: common.Range{
 				To: time.Now(),
 			},
-			AdHocFilters: []simplejson.AdHocFilter{
+			AdHocFilters: []common.AdHocFilter{
 				{
 					Key:      "Country Name",
 					Operator: "=",
@@ -66,14 +61,14 @@ func TestIncrementalHandler_Country(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	for i := 0; i < 3; i++ {
 		require.Len(t, response.Columns[i].Data, 2)
 	}
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{0, 0}, response.Columns[1].Data)
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 2}, response.Columns[2].Data)
+	assert.Equal(t, query.NumberColumn{0, 0}, response.Columns[1].Data)
+	assert.Equal(t, query.NumberColumn{1, 2}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }

@@ -6,7 +6,8 @@ import (
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/mortality"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -40,28 +41,22 @@ func TestHandler(t *testing.T) {
 
 	h := mortality.Handler{CovidDB: dbh}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
-				To: time.Now(),
-			},
-		},
-	}
+	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	assert.Equal(t, "timestamp", response.Columns[0].Text)
 	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, simplejson.TableQueryResponseColumn{
+	assert.Equal(t, query.Column{
 		Text: "country",
-		Data: simplejson.TableQueryResponseStringColumn{"A", "B"},
+		Data: query.StringColumn{"A", "B"},
 	}, response.Columns[1])
-	assert.Equal(t, simplejson.TableQueryResponseColumn{
+	assert.Equal(t, query.Column{
 		Text: "ratio",
-		Data: simplejson.TableQueryResponseNumberColumn{0.1, 0.05},
+		Data: query.NumberColumn{0.1, 0.05},
 	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -71,13 +66,7 @@ func TestHandler_Errors(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	h := mortality.Handler{CovidDB: dbh}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
-				To: time.Now(),
-			},
-		},
-	}
+	args := query.Args{}
 
 	ctx := context.Background()
 
@@ -86,7 +75,7 @@ func TestHandler_Errors(t *testing.T) {
 		Return(nil, errors.New("db error")).
 		Once()
 
-	_, err := h.Endpoints().TableQuery(ctx, &args)
+	_, err := h.Endpoints().TableQuery(ctx, args)
 	require.Error(t, err)
 
 	dbh.
@@ -96,7 +85,7 @@ func TestHandler_Errors(t *testing.T) {
 		On("GetLatestForCountriesByTime", []string{"AA", "BB", "CC"}, mock.AnythingOfType("time.Time")).
 		Return(nil, errors.New("db error"))
 
-	_, err = h.Endpoints().TableQuery(ctx, &args)
+	_, err = h.Endpoints().TableQuery(ctx, args)
 	require.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, dbh)

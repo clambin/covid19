@@ -3,11 +3,12 @@ package summarized
 import (
 	"fmt"
 	"github.com/clambin/covid19/cache"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"time"
 )
 
-func buildResponse(entries []cache.Entry, window simplejson.Range) *simplejson.TableQueryResponse {
+func buildResponse(entries []cache.Entry, window common.Range) *query.TableResponse {
 	timestamps := make([]time.Time, 0, len(entries))
 	confirmed := make([]float64, 0, len(entries))
 	deaths := make([]float64, 0, len(entries))
@@ -24,16 +25,16 @@ func buildResponse(entries []cache.Entry, window simplejson.Range) *simplejson.T
 		deaths = append(deaths, float64(entry.Deaths))
 	}
 
-	return &simplejson.TableQueryResponse{
-		Columns: []simplejson.TableQueryResponseColumn{
-			{Text: "timestamp", Data: simplejson.TableQueryResponseTimeColumn(timestamps)},
-			{Text: "deaths", Data: simplejson.TableQueryResponseNumberColumn(deaths)},
-			{Text: "confirmed", Data: simplejson.TableQueryResponseNumberColumn(confirmed)},
+	return &query.TableResponse{
+		Columns: []query.Column{
+			{Text: "timestamp", Data: query.TimeColumn(timestamps)},
+			{Text: "deaths", Data: query.NumberColumn(deaths)},
+			{Text: "confirmed", Data: query.NumberColumn(confirmed)},
 		},
 	}
 }
 
-func evaluateAdHocFilter(adHocFilters []simplejson.AdHocFilter) (name string, err error) {
+func evaluateAdHocFilter(adHocFilters []common.AdHocFilter) (name string, err error) {
 	if len(adHocFilters) != 1 {
 		err = fmt.Errorf("only one ad hoc filter supported. got %d", len(adHocFilters))
 	} else if adHocFilters[0].Key != "Country Name" {

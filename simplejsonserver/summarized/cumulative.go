@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 )
 
 // CumulativeHandler returns the incremental number of cases & deaths. If an adhoc filter exists, it returns the
@@ -24,7 +25,7 @@ func (handler CumulativeHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *CumulativeHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (handler *CumulativeHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var totals []cache.Entry
 	if len(args.AdHocFilters) > 0 {
 		totals, err = handler.getTotalsForCountry(args)
@@ -38,7 +39,7 @@ func (handler *CumulativeHandler) tableQuery(_ context.Context, args *simplejson
 	return
 }
 
-func (handler *CumulativeHandler) getTotalsForCountry(args *simplejson.TableQueryArgs) (totals []cache.Entry, err error) {
+func (handler *CumulativeHandler) getTotalsForCountry(args query.Args) (totals []cache.Entry, err error) {
 	var countryName string
 	countryName, err = evaluateAdHocFilter(args.AdHocFilters)
 

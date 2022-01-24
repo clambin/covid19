@@ -4,7 +4,8 @@ import (
 	"context"
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 	"time"
 )
 
@@ -27,11 +28,11 @@ func (handler ByCountryHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *ByCountryHandler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (handler *ByCountryHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	return getStatsByCountry(handler.CovidDB, args, handler.Mode)
 }
 
-func getStatsByCountry(db covidStore.CovidStore, args *simplejson.TableQueryArgs, mode int) (response *simplejson.TableQueryResponse, err error) {
+func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (response *query.TableResponse, err error) {
 	var names []string
 	names, err = db.GetAllCountryNames()
 
@@ -51,15 +52,15 @@ func getStatsByCountry(db covidStore.CovidStore, args *simplejson.TableQueryArgs
 	}
 
 	var timestamp time.Time
-	response = &simplejson.TableQueryResponse{}
+	response = &query.TableResponse{}
 
 	for _, name := range names {
 		entry := entries[name]
 		if timestamp.IsZero() {
 			timestamp = entry.Timestamp
-			response.Columns = append(response.Columns, simplejson.TableQueryResponseColumn{
+			response.Columns = append(response.Columns, query.Column{
 				Text: "timestamp",
-				Data: simplejson.TableQueryResponseTimeColumn([]time.Time{timestamp}),
+				Data: query.TimeColumn([]time.Time{timestamp}),
 			})
 		}
 
@@ -71,9 +72,9 @@ func getStatsByCountry(db covidStore.CovidStore, args *simplejson.TableQueryArgs
 			value = float64(entry.Deaths)
 		}
 
-		response.Columns = append(response.Columns, simplejson.TableQueryResponseColumn{
+		response.Columns = append(response.Columns, query.Column{
 			Text: name,
-			Data: simplejson.TableQueryResponseNumberColumn([]float64{value}),
+			Data: query.NumberColumn([]float64{value}),
 		})
 	}
 

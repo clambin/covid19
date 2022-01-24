@@ -4,7 +4,8 @@ import (
 	"context"
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 	"time"
 )
 
@@ -21,7 +22,7 @@ func (handler Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, args *simplejson.TableQueryArgs) (response *simplejson.TableQueryResponse, err error) {
+func (handler *Handler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var countryNames []string
 	countryNames, err = handler.CovidDB.GetAllCountryNames()
 	if err != nil {
@@ -53,18 +54,18 @@ func (handler *Handler) tableQuery(_ context.Context, args *simplejson.TableQuer
 		ratios = append(ratios, ratio)
 	}
 
-	return &simplejson.TableQueryResponse{Columns: []simplejson.TableQueryResponseColumn{
+	return &query.TableResponse{Columns: []query.Column{
 		{
 			Text: "timestamp",
-			Data: simplejson.TableQueryResponseTimeColumn(timestamps),
+			Data: query.TimeColumn(timestamps),
 		},
 		{
 			Text: "country",
-			Data: simplejson.TableQueryResponseStringColumn(countryCodes),
+			Data: query.StringColumn(countryCodes),
 		},
 		{
 			Text: "ratio",
-			Data: simplejson.TableQueryResponseNumberColumn(ratios),
+			Data: query.NumberColumn(ratios),
 		},
 	}}, nil
 }

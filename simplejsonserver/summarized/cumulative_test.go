@@ -7,7 +7,8 @@ import (
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
-	"github.com/clambin/simplejson"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,24 +24,18 @@ func TestCumulativeHandler_Global(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := summarized.CumulativeHandler{Cache: c}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
-				To: time.Now(),
-			},
-		},
-	}
+	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	for i := 0; i < 3; i++ {
 		require.Len(t, response.Columns[i].Data, 3)
 	}
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{0, 0, 1}, response.Columns[1].Data)
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 6, 13}, response.Columns[2].Data)
+	assert.Equal(t, query.NumberColumn{0, 0, 1}, response.Columns[1].Data)
+	assert.Equal(t, query.NumberColumn{1, 6, 13}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
@@ -53,9 +48,9 @@ func BenchmarkCumulativeHandler_Global(b *testing.B) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := summarized.CumulativeHandler{Cache: c}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
+	args := query.Args{
+		Args: common.Args{
+			Range: common.Range{
 				From: from,
 				To:   to,
 			},
@@ -66,7 +61,7 @@ func BenchmarkCumulativeHandler_Global(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.Endpoints().TableQuery(ctx, &args)
+		_, err := h.Endpoints().TableQuery(ctx, args)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -99,12 +94,12 @@ func TestCumulativeHandler_Country(t *testing.T) {
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := summarized.CumulativeHandler{Cache: c}
 
-	args := simplejson.TableQueryArgs{
-		Args: simplejson.Args{
-			Range: simplejson.Range{
+	args := query.Args{
+		Args: common.Args{
+			Range: common.Range{
 				To: time.Now(),
 			},
-			AdHocFilters: []simplejson.AdHocFilter{
+			AdHocFilters: []common.AdHocFilter{
 				{
 					Key:      "Country Name",
 					Operator: "=",
@@ -116,14 +111,14 @@ func TestCumulativeHandler_Country(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, &args)
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
 	require.Len(t, response.Columns, 3)
 	for i := 0; i < 3; i++ {
 		require.Len(t, response.Columns[i].Data, 2)
 	}
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{0, 0}, response.Columns[1].Data)
-	assert.Equal(t, simplejson.TableQueryResponseNumberColumn{1, 3}, response.Columns[2].Data)
+	assert.Equal(t, query.NumberColumn{0, 0}, response.Columns[1].Data)
+	assert.Equal(t, query.NumberColumn{1, 3}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
