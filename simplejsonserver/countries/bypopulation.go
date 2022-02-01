@@ -5,8 +5,8 @@ import (
 	"github.com/clambin/covid19/covid/probe/fetcher"
 	covidStore "github.com/clambin/covid19/covid/store"
 	populationStore "github.com/clambin/covid19/population/store"
-	"github.com/clambin/simplejson/v2"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/query"
 	"time"
 )
 
@@ -21,20 +21,21 @@ var _ simplejson.Handler = &ByCountryHandler{}
 
 func (handler ByCountryByPopulationHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	return simplejson.Endpoints{
-		TableQuery: handler.tableQuery,
+		Query: handler.tableQuery,
 	}
 }
 
-func (handler *ByCountryByPopulationHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
-	if response, err = getStatsByCountry(handler.CovidDB, args, handler.Mode); err != nil {
-		return
+func (handler *ByCountryByPopulationHandler) tableQuery(_ context.Context, req query.Request) (query.Response, error) {
+	response, err := getStatsByCountry(handler.CovidDB, req.Args, handler.Mode)
+	if err != nil {
+		return nil, err
 	}
 
 	response = handler.pivotResponse(response)
 
 	var population map[string]int64
 	if population, err = handler.PopDB.List(); err != nil {
-		return
+		return nil, err
 	}
 
 	// calculate figure by country population
@@ -63,7 +64,7 @@ func (handler *ByCountryByPopulationHandler) tableQuery(_ context.Context, args 
 		response.Columns[2].Text = "deaths"
 	}
 
-	return
+	return response, nil
 }
 
 func (handler *ByCountryByPopulationHandler) pivotResponse(input *query.TableResponse) (output *query.TableResponse) {
