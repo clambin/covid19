@@ -3,8 +3,8 @@ package summarized
 import (
 	"fmt"
 	"github.com/clambin/covid19/cache"
-	"github.com/clambin/simplejson/v3/common"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"time"
 )
 

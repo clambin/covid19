@@ -7,8 +7,8 @@ import (
 	"github.com/clambin/covid19/models"
 	mockPopulationStore "github.com/clambin/covid19/population/store/mocks"
 	"github.com/clambin/covid19/simplejsonserver/countries"
-	"github.com/clambin/simplejson/v3/common"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -43,13 +43,19 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 	args := query.Args{Args: common.Args{Range: common.Range{To: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)}}}
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.January, 3, 0, 0, 0, 0, time.UTC), time.Date(2020, time.January, 3, 0, 0, 0, 0, time.UTC)}},
-		{Text: "country", Data: query.StringColumn{"BE", "US"}},
-		{Text: "confirmed", Data: query.NumberColumn{20, 10}},
-	}}, response)
+	require.Len(t, response.Columns, 3)
+	assert.Equal(t, "timestamp", response.Columns[0].Text)
+	assert.Len(t, response.Columns[0].Data, 2)
+	assert.Equal(t, query.Column{
+		Text: "country",
+		Data: query.StringColumn{"BE", "US"},
+	}, response.Columns[1])
+	assert.Equal(t, query.Column{
+		Text: "confirmed",
+		Data: query.NumberColumn{20.0, 10.0},
+	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh, dbh2)
 }
@@ -81,13 +87,19 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 	args := query.Args{Args: common.Args{Range: common.Range{To: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)}}}
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.January, 3, 0, 0, 0, 0, time.UTC), time.Date(2020, time.January, 3, 0, 0, 0, 0, time.UTC)}},
-		{Text: "country", Data: query.StringColumn{"BE", "US"}},
-		{Text: "deaths", Data: query.NumberColumn{20, 10}},
-	}}, response)
+	require.Len(t, response.Columns, 3)
+	assert.Equal(t, "timestamp", response.Columns[0].Text)
+	assert.Len(t, response.Columns[0].Data, 2)
+	assert.Equal(t, query.Column{
+		Text: "country",
+		Data: query.StringColumn{"BE", "US"},
+	}, response.Columns[1])
+	assert.Equal(t, query.Column{
+		Text: "deaths",
+		Data: query.NumberColumn{20.0, 10.0},
+	}, response.Columns[2])
 
 	mock.AssertExpectationsForObjects(t, dbh, dbh2)
 }
@@ -116,7 +128,7 @@ func TestConfirmedByCountryByPopulation_Errors(t *testing.T) {
 	ctx := context.Background()
 
 	dbh2.On("List").Return(nil, errors.New("db error"))
-	_, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	_, err := h.Endpoints().TableQuery(ctx, args)
 	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, dbh, dbh2)

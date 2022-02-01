@@ -5,8 +5,8 @@ import (
 	"github.com/clambin/covid19/cache"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
-	"github.com/clambin/simplejson/v3/common"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v2/common"
+	"github.com/clambin/simplejson/v2/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,13 +25,14 @@ func TestIncrementalHandler_Global(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC)}},
-		{Text: "deaths", Data: query.NumberColumn{0, 0, 1}},
-		{Text: "confirmed", Data: query.NumberColumn{1, 5, 7}},
-	}}, response)
+	require.Len(t, response.Columns, 3)
+	for i := 0; i < 3; i++ {
+		require.Len(t, response.Columns[i].Data, 3)
+	}
+	assert.Equal(t, query.NumberColumn{0, 0, 1}, response.Columns[1].Data)
+	assert.Equal(t, query.NumberColumn{1, 5, 7}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
@@ -60,13 +61,14 @@ func TestIncrementalHandler_Country(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().TableQuery(ctx, args)
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC)}},
-		{Text: "deaths", Data: query.NumberColumn{0, 0}},
-		{Text: "confirmed", Data: query.NumberColumn{1, 2}},
-	}}, response)
+	require.Len(t, response.Columns, 3)
+	for i := 0; i < 3; i++ {
+		require.Len(t, response.Columns[i].Data, 2)
+	}
+	assert.Equal(t, query.NumberColumn{0, 0}, response.Columns[1].Data)
+	assert.Equal(t, query.NumberColumn{1, 2}, response.Columns[2].Data)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }

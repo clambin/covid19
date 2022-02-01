@@ -4,8 +4,8 @@ import (
 	"context"
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 	"sort"
 	"time"
 )
@@ -22,13 +22,13 @@ var _ simplejson.Handler = &Handler{}
 
 func (handler Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	return simplejson.Endpoints{
-		Query: handler.tableQuery,
+		TableQuery: handler.tableQuery,
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
+func (handler *Handler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var entries map[string][]int64
-	entries, err = handler.getLatestEntries(req.Args.Range.To)
+	entries, err = handler.getLatestEntries(args.Range.To)
 	if err != nil {
 		return
 	}
@@ -42,8 +42,7 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (respon
 	)
 
 	for _, name := range names {
-		// TODO: if To is zero, all reported timestamps are zero
-		timestamps = append(timestamps, req.Args.Range.To)
+		timestamps = append(timestamps, args.Range.To)
 		values = append(values, increases[name])
 	}
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v2/query"
 	"time"
 )
 
@@ -18,11 +18,11 @@ var _ simplejson.Handler = &Handler{}
 
 func (handler Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	return simplejson.Endpoints{
-		Query: handler.tableQuery,
+		TableQuery: handler.tableQuery,
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
+func (handler *Handler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
 	var countryNames []string
 	countryNames, err = handler.CovidDB.GetAllCountryNames()
 	if err != nil {
@@ -30,7 +30,7 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (respon
 	}
 
 	var entries map[string]models.CountryEntry
-	entries, err = handler.CovidDB.GetLatestForCountriesByTime(countryNames, req.Args.Range.To)
+	entries, err = handler.CovidDB.GetLatestForCountriesByTime(countryNames, args.Range.To)
 	if err != nil {
 		return
 	}
