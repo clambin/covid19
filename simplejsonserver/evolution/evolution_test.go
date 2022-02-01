@@ -6,8 +6,8 @@ import (
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/evolution"
-	"github.com/clambin/simplejson/v2/common"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3/common"
+	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -31,13 +31,13 @@ func TestEvolution(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, args)
+	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 	require.NoError(t, err)
-	require.Len(t, response.Columns, 3)
-	assert.Equal(t, "timestamp", response.Columns[0].Text)
-	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, query.Column{Text: "country", Data: query.StringColumn{"A", "B"}}, response.Columns[1])
-	assert.Equal(t, query.Column{Text: "increase", Data: query.NumberColumn{1.0, 3.5}}, response.Columns[2])
+	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+		{Text: "timestamp", Data: query.TimeColumn{time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC), time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC)}},
+		{Text: "country", Data: query.StringColumn{"A", "B"}},
+		{Text: "increase", Data: query.NumberColumn{1, 3.5}},
+	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
@@ -64,16 +64,17 @@ func TestEvolution_NoEndDate(t *testing.T) {
 		On("GetAll").
 		Return(dbContents2, nil)
 
-	response, err := h.Endpoints().TableQuery(ctx, args)
+	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 	require.NoError(t, err)
-	require.Len(t, response.Columns, 3)
-	assert.Equal(t, "timestamp", response.Columns[0].Text)
-	assert.Len(t, response.Columns[0].Data, 2)
-	assert.Equal(t, query.Column{Text: "country", Data: query.StringColumn{"A", "B"}}, response.Columns[1])
-	assert.Equal(t, query.Column{Text: "increase", Data: query.NumberColumn{1.0, 3.5}}, response.Columns[2])
+	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+		{Text: "timestamp", Data: query.TimeColumn{time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)}},
+		{Text: "country", Data: query.StringColumn{"A", "B"}},
+		{Text: "increase", Data: query.NumberColumn{1, 3.5}},
+	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
+
 func TestEvolution_NoData(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.
@@ -89,12 +90,13 @@ func TestEvolution_NoData(t *testing.T) {
 	args := query.Args{Args: common.Args{Range: common.Range{To: time.Date(2020, time.October, 31, 0, 0, 0, 0, time.UTC)}}}
 	ctx := context.Background()
 
-	response, err := h.Endpoints().TableQuery(ctx, args)
+	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 	require.NoError(t, err)
-	require.Len(t, response.Columns, 3)
-	for _, column := range response.Columns {
-		assert.Empty(t, column.Data)
-	}
+	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+		{Text: "timestamp", Data: query.TimeColumn(nil)},
+		{Text: "country", Data: query.StringColumn(nil)},
+		{Text: "increase", Data: query.NumberColumn(nil)},
+	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)
 }
@@ -124,7 +126,7 @@ func BenchmarkHandler_TableQuery_Evolution(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.Endpoints().TableQuery(ctx, args)
+		_, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 		if err != nil {
 			panic(err)
 		}

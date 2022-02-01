@@ -3,8 +3,8 @@ package updates
 import (
 	"context"
 	covidStore "github.com/clambin/covid19/covid/store"
-	"github.com/clambin/simplejson/v2"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/query"
 	"sort"
 	"time"
 )
@@ -18,13 +18,13 @@ var _ simplejson.Handler = &Handler{}
 
 func (handler Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	return simplejson.Endpoints{
-		TableQuery: handler.tableQuery,
+		Query: handler.tableQuery,
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
+func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
 	var entries map[time.Time]int
-	entries, err = handler.CovidDB.CountEntriesByTime(args.Range.From, args.Range.To)
+	entries, err = handler.CovidDB.CountEntriesByTime(req.Args.Range.From, req.Args.Range.To)
 	if err != nil {
 		return
 	}

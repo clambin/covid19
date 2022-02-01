@@ -6,8 +6,8 @@ import (
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/countries"
-	"github.com/clambin/simplejson/v2/common"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3/common"
+	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,14 +17,16 @@ import (
 
 func TestConfirmedByCountry(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
+
+	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
 	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
-		"A": {Timestamp: time.Now(), Confirmed: 3},
-		"B": {Timestamp: time.Now(), Confirmed: 10},
+		"A": {Timestamp: timestamp, Confirmed: 3},
+		"B": {Timestamp: timestamp, Confirmed: 10},
 	}, nil)
 	dbh.On("GetLatestForCountries", []string{"A", "B"}).Return(map[string]models.CountryEntry{
-		"A": {Timestamp: time.Now(), Confirmed: 3},
-		"B": {Timestamp: time.Now(), Confirmed: 10},
+		"A": {Timestamp: timestamp, Confirmed: 3},
+		"B": {Timestamp: timestamp, Confirmed: 10},
 	}, nil)
 
 	h := countries.ByCountryHandler{
@@ -35,23 +37,16 @@ func TestConfirmedByCountry(t *testing.T) {
 	ctx := context.Background()
 
 	for _, args := range []query.Args{
-		{Args: common.Args{Range: common.Range{To: time.Now()}}},
+		{Args: common.Args{Range: common.Range{To: timestamp}}},
 		{},
 	} {
-
-		response, err := h.Endpoints().TableQuery(ctx, args)
+		response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 		require.NoError(t, err)
-		require.Len(t, response.Columns, 3)
-		assert.Equal(t, "timestamp", response.Columns[0].Text)
-		assert.Len(t, response.Columns[0].Data, 1)
-		assert.Equal(t, query.Column{
-			Text: "A",
-			Data: query.NumberColumn{3.0},
-		}, response.Columns[1])
-		assert.Equal(t, query.Column{
-			Text: "B",
-			Data: query.NumberColumn{10.0},
-		}, response.Columns[2])
+		assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+			{Text: "timestamp", Data: query.TimeColumn{timestamp}},
+			{Text: "A", Data: query.NumberColumn{3}},
+			{Text: "B", Data: query.NumberColumn{10}},
+		}}, response)
 	}
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -59,14 +54,16 @@ func TestConfirmedByCountry(t *testing.T) {
 
 func TestDeathsByCountry(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
+
+	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
 	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
-		"A": {Timestamp: time.Now(), Deaths: 0},
-		"B": {Timestamp: time.Now(), Deaths: 1},
+		"A": {Timestamp: timestamp, Deaths: 0},
+		"B": {Timestamp: timestamp, Deaths: 1},
 	}, nil)
 	dbh.On("GetLatestForCountries", []string{"A", "B"}).Return(map[string]models.CountryEntry{
-		"A": {Timestamp: time.Now(), Deaths: 0},
-		"B": {Timestamp: time.Now(), Deaths: 1},
+		"A": {Timestamp: timestamp, Deaths: 0},
+		"B": {Timestamp: timestamp, Deaths: 1},
 	}, nil)
 
 	h := countries.ByCountryHandler{
@@ -79,18 +76,13 @@ func TestDeathsByCountry(t *testing.T) {
 		{Args: common.Args{Range: common.Range{To: time.Now()}}},
 		{},
 	} {
-		response, err := h.Endpoints().TableQuery(ctx, args)
+		response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 		require.NoError(t, err)
-		assert.Equal(t, "timestamp", response.Columns[0].Text)
-		assert.Len(t, response.Columns[0].Data, 1)
-		assert.Equal(t, query.Column{
-			Text: "A",
-			Data: query.NumberColumn{0.0},
-		}, response.Columns[1])
-		assert.Equal(t, query.Column{
-			Text: "B",
-			Data: query.NumberColumn{1.0},
-		}, response.Columns[2])
+		assert.Equal(t, &query.TableResponse{Columns: []query.Column{
+			{Text: "timestamp", Data: query.TimeColumn{timestamp}},
+			{Text: "A", Data: query.NumberColumn{0}},
+			{Text: "B", Data: query.NumberColumn{1}},
+		}}, response)
 	}
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -108,13 +100,13 @@ func TestConfirmedByCountry_Errors(t *testing.T) {
 	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
 
 	dbh.On("GetAllCountryNames").Return(nil, errors.New("db error")).Once()
-	_, err := h.Endpoints().TableQuery(ctx, args)
+	_, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 	assert.Error(t, err)
 
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil).Once()
 	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(nil, errors.New("db error")).Once()
 
-	_, err = h.Endpoints().TableQuery(ctx, args)
+	_, err = h.Endpoints().Query(ctx, query.Request{Args: args})
 	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, dbh)

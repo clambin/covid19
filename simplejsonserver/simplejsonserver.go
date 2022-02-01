@@ -9,7 +9,7 @@ import (
 	"github.com/clambin/covid19/simplejsonserver/mortality"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
 	"github.com/clambin/covid19/simplejsonserver/updates"
-	"github.com/clambin/simplejson/v2"
+	"github.com/clambin/simplejson/v3"
 )
 
 // 	"incremental",

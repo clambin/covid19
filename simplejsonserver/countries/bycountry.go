@@ -4,8 +4,8 @@ import (
 	"context"
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v2"
-	"github.com/clambin/simplejson/v2/query"
+	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/query"
 	"time"
 )
 
@@ -24,12 +24,12 @@ var _ simplejson.Handler = &ByCountryHandler{}
 
 func (handler ByCountryHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	return simplejson.Endpoints{
-		TableQuery: handler.tableQuery,
+		Query: handler.tableQuery,
 	}
 }
 
-func (handler *ByCountryHandler) tableQuery(_ context.Context, args query.Args) (response *query.TableResponse, err error) {
-	return getStatsByCountry(handler.CovidDB, args, handler.Mode)
+func (handler *ByCountryHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
+	return getStatsByCountry(handler.CovidDB, req.Args, handler.Mode)
 }
 
 func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (response *query.TableResponse, err error) {
@@ -52,13 +52,12 @@ func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (res
 	}
 
 	var timestamp time.Time
-	response = &query.TableResponse{}
-
+	columns := make([]query.Column, 0)
 	for _, name := range names {
 		entry := entries[name]
 		if timestamp.IsZero() {
 			timestamp = entry.Timestamp
-			response.Columns = append(response.Columns, query.Column{
+			columns = append(columns, query.Column{
 				Text: "timestamp",
 				Data: query.TimeColumn([]time.Time{timestamp}),
 			})
@@ -72,11 +71,11 @@ func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (res
 			value = float64(entry.Deaths)
 		}
 
-		response.Columns = append(response.Columns, query.Column{
+		columns = append(columns, query.Column{
 			Text: name,
 			Data: query.NumberColumn([]float64{value}),
 		})
 	}
 
-	return
+	return &query.TableResponse{Columns: columns}, nil
 }
