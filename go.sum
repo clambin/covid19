@@ -69,8 +69,8 @@ github.com/clambin/go-metrics v0.2.1 h1:TlnrXbZ4lEv6KLYdtdFKCZYre8Mf9sBlWlItcdn1
 github.com/clambin/go-metrics v0.2.1/go.mod h1:oEEJTGR660AzsIlFsEP2qRVJMYrSUAFvhcrhrRk5Vdk=
 github.com/clambin/go-rapidapi v0.2.0 h1:xNsMAhL9o3HXF4dvurwhnYwAWmAnn5J/ykf+JjGSdTU=
 github.com/clambin/go-rapidapi v0.2.0/go.mod h1:jIgXVGiR0D5wopGCdhUpLatsBOeEix8Ydz7pKooJu1g=
-github.com/clambin/simplejson/v3 v3.0.0 h1:qPnRwyJM3JCsxS7aHHA5INFTxWMBKgQqn4PBfybAws0=
-github.com/clambin/simplejson/v3 v3.0.0/go.mod h1:AO4rrRWMMHEYfhDndTz0u3MH+p0kxASjDbShzvP1T6k=
+github.com/clambin/simplejson/v3 v3.0.1 h1:Zcm0hIB5iKBQSyXldrtpOtfPZzHLGMLP0S9WtK5tpCk=
+github.com/clambin/simplejson/v3 v3.0.1/go.mod h1:AA0ghH05jUGn+Nzy6i3pmI07HM1jZ8om8l0zTpqPQ8I=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/containrrr/shoutrrr v0.5.2 h1:97P+wZDpN2gzBKLt4PDP1ZUTLz+k8AJVs40WOu9NNw8=
@@ -278,7 +278,6 @@ github.com/prometheus/client_golang v0.9.3/go.mod h1:/TN21ttK/J9q6uSwhBd54HahCDf
 github.com/prometheus/client_golang v1.0.0/go.mod h1:db9x61etRT2tGnBNRi70OPL5FsnadC4Ky3P0J6CfImo=
 github.com/prometheus/client_golang v1.7.1/go.mod h1:PY5Wy2awLA44sXw4AOSfFBetzPP4j5+D6mVACh+pe2M=
 github.com/prometheus/client_golang v1.11.0/go.mod h1:Z6t4BnS23TR94PD6BsDNk8yVqroYurpAkEiz0P2BEV0=
-github.com/prometheus/client_golang v1.12.0/go.mod h1:3Z9XVyYiZYEO+YQWt3RD2R3jrbd179Rt297l4aS6nDY=
 github.com/prometheus/client_golang v1.12.1 h1:ZiaPsmm9uiBeaSMRznKsCDNtPCS0T3JVDGF+06gjBzk=
 github.com/prometheus/client_golang v1.12.1/go.mod h1:3Z9XVyYiZYEO+YQWt3RD2R3jrbd179Rt297l4aS6nDY=
 github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910/go.mod h1:MbSGuTsp3dbXC40dX6PRTWyKYBIrTGTE9sqQNg2J8bo=
