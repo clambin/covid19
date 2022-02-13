@@ -41,30 +41,66 @@ jobs:
         with:
           file: coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
-  build-handler:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: clambin/workflows/.github/actions/go/lint@main
+        with:
+          go-version: 1.17
+  vet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: clambin/workflows/.github/actions/go/vet@main
+        with:
+          go-version: 1.17
+  codeql:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - uses: github/codeql-action/init@v1
+        with:
+          languages: go
+      - uses: github/codeql-action/autobuild@v1
+      - uses: github/codeql-action/analyze@v1
+  vulnerabilities:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: clambin/workflows/.github/actions/go/vulnerabilities@main
+        with:
+          go-version: 1.17
+  build:
     needs: test
-    uses: clambin/workflows/.github/workflows/build.yaml@main
-    with:
-      go-version: 1.17
-      target: covid19-handler
-      dockerfile: build/Dockerfile-covid19-handler
-  build-loader:
-    needs: test
-    uses: clambin/workflows/.github/workflows/build.yaml@main
-    with:
-      go-version: 1.17
-      target: covid19-loader
-      dockerfile: build/Dockerfile-covid19-loader
-  build-population-loader:
-    needs: test
-    uses: clambin/workflows/.github/workflows/build.yaml@main
-    with:
-      go-version: 1.17
-      target: covid19-population-loader
-      dockerfile: build/Dockerfile-covid19-population-loader
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ covid19-handler, covid19-loader, covid19-population-loader ]
+        goarch: [ amd64, arm, arm64 ]
+    steps:
+      - uses: clambin/workflows/.github/actions/go/build@main
+        with:
+          go-version: 1.17
+          target: ${{ matrix.target }}
+          goos: linux
+          goarch: ${{ matrix.goarch }}
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ covid19-handler, covid19-loader, covid19-population-loader ]
+    steps:
+      - uses: clambin/workflows/.github/actions/docker@main
+        with:
+          target: ${{ matrix.target }}
+          repo: clambin
+          dockerfile: build/Dockerfile-${{ matrix.target }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
   publish:
+    runs-on: ubuntu-latest
     needs:
-      - build-handler
-      - build-loader
-      - build-population-loader
-    uses: clambin/workflows/.github/workflows/publish.yaml@main
+      - docker
+    steps:
+      - uses: clambin/workflows/.github/actions/go/publish@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
