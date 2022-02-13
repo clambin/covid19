@@ -7,6 +7,10 @@ ARG TARGETARCH
 
 COPY bld/covid19-population-loader-$TARGETOS-$TARGETARCH /app/covid19-population-loader
 
+RUN /usr/sbin/addgroup app
+RUN /usr/sbin/adduser app -G app -D
+USER app
+
 EXPOSE 8080
 ENTRYPOINT ["/app/covid19-population-loader"]
 CMD []
