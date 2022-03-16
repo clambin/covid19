@@ -68,6 +68,7 @@ jobs:
     strategy:
       matrix:
         target: [ covid19-handler, covid19-loader, covid19-population-loader ]
+        goos: [ linux ]
         goarch: [ amd64, arm, arm64 ]
     steps:
       - uses: actions/checkout@v3
