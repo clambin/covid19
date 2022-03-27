@@ -1,6 +1,6 @@
 module github.com/clambin/covid19
 
-go 1.17
+go 1.18
 
 require (
 	bou.ke/monkey v1.0.2
@@ -24,7 +24,7 @@ require (
 require (
 	github.com/clambin/go-metrics v0.2.1
 	github.com/clambin/go-rapidapi v0.2.0
-	github.com/clambin/simplejson/v3 v3.0.1
+	github.com/clambin/simplejson/v3 v3.1.0-rc2
 )
 
 require (
