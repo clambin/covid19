@@ -3,6 +3,7 @@ package cache
 import (
 	"github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
+	"github.com/clambin/simplejson/v3/dataset"
 	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
@@ -16,21 +17,12 @@ type Cache struct {
 	lock      sync.Mutex
 	expiry    time.Time
 	once      *sync.Once
-	totals    []Entry
-	deltas    []Entry
-}
-
-// Entry holds one date's data
-type Entry struct {
-	Timestamp time.Time
-	Confirmed int64
-	Recovered int64
-	Deaths    int64
-	Active    int64
+	totals    *dataset.Dataset
+	deltas    *dataset.Dataset
 }
 
 // GetTotals return total probe figures up to endTime
-func (cache *Cache) GetTotals(endTime time.Time) (totals []Entry, err error) {
+func (cache *Cache) GetTotals(endTime time.Time) (totals *dataset.Dataset, err error) {
 	err = cache.updateMaybe()
 	if err != nil {
 		log.WithError(err).Error("failed to retrieve COVID19 entries from the database")
@@ -39,11 +31,14 @@ func (cache *Cache) GetTotals(endTime time.Time) (totals []Entry, err error) {
 
 	cache.lock.Lock()
 	defer cache.lock.Unlock()
-	return filterEntries(cache.totals, endTime), nil
+	totals = cache.totals.Copy()
+	totals.FilterByRange(time.Time{}, endTime)
+
+	return
 }
 
 // GetDeltas returns the incremental probe figures up to endTime
-func (cache *Cache) GetDeltas(endTime time.Time) (deltas []Entry, err error) {
+func (cache *Cache) GetDeltas(endTime time.Time) (deltas *dataset.Dataset, err error) {
 	err = cache.updateMaybe()
 	if err != nil {
 		log.WithError(err).Error("failed to retrieve COVID19 entries from the database")
@@ -52,7 +47,10 @@ func (cache *Cache) GetDeltas(endTime time.Time) (deltas []Entry, err error) {
 
 	cache.lock.Lock()
 	defer cache.lock.Unlock()
-	return filterEntries(cache.deltas, endTime), nil
+
+	deltas = cache.deltas.Copy()
+	deltas.FilterByRange(time.Time{}, endTime)
+	return
 }
 
 func (cache *Cache) updateMaybe() (err error) {
@@ -74,13 +72,26 @@ func (cache *Cache) updateMaybe() (err error) {
 	return
 }
 
-func filterEntries(entries []Entry, end time.Time) (result []Entry) {
+func GetTotalCases(entries []models.CountryEntry) (result *dataset.Dataset) {
+	result = dataset.New()
 	for _, entry := range entries {
-		if entry.Timestamp.After(end) {
-			break
-		}
-		result = append(result, entry)
+		result.Add(entry.Timestamp, "confirmed", float64(entry.Confirmed))
+		result.Add(entry.Timestamp, "deaths", float64(entry.Deaths))
+		//result.Add(entry.Timestamp, "recovered", float64(entry.Recovered))
 	}
 	return
+}
 
+func GetTotalDeltas(totals *dataset.Dataset) (result *dataset.Dataset) {
+	result = dataset.New()
+	timestamps := totals.GetTimestamps()
+	for _, column := range totals.GetColumns() {
+		var current float64
+		values, _ := totals.GetValues(column)
+		for index, value := range values {
+			result.Add(timestamps[index], column, value-current)
+			current = value
+		}
+	}
+	return
 }

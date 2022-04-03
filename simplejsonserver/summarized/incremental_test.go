@@ -29,8 +29,8 @@ func TestIncrementalHandler_Global(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
 		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC)}},
+		{Text: "confirmed", Data: query.NumberColumn{1, 5, 4}},
 		{Text: "deaths", Data: query.NumberColumn{0, 0, 1}},
-		{Text: "confirmed", Data: query.NumberColumn{1, 5, 7}},
 	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -64,8 +64,8 @@ func TestIncrementalHandler_Country(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
 		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC)}},
-		{Text: "deaths", Data: query.NumberColumn{0, 0}},
 		{Text: "confirmed", Data: query.NumberColumn{1, 2}},
+		{Text: "deaths", Data: query.NumberColumn{0, 0}},
 	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)

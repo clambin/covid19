@@ -6,6 +6,7 @@ import (
 	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
@@ -26,7 +27,7 @@ func (handler CumulativeHandler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *CumulativeHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var totals []cache.Entry
+	var totals *dataset.Dataset
 	if len(req.Args.AdHocFilters) > 0 {
 		totals, err = handler.getTotalsForCountry(req.Args)
 	} else {
@@ -34,12 +35,13 @@ func (handler *CumulativeHandler) tableQuery(_ context.Context, req query.Reques
 	}
 
 	if err == nil {
-		response = buildResponse(totals, req.Args.Range)
+		totals.FilterByRange(req.Args.Range.From, req.Args.Range.To)
+		response = totals.GenerateTableResponse()
 	}
 	return
 }
 
-func (handler *CumulativeHandler) getTotalsForCountry(args query.Args) (totals []cache.Entry, err error) {
+func (handler *CumulativeHandler) getTotalsForCountry(args query.Args) (totals *dataset.Dataset, err error) {
 	var countryName string
 	countryName, err = evaluateAdHocFilter(args.AdHocFilters)
 
@@ -54,12 +56,11 @@ func (handler *CumulativeHandler) getTotalsForCountry(args query.Args) (totals [
 		return
 	}
 
+	totals = dataset.New()
 	for _, entry := range entries {
-		totals = append(totals, cache.Entry{
-			Timestamp: entry.Timestamp,
-			Confirmed: entry.Confirmed,
-			Deaths:    entry.Deaths,
-		})
+		totals.Add(entry.Timestamp, "confirmed", float64(entry.Confirmed))
+		totals.Add(entry.Timestamp, "deaths", float64(entry.Deaths))
+		//totals.Add(entry.Timestamp, "recovered", float64(entry.Recovered))
 	}
 	return
 }

@@ -70,6 +70,8 @@ github.com/clambin/go-rapidapi v0.2.0 h1:xNsMAhL9o3HXF4dvurwhnYwAWmAnn5J/ykf+JjG
 github.com/clambin/go-rapidapi v0.2.0/go.mod h1:jIgXVGiR0D5wopGCdhUpLatsBOeEix8Ydz7pKooJu1g=
 github.com/clambin/simplejson/v3 v3.1.0 h1:bvAzj9+aVo4QIKsIgKQ4NnJR/G9kyVoTdA3p9ouJQ2U=
 github.com/clambin/simplejson/v3 v3.1.0/go.mod h1:0wv3gRk00ZqjpAMM/l/C8d0GLcLGLVr0UICdDM4Nu9E=
+github.com/clambin/simplejson/v3 v3.2.0 h1:LS0a/e4uQDBipoDzx+9cqcMZ6TZ6HIDD+bXIPI1xrK8=
+github.com/clambin/simplejson/v3 v3.2.0/go.mod h1:LblHfcyKshNtmFXCFdH8dIfFL+8qNSLDsMlZkij6cMk=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/containrrr/shoutrrr v0.5.2 h1:97P+wZDpN2gzBKLt4PDP1ZUTLz+k8AJVs40WOu9NNw8=

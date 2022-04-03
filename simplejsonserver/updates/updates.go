@@ -4,8 +4,8 @@ import (
 	"context"
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
-	"sort"
 	"time"
 )
 
@@ -29,24 +29,10 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (respon
 		return
 	}
 
-	timestamps := getUniqueSortedTimestamps(entries)
-	var updateCount []float64
-	for _, timestamp := range timestamps {
-		updateCount = append(updateCount, float64(entries[timestamp]))
+	d := dataset.New()
+	for timestamp, count := range entries {
+		d.Add(timestamp, "updates", float64(count))
 	}
 
-	return &query.TableResponse{
-		Columns: []query.Column{
-			{Text: "timestamp", Data: query.TimeColumn(timestamps)},
-			{Text: "updates", Data: query.NumberColumn(updateCount)},
-		},
-	}, nil
-}
-
-func getUniqueSortedTimestamps(updates map[time.Time]int) (timestamps []time.Time) {
-	for key := range updates {
-		timestamps = append(timestamps, key)
-	}
-	sort.Slice(timestamps, func(i, j int) bool { return timestamps[i].Before(timestamps[j]) })
-	return
+	return d.GenerateTableResponse(), nil
 }

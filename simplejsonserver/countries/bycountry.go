@@ -5,6 +5,7 @@ import (
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 	"time"
 )
@@ -29,10 +30,15 @@ func (handler ByCountryHandler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *ByCountryHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	return getStatsByCountry(handler.CovidDB, req.Args, handler.Mode)
+	var d *dataset.Dataset
+	d, err = getStatsByCountry(handler.CovidDB, req.Args, handler.Mode)
+	if err != nil {
+		return
+	}
+	return d.GenerateTableResponse(), nil
 }
 
-func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (response *query.TableResponse, err error) {
+func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (response *dataset.Dataset, err error) {
 	var names []string
 	names, err = db.GetAllCountryNames()
 
@@ -52,15 +58,11 @@ func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (res
 	}
 
 	var timestamp time.Time
-	columns := make([]query.Column, 0)
-	for _, name := range names {
-		entry := entries[name]
+	d := dataset.New()
+
+	for name, entry := range entries {
 		if timestamp.IsZero() {
 			timestamp = entry.Timestamp
-			columns = append(columns, query.Column{
-				Text: "timestamp",
-				Data: query.TimeColumn([]time.Time{timestamp}),
-			})
 		}
 
 		var value float64
@@ -71,11 +73,10 @@ func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (res
 			value = float64(entry.Deaths)
 		}
 
-		columns = append(columns, query.Column{
-			Text: name,
-			Data: query.NumberColumn([]float64{value}),
-		})
+		d.Add(timestamp, name, value)
 	}
 
-	return &query.TableResponse{Columns: columns}, nil
+	d.FilterByRange(args.Range.From, args.Range.To)
+
+	return d, nil
 }

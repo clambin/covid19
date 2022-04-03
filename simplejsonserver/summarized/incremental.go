@@ -6,6 +6,7 @@ import (
 	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v3/dataset"
 	"github.com/clambin/simplejson/v3/query"
 )
 
@@ -26,7 +27,7 @@ func (handler IncrementalHandler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *IncrementalHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var deltas []cache.Entry
+	var deltas *dataset.Dataset
 	if len(req.Args.AdHocFilters) > 0 {
 		deltas, err = handler.getDeltasForCountry(req.Args)
 	} else {
@@ -34,12 +35,13 @@ func (handler *IncrementalHandler) tableQuery(_ context.Context, req query.Reque
 	}
 
 	if err == nil {
-		response = buildResponse(deltas, req.Args.Range)
+		deltas.FilterByRange(req.Args.Range.From, req.Args.Range.To)
+		response = deltas.GenerateTableResponse()
 	}
 	return
 }
 
-func (handler *IncrementalHandler) getDeltasForCountry(args query.Args) (deltas []cache.Entry, err error) {
+func (handler *IncrementalHandler) getDeltasForCountry(args query.Args) (deltas *dataset.Dataset, err error) {
 	var countryName string
 	countryName, err = evaluateAdHocFilter(args.AdHocFilters)
 
@@ -54,13 +56,12 @@ func (handler *IncrementalHandler) getDeltasForCountry(args query.Args) (deltas 
 		return
 	}
 
+	deltas = dataset.New()
 	var confirmed, deaths int64
 	for _, entry := range entries {
-		deltas = append(deltas, cache.Entry{
-			Timestamp: entry.Timestamp,
-			Confirmed: entry.Confirmed - confirmed,
-			Deaths:    entry.Deaths - deaths,
-		})
+		deltas.Add(entry.Timestamp, "confirmed", float64(entry.Confirmed-confirmed))
+		deltas.Add(entry.Timestamp, "deaths", float64(entry.Deaths-deaths))
+
 		confirmed = entry.Confirmed
 		deaths = entry.Deaths
 	}
