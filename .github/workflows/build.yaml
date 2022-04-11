@@ -104,15 +104,15 @@ jobs:
         target: [ covid19-handler, covid19-loader, covid19-population-loader ]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: ${{ matrix.target }}-linux-arm
           path: ./bld
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: ${{ matrix.target }}-linux-arm64
           path: ./bld
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: ${{ matrix.target }}-linux-amd64
           path: ./bld
