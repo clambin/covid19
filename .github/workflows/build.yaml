@@ -92,7 +92,7 @@ jobs:
               cmd/$TARGET/$TARGET.go
         shell: bash
       - name: artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.target }}-${{ matrix.goos }}-${{ matrix.goarch }}
           path: ./bld/*
