@@ -125,7 +125,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/metadata-action@v3.7.0
+      - uses: docker/metadata-action@v3.8.0
         id: docker_meta
         with:
           images: ghcr.io/clambin/${{ matrix.target }}
