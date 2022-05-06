@@ -119,7 +119,7 @@ jobs:
         run: chmod +x bld/*
         shell: bash
       - uses: docker/setup-qemu-action@v2
-      - uses: docker/setup-buildx-action@v1
+      - uses: docker/setup-buildx-action@v2
       - uses: docker/login-action@v2.0.0
         with:
           registry: ghcr.io
