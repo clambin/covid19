@@ -7,7 +7,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/containrrr/shoutrrr v0.5.3
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/lib/pq v1.10.5
+	github.com/lib/pq v1.10.6
 	github.com/prometheus/client_golang v1.12.2
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
