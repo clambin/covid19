@@ -22,7 +22,6 @@ require (
 )
 
 require (
-	github.com/clambin/go-metrics v0.3.0
 	github.com/clambin/go-rapidapi v0.2.0
 	github.com/clambin/simplejson/v3 v3.2.0
 )
