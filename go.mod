@@ -9,22 +9,22 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/lib/pq v1.10.6
 	github.com/prometheus/client_golang v1.12.2
-	github.com/prometheus/common v0.32.1 // indirect
+	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/xonvanetta/shutdown v0.0.3
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
 
 require (
-	github.com/clambin/go-metrics v0.3.0
+	github.com/clambin/go-metrics v0.4.1
 	github.com/clambin/go-rapidapi v0.2.0
-	github.com/clambin/simplejson/v3 v3.2.0
+	github.com/clambin/simplejson/v3 v3.3.0
 )
 
 require (
@@ -44,8 +44,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/stretchr/objx v0.1.1 // indirect
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

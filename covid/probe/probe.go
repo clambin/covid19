@@ -39,8 +39,7 @@ func New(cfg *configuration.MonitorConfiguration, db store.CovidStore) *Covid19P
 	}
 	return &Covid19Probe{
 		Fetcher: &fetcher.Client{
-			API:     rapidapi.New(rapidAPIHost, cfg.RapidAPIKey.Get()),
-			Metrics: fetcher.Metrics,
+			API: rapidapi.New(rapidAPIHost, cfg.RapidAPIKey.Get()),
 		},
 		Saver:    &saver.StoreSaver{Store: db},
 		Notifier: n,

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/clambin/go-rapidapi"
-	"github.com/prometheus/client_golang/prometheus"
 	"net/url"
 )
 
@@ -76,13 +75,13 @@ func (client *RapidAPIClient) GetCountries(ctx context.Context) (countries []str
 			Countries []string
 		}
 	}
+
 	if err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(body))
-		err = decoder.Decode(&stats)
+		err = json.NewDecoder(bytes.NewReader(body)).Decode(&stats)
 	}
 
 	if err == nil {
-		if stats.OK == true {
+		if stats.OK {
 			countries = stats.Body.Countries
 		} else {
 			err = fmt.Errorf("invalid response received from %s", rapidAPIHost)
@@ -94,14 +93,5 @@ func (client *RapidAPIClient) GetCountries(ctx context.Context) (countries []str
 
 // Call calls the Population API for the provided endpoint
 func (client *RapidAPIClient) Call(ctx context.Context, endpoint string) (body []byte, err error) {
-	timer := prometheus.NewTimer(metricRequestLatency.WithLabelValues(endpoint))
-
-	body, err = client.API.CallWithContext(ctx, endpoint)
-
-	timer.ObserveDuration()
-	metricRequestsTotal.WithLabelValues(endpoint).Add(1.0)
-	if err != nil {
-		metricRequestErrorsTotal.WithLabelValues(endpoint).Add(1.0)
-	}
-	return
+	return client.API.CallWithContext(ctx, endpoint)
 }

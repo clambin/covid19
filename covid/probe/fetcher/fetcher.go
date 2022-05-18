@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/go-metrics"
 	"github.com/clambin/go-rapidapi"
 	log "github.com/sirupsen/logrus"
 	"time"
@@ -19,10 +18,10 @@ type Fetcher interface {
 
 // CountryStats contains total figures for one country
 type CountryStats struct {
-	LastUpdate      time.Time
-	lllllmConfirmed int64
-	Deaths          int64
-	Recovered       int64
+	LastUpdate time.Time
+	Confirmed  int64
+	Deaths     int64
+	Recovered  int64
 }
 
 var _ Fetcher = &Client{}
@@ -30,7 +29,6 @@ var _ Fetcher = &Client{}
 // Client implements the Fetcher interface
 type Client struct {
 	rapidapi.API
-	Metrics          metrics.APIClientMetrics
 	invalidCountries StringSet
 }
 
@@ -114,24 +112,12 @@ type statsResponse struct {
 func (client *Client) getStats(ctx context.Context) (stats statsResponse, err error) {
 	const endpoint = "/v1/stats"
 
-	defer func() {
-		client.Metrics.ReportErrors(err, endpoint)
-	}()
-
-	timer := client.Metrics.MakeLatencyTimer(endpoint)
-
 	var body []byte
 	body, err = client.API.CallWithContext(ctx, endpoint)
 
-	if timer != nil {
-		timer.ObserveDuration()
+	if err == nil {
+		err = json.NewDecoder(bytes.NewReader(body)).Decode(&stats)
 	}
 
-	if err != nil {
-		return
-	}
-
-	decoder := json.NewDecoder(bytes.NewReader(body))
-	err = decoder.Decode(&stats)
 	return
 }

@@ -11,7 +11,7 @@ import (
 	mockSaver "github.com/clambin/covid19/covid/probe/saver/mocks"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/go-metrics"
+	"github.com/clambin/go-metrics/tools"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -78,13 +78,13 @@ func TestCovid19Probe_Update(t *testing.T) {
 
 	for i := len(fetcher.CountryCodes); i > 0; i-- {
 		metric := <-ch
-		country := metrics.MetricLabel(metric, "country")
+		country := tools.MetricLabel(metric, "country")
 		target := 0.0
 		if country == "US" {
 			target = 1.0
 		}
 
-		assert.Equal(t, target, metrics.MetricValue(metric).GetCounter().GetValue(), country)
+		assert.Equal(t, target, tools.MetricValue(metric).GetCounter().GetValue(), country)
 	}
 
 	mock.AssertExpectationsForObjects(t, db, s, f, n)
