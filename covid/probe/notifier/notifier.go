@@ -45,12 +45,7 @@ func (notifier *RealNotifier) Notify(entries []models.CountryEntry) (err error) 
 	for _, record := range entries {
 		lastDBEntry, ok := notifier.lastDBEntries[record.Name]
 
-		if ok == false {
-			log.WithError(err).Warning("failed to get last CovidDB entry")
-			continue
-		}
-
-		if !record.Timestamp.After(lastDBEntry.Timestamp) {
+		if !ok || !record.Timestamp.After(lastDBEntry.Timestamp) {
 			continue
 		}
 
