@@ -18,7 +18,7 @@ require (
 	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
-	gopkg.in/yaml.v3 v3.0.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
