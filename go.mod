@@ -18,13 +18,13 @@ require (
 	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+	gopkg.in/yaml.v3 v3.0.0
 )
 
 require (
 	github.com/clambin/go-metrics v0.5.0
 	github.com/clambin/go-rapidapi v0.2.0
-	github.com/clambin/simplejson/v3 v3.3.0
+	github.com/clambin/simplejson/v3 v3.3.1
 )
 
 require (
