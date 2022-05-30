@@ -25,7 +25,8 @@ func TestMain(m *testing.M) {
 	var err error
 	DB, err = db.NewWithConfiguration(pg)
 	if err != nil {
-		panic(fmt.Sprintf("unable to connect to database: %s", err.Error()))
+		fmt.Printf("unable to connect to database: %s", err.Error())
+		os.Exit(1)
 	}
 
 	covidStore = store.New(DB)
@@ -34,7 +35,8 @@ func TestMain(m *testing.M) {
 
 	err = covidStore.(*store.PGCovidStore).RemoveDB()
 	if err != nil {
-		panic(fmt.Sprintf("failed to clean up database: %s", err.Error()))
+		fmt.Printf("failed to clean up database: %s", err.Error())
+		os.Exit(1)
 	}
 }
 

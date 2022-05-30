@@ -50,8 +50,8 @@ func (client *Client) filterUnsupportedCountries(stats *statsResponse) (entries 
 	for _, entry := range stats.Data.Covid19Stats {
 		code, found := CountryCodes[entry.Country]
 
-		if found == false {
-			if found = client.invalidCountries.Set(entry.Country); found == false {
+		if !found {
+			if found = client.invalidCountries.Set(entry.Country); !found {
 				log.WithField("name", entry.Country).Warning("unknown country name received from COVID-19 API")
 				continue
 			}
@@ -72,8 +72,8 @@ func sumByCountry(entries []models.CountryEntry) (sum []models.CountryEntry) {
 	summed := make(map[string]models.CountryEntry)
 
 	for _, entry := range entries {
-		sumEntry, ok := summed[entry.Code]
-		if ok == false {
+		sumEntry, found := summed[entry.Code]
+		if !found {
 			sumEntry = models.CountryEntry{
 				Timestamp: entry.Timestamp,
 				Code:      entry.Code,

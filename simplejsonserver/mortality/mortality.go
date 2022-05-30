@@ -40,8 +40,8 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (respon
 	var ratios []float64
 
 	for _, countryName := range countryNames {
-		entry, ok := entries[countryName]
-		if ok == false {
+		entry, found := entries[countryName]
+		if !found {
 			continue
 		}
 

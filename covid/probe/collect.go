@@ -29,10 +29,10 @@ func (probe *Covid19Probe) Collect(ch chan<- prometheus.Metric) {
 	defer probe.lock.RUnlock()
 
 	for country := range fetcher.CountryCodes {
-		count, _ := probe.newUpdates[country]
+		count := probe.newUpdates[country]
 		ch <- prometheus.MustNewConstMetric(metricUpdates, prometheus.CounterValue, float64(count), country)
 	}
-	log.WithField("duration", time.Now().Sub(start)).Debug("prometheus scrape done")
+	log.WithField("duration", time.Since(start)).Debug("prometheus scrape done")
 }
 
 func (probe *Covid19Probe) setCountryUpdates(newEntries []models.CountryEntry) {
@@ -44,7 +44,7 @@ func (probe *Covid19Probe) setCountryUpdates(newEntries []models.CountryEntry) {
 	}
 
 	for _, entry := range newEntries {
-		count, _ := probe.newUpdates[entry.Name]
+		count := probe.newUpdates[entry.Name]
 		probe.newUpdates[entry.Name] = count + 1
 	}
 }

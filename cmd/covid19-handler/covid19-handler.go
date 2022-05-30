@@ -69,11 +69,11 @@ func CreateStackWithStores(cfg *configuration.Configuration, covidDB covidStore.
 
 // Run runs the application stack
 func (stack *Stack) Run() {
-	if stack.SkipBackfill == false {
+	if !stack.SkipBackfill {
 		stack.loadIfEmpty()
 	}
 
-	if err := stack.HTTPServer.ListenAndServe(); errors.Is(err, http.ErrServerClosed) == false {
+	if err := stack.HTTPServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		log.WithError(err).Fatal("unable to start grafana SimpleJson server")
 	}
 }
@@ -90,16 +90,19 @@ func (stack *Stack) loadIfEmpty() {
 		log.WithError(err).Fatal("could not access database")
 	}
 
-	if found == false {
-		log.Info("database is empty. backfilling ... ")
-		bf := backfill.New(stack.CovidStore)
-		go func() {
-			start := time.Now()
-			if err = bf.Run(); err == nil {
-				log.Infof("historic data loaded in %s", time.Now().Sub(start).String())
-			} else {
-				log.WithError(err).Error("failed to populate database")
-			}
-		}()
+	if found {
+		return
 	}
+
+	log.Info("database is empty. backfilling ... ")
+	bf := backfill.New(stack.CovidStore)
+	go func() {
+		start := time.Now()
+		if err = bf.Run(); err == nil {
+			log.Infof("historic data loaded in %s", time.Since(start).String())
+		} else {
+			log.WithError(err).Error("failed to populate database")
+		}
+	}()
+
 }

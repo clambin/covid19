@@ -39,7 +39,7 @@ func TestGetPopulation(t *testing.T) {
 		On("CallWithContext", mock.Anything, "/population?country_name=%3F%3F").
 		Return([]byte(``), fmt.Errorf("404 - Not Found")).
 		Once()
-	population, err = apiClient.GetPopulation(ctx, "??")
+	_, err = apiClient.GetPopulation(ctx, "??")
 	require.Error(t, err)
 }
 

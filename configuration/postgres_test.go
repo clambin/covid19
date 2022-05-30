@@ -30,7 +30,7 @@ func TestLoadPGEnvironment(t *testing.T) {
 	require.NoError(t, err)
 	err = os.Setenv("pg_user", "bar")
 	require.NoError(t, err)
-	err = os.Setenv("pg_password", "snafu")
+	_ = os.Setenv("pg_password", "snafu")
 
 	cfg = configuration.LoadPGEnvironment()
 	assert.True(t, cfg.IsValid())

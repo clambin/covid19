@@ -47,9 +47,9 @@ func (storeSaver *StoreSaver) getNewRecords(entries []models.CountryEntry) (newE
 	latest, err = storeSaver.Store.GetLatestForCountries(countries)
 
 	for _, entry := range entries {
-		latestEntry, ok := latest[entry.Name]
+		latestEntry, found := latest[entry.Name]
 
-		if ok == false || entry.Timestamp.After(latestEntry.Timestamp) {
+		if !found || entry.Timestamp.After(latestEntry.Timestamp) {
 			newEntries = append(newEntries, entry)
 		}
 	}

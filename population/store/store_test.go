@@ -17,8 +17,7 @@ func TestDB(t *testing.T) {
 	DB, err := db.NewWithConfiguration(pg)
 	assert.NoError(t, err)
 
-	var popDB store.PopulationStore
-	popDB = store.New(DB)
+	popDB := store.New(DB)
 
 	_, err = popDB.List()
 	assert.Nil(t, err)

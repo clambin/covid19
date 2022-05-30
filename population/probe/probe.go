@@ -32,9 +32,9 @@ func (probe *Probe) Update(ctx context.Context) (err error) {
 	maxJobs := semaphore.NewWeighted(maxConcurrentJobs)
 	codes := 0
 	for _, code := range countryCodes() {
-		country, ok := countryNames[code]
+		country, found := countryNames[code]
 
-		if ok == false {
+		if !found {
 			log.WithField("code", code).Warning("unsupported country code received from population API. skipping")
 			continue
 		}

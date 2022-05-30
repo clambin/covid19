@@ -6,6 +6,7 @@ import (
 	probeMock "github.com/clambin/covid19/population/probe/mocks"
 	popDBMock "github.com/clambin/covid19/population/store/mocks"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -22,7 +23,8 @@ func TestProbe_Update(t *testing.T) {
 	store.On("Add", "US", int64(330)).Return(nil)
 	store.On("Add", "BE", int64(11)).Return(nil)
 
-	p.Update(context.TODO())
+	err := p.Update(context.Background())
+	require.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, store, apiClient)
 }

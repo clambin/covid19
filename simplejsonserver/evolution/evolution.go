@@ -80,7 +80,7 @@ func (handler *Handler) getLatestEntries(end time.Time) (confirmed map[string][]
 	confirmed = make(map[string][]int64)
 
 	for index := len(entries) - 1; index >= 0; index-- {
-		list, _ := confirmed[entries[index].Code]
+		list := confirmed[entries[index].Code]
 		list = append(list, entries[index].Confirmed)
 		confirmed[entries[index].Code] = list
 	}

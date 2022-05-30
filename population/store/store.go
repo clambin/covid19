@@ -34,7 +34,7 @@ func New(db *db.DB) (pgdb *PGPopulationStore) {
 // List all records from the population table
 func (store *PGPopulationStore) List() (entries map[string]int64, err error) {
 	var rows *sql.Rows
-	rows, err = store.DB.Handle.Query(fmt.Sprintf("SELECT country_code, population FROM population"))
+	rows, err = store.DB.Handle.Query(`SELECT country_code, population FROM population`)
 
 	if err == nil {
 		entries = make(map[string]int64, 0)
