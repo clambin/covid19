@@ -153,48 +153,59 @@ func TestServer_Query(t *testing.T) {
 		fail   bool
 	}{
 		{
-			input:  `{"targets": [{"target": "country-confirmed","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"A","type":"number"},{"text":"B","type":"number"}],"rows":[["2022-01-19T00:00:00Z",4,10]]}]`,
+			input: `{"targets": [{"target": "country-confirmed","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"A","type":"number"},{"text":"B","type":"number"}],"rows":[["2022-01-19T00:00:00Z",4,10]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "country-deaths","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"A","type":"number"},{"text":"B","type":"number"}],"rows":[["2022-01-19T00:00:00Z",1,5]]}]`,
+			input: `{"targets": [{"target": "country-deaths","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"A","type":"number"},{"text":"B","type":"number"}],"rows":[["2022-01-19T00:00:00Z",1,5]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "country-confirmed-population","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"confirmed","type":"number"}],"rows":[["2022-01-19T00:00:00Z","A",0.4],["2022-01-19T00:00:00Z","B",0.1]]}]`,
+			input: `{"targets": [{"target": "country-confirmed-population","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"confirmed","type":"number"}],"rows":[["2022-01-19T00:00:00Z","A",0.4],["2022-01-19T00:00:00Z","B",0.1]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "country-deaths-population","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"deaths","type":"number"}],"rows":[["2022-01-19T00:00:00Z","A",0.1],["2022-01-19T00:00:00Z","B",0.05]]}]`,
+			input: `{"targets": [{"target": "country-deaths-population","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"deaths","type":"number"}],"rows":[["2022-01-19T00:00:00Z","A",0.1],["2022-01-19T00:00:00Z","B",0.05]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "country-deaths-vs-confirmed","type": "table"}],"range": {"to": "2022-01-17T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"ratio","type":"number"}],"rows":[["2022-01-19T00:00:00Z","A",0.25],["2022-01-19T00:00:00Z","B",0.5]]}]`,
+			input: `{"targets": [{"target": "country-deaths-vs-confirmed","type": "table"}],"range": {"to": "2022-01-17T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"ratio","type":"number"}],"rows":[["2022-01-19T00:00:00Z","A",0.25],["2022-01-19T00:00:00Z","B",0.5]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "incremental","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"confirmed","type":"number"},{"text":"deaths","type":"number"}],"rows":[["2022-01-18T00:00:00Z",0,0],["2022-01-19T00:00:00Z",14,6]]}]`,
+			input: `{"targets": [{"target": "incremental","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"confirmed","type":"number"},{"text":"deaths","type":"number"}],"rows":[["2022-01-18T00:00:00Z",0,0],["2022-01-19T00:00:00Z",14,6]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "incremental","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"},"adhocFilters": [{"key": "Country Name","operator": "=","value": "A"}]}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"confirmed","type":"number"},{"text":"deaths","type":"number"}],"rows":[["2022-01-18T00:00:00Z",0,0],["2022-01-19T00:00:00Z",4,1]]}]`,
+			input: `{"targets": [{"target": "incremental","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"},"adhocFilters": [{"key": "Country Name","operator": "=","value": "A"}]}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"confirmed","type":"number"},{"text":"deaths","type":"number"}],"rows":[["2022-01-18T00:00:00Z",0,0],["2022-01-19T00:00:00Z",4,1]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "cumulative","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"confirmed","type":"number"},{"text":"deaths","type":"number"}],"rows":[["2022-01-18T00:00:00Z",0,0],["2022-01-19T00:00:00Z",14,6]]}]`,
+			input: `{"targets": [{"target": "cumulative","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"confirmed","type":"number"},{"text":"deaths","type":"number"}],"rows":[["2022-01-18T00:00:00Z",0,0],["2022-01-19T00:00:00Z",14,6]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "cumulative","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"},"adhocFilters": [{"key": "Country Name","operator": "=","value": "A"}]}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"confirmed","type":"number"},{"text":"deaths","type":"number"}],"rows":[["2022-01-18T00:00:00Z",0,0],["2022-01-19T00:00:00Z",4,1]]}]`,
+			input: `{"targets": [{"target": "cumulative","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"},"adhocFilters": [{"key": "Country Name","operator": "=","value": "A"}]}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"confirmed","type":"number"},{"text":"deaths","type":"number"}],"rows":[["2022-01-18T00:00:00Z",0,0],["2022-01-19T00:00:00Z",4,1]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "evolution","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"increase","type":"number"}],"rows":[["2022-01-20T00:00:00Z","A",2],["2022-01-20T00:00:00Z","B",5]]}]`,
+			input: `{"targets": [{"target": "evolution","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"increase","type":"number"}],"rows":[["2022-01-20T00:00:00Z","A",2],["2022-01-20T00:00:00Z","B",5]]}]
+`,
 		},
 		{
-			input:  `{"targets": [{"target": "updates","type": "table"}],"range": {"from": "2022-01-20T00:00:00Z","to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"updates","type":"number"}],"rows":[["2022-01-20T00:00:00Z",2]]}]`,
+			input: `{"targets": [{"target": "updates","type": "table"}],"range": {"from": "2022-01-20T00:00:00Z","to": "2022-01-20T00:00:00Z"}}`,
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"updates","type":"number"}],"rows":[["2022-01-20T00:00:00Z",2]]}]
+`,
 		},
 	}
 
