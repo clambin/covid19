@@ -1,7 +1,6 @@
 package simplejsonserver
 
 import (
-	"github.com/clambin/covid19/cache"
 	covidStore "github.com/clambin/covid19/covid/store"
 	populationStore "github.com/clambin/covid19/population/store"
 	"github.com/clambin/covid19/simplejsonserver/countries"
@@ -12,12 +11,7 @@ import (
 	"github.com/clambin/simplejson/v3"
 )
 
-// 	"incremental",
-//	"cumulative",
-//	"evolution",
-//	"updates",
-
-func MakeServer(covidDB covidStore.CovidStore, popDB populationStore.PopulationStore, dbCache *cache.Cache) *simplejson.Server {
+func MakeServer(covidDB covidStore.CovidStore, popDB populationStore.PopulationStore) *simplejson.Server {
 	return &simplejson.Server{
 		Name: "covid19",
 		Handlers: map[string]simplejson.Handler{
@@ -43,10 +37,10 @@ func MakeServer(covidDB covidStore.CovidStore, popDB populationStore.PopulationS
 				CovidDB: covidDB,
 			},
 			"cumulative": summarized.CumulativeHandler{
-				Cache: dbCache,
+				Retriever: summarized.Retriever{DB: covidDB},
 			},
 			"incremental": summarized.IncrementalHandler{
-				Cache: dbCache,
+				Retriever: summarized.Retriever{DB: covidDB},
 			},
 			"evolution": evolution.Handler{
 				CovidDB: covidDB,

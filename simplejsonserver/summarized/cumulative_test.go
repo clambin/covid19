@@ -3,7 +3,6 @@ package summarized_test
 import (
 	"context"
 	"errors"
-	"github.com/clambin/covid19/cache"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
@@ -21,8 +20,7 @@ func TestCumulativeHandler_Global(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetTotalsPerDay").Return(dbTotals, nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := summarized.CumulativeHandler{Cache: c}
+	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
 
 	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
 
@@ -49,8 +47,7 @@ func BenchmarkCumulativeHandler_Global(b *testing.B) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetTotalsPerDay").Return(bigContents, nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := summarized.CumulativeHandler{Cache: c}
+	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
 
 	args := query.Args{
 		Args: common.Args{
@@ -95,8 +92,7 @@ func TestCumulativeHandler_Country(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetAllForCountryName", "A").Return(filterByName(dbContents, "A"), nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := summarized.CumulativeHandler{Cache: c}
+	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
 
 	args := query.Args{
 		Args: common.Args{
@@ -128,8 +124,7 @@ func TestCumulativeHandler_Country(t *testing.T) {
 
 func TestCumulativeHandler_Tags(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := summarized.CumulativeHandler{Cache: c}
+	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
 
 	ctx := context.Background()
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/clambin/covid19/cache"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/models"
 	mockPopulationStore "github.com/clambin/covid19/population/store/mocks"
@@ -23,11 +22,7 @@ import (
 func TestServer_Query(t *testing.T) {
 	covidDB := &mockCovidStore.CovidStore{}
 	popDB := &mockPopulationStore.PopulationStore{}
-	dbCache := &cache.Cache{
-		DB:        covidDB,
-		Retention: time.Hour,
-	}
-	s := simplejsonserver.MakeServer(covidDB, popDB, dbCache)
+	s := simplejsonserver.MakeServer(covidDB, popDB)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -242,7 +237,7 @@ func TestServer_Query(t *testing.T) {
 }
 
 func TestServer_Search(t *testing.T) {
-	s := simplejsonserver.MakeServer(nil, nil, nil)
+	s := simplejsonserver.MakeServer(nil, nil)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)

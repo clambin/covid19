@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/clambin/covid19/backfill"
-	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/configuration"
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/db"
@@ -34,7 +33,6 @@ func main() {
 // Stack groups the different components that make up the application
 type Stack struct {
 	CovidStore      covidStore.CovidStore
-	Cache           *cache.Cache
 	PopulationStore populationStore.PopulationStore
 	HTTPServer      *http.Server
 	SkipBackfill    bool
@@ -54,10 +52,9 @@ func CreateStackWithStores(cfg *configuration.Configuration, covidDB covidStore.
 	stack = &Stack{
 		CovidStore:      covidDB,
 		PopulationStore: populationStore,
-		Cache:           &cache.Cache{DB: covidDB, Retention: 20 * time.Minute},
 	}
 
-	server := simplejsonserver.MakeServer(stack.CovidStore, stack.PopulationStore, stack.Cache)
+	server := simplejsonserver.MakeServer(stack.CovidStore, stack.PopulationStore)
 	r := server.GetRouter()
 	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	stack.HTTPServer = &http.Server{

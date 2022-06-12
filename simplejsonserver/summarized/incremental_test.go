@@ -2,7 +2,6 @@ package summarized_test
 
 import (
 	"context"
-	"github.com/clambin/covid19/cache"
 	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
 	"github.com/clambin/simplejson/v3/common"
@@ -18,8 +17,7 @@ func TestIncrementalHandler_Global(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetTotalsPerDay").Return(dbTotals, nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := summarized.IncrementalHandler{Cache: c}
+	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
 
 	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
 
@@ -45,8 +43,7 @@ func TestIncrementalHandler_Country(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetAllForCountryName", "A").Return(filterByName(dbContents, "A"), nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := summarized.IncrementalHandler{Cache: c}
+	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
 
 	args := query.Args{
 		Args: common.Args{
@@ -80,8 +77,7 @@ func TestIncrementalHandler_Tags(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
 
-	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
-	h := summarized.IncrementalHandler{Cache: c}
+	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
 
 	ctx := context.Background()
 
