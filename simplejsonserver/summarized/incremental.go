@@ -6,8 +6,9 @@ import (
 	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/dataset"
+	"github.com/clambin/simplejson/v3/data"
 	"github.com/clambin/simplejson/v3/query"
+	"time"
 )
 
 // IncrementalHandler returns the incremental number of cases & deaths. If an adhoc filter exists, it returns the
@@ -27,21 +28,23 @@ func (handler IncrementalHandler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *IncrementalHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var deltas *dataset.Dataset
+	var deltas *data.Table
 	if len(req.Args.AdHocFilters) > 0 {
 		deltas, err = handler.getDeltasForCountry(req.Args)
+		if err == nil {
+			deltas = deltas.Filter(req.Args)
+		}
 	} else {
 		deltas, err = handler.Cache.GetDeltas(req.Args.Range.To)
 	}
 
 	if err == nil {
-		deltas.FilterByRange(req.Args.Range.From, req.Args.Range.To)
-		response = deltas.GenerateTableResponse()
+		response = deltas.CreateTableResponse()
 	}
 	return
 }
 
-func (handler *IncrementalHandler) getDeltasForCountry(args query.Args) (deltas *dataset.Dataset, err error) {
+func (handler *IncrementalHandler) getDeltasForCountry(args query.Args) (deltas *data.Table, err error) {
 	var countryName string
 	countryName, err = evaluateAdHocFilter(args.AdHocFilters)
 
@@ -56,16 +59,24 @@ func (handler *IncrementalHandler) getDeltasForCountry(args query.Args) (deltas 
 		return
 	}
 
-	deltas = dataset.New()
-	var confirmed, deaths int64
-	for _, entry := range entries {
-		deltas.Add(entry.Timestamp, "confirmed", float64(entry.Confirmed-confirmed))
-		deltas.Add(entry.Timestamp, "deaths", float64(entry.Deaths-deaths))
+	timestamps := make([]time.Time, len(entries))
+	confirmed := make([]float64, len(entries))
+	deaths := make([]float64, len(entries))
 
-		confirmed = entry.Confirmed
-		deaths = entry.Deaths
+	var lastConfirmed, lastDeaths float64
+	for idx, entry := range entries {
+		timestamps[idx] = entry.Timestamp
+		confirmed[idx] = float64(entry.Confirmed) - lastConfirmed
+		deaths[idx] = float64(entry.Deaths) - lastDeaths
+		lastConfirmed = float64(entry.Confirmed)
+		lastDeaths = float64(entry.Deaths)
 	}
-	return
+
+	return data.New(
+		data.Column{Name: "timestamp", Values: timestamps},
+		data.Column{Name: "confirmed", Values: confirmed},
+		data.Column{Name: "deaths", Values: deaths},
+	), nil
 }
 
 func (handler *IncrementalHandler) tagKeys(_ context.Context) []string {

@@ -16,7 +16,7 @@ import (
 
 func TestIncrementalHandler_Global(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
-	dbh.On("GetAll").Return(dbContents, nil)
+	dbh.On("GetTotalsPerDay").Return(dbTotals, nil)
 
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := summarized.IncrementalHandler{Cache: c}
@@ -28,9 +28,14 @@ func TestIncrementalHandler_Global(t *testing.T) {
 	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC)}},
-		{Text: "confirmed", Data: query.NumberColumn{1, 5, 4}},
-		{Text: "deaths", Data: query.NumberColumn{0, 0, 1}},
+		{Text: "timestamp", Data: query.TimeColumn{
+			time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
+			time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC),
+			time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
+		}},
+		{Text: "confirmed", Data: query.NumberColumn{1, 2, 0, 7}},
+		{Text: "deaths", Data: query.NumberColumn{0, 0, 0, 1}},
 	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)

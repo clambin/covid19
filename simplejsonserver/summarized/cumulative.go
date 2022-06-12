@@ -6,8 +6,9 @@ import (
 	"github.com/clambin/covid19/cache"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/dataset"
+	"github.com/clambin/simplejson/v3/data"
 	"github.com/clambin/simplejson/v3/query"
+	"time"
 )
 
 // CumulativeHandler returns the incremental number of cases & deaths. If an adhoc filter exists, it returns the
@@ -27,21 +28,23 @@ func (handler CumulativeHandler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *CumulativeHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var totals *dataset.Dataset
+	var totals *data.Table
 	if len(req.Args.AdHocFilters) > 0 {
 		totals, err = handler.getTotalsForCountry(req.Args)
+		if err == nil {
+			totals = totals.Filter(req.Args)
+		}
 	} else {
 		totals, err = handler.Cache.GetTotals(req.Args.Range.To)
 	}
 
 	if err == nil {
-		totals.FilterByRange(req.Args.Range.From, req.Args.Range.To)
-		response = totals.GenerateTableResponse()
+		response = totals.CreateTableResponse()
 	}
 	return
 }
 
-func (handler *CumulativeHandler) getTotalsForCountry(args query.Args) (totals *dataset.Dataset, err error) {
+func (handler *CumulativeHandler) getTotalsForCountry(args query.Args) (totals *data.Table, err error) {
 	var countryName string
 	countryName, err = evaluateAdHocFilter(args.AdHocFilters)
 
@@ -56,13 +59,20 @@ func (handler *CumulativeHandler) getTotalsForCountry(args query.Args) (totals *
 		return
 	}
 
-	totals = dataset.New()
-	for _, entry := range entries {
-		totals.Add(entry.Timestamp, "confirmed", float64(entry.Confirmed))
-		totals.Add(entry.Timestamp, "deaths", float64(entry.Deaths))
-		//totals.Add(entry.Timestamp, "recovered", float64(entry.Recovered))
+	timestamps := make([]time.Time, len(entries))
+	confirmed := make([]float64, len(entries))
+	deaths := make([]float64, len(entries))
+
+	for idx, entry := range entries {
+		timestamps[idx] = entry.Timestamp
+		confirmed[idx] = float64(entry.Confirmed)
+		deaths[idx] = float64(entry.Deaths)
 	}
-	return
+	return data.New(
+		data.Column{Name: "timestamp", Values: timestamps},
+		data.Column{Name: "confirmed", Values: confirmed},
+		data.Column{Name: "deaths", Values: deaths},
+	), nil
 }
 
 func (handler *CumulativeHandler) tagKeys(_ context.Context) []string {

@@ -4,7 +4,7 @@ on:
   push:
     branches-ignore:
       - master
-      - caller2
+      - table
   pull_request_target:
 
 jobs:

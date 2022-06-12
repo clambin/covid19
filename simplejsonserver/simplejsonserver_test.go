@@ -74,6 +74,16 @@ func TestServer_Query(t *testing.T) {
 			Deaths:    5,
 		},
 	}, nil)
+	covidDB.On("GetTotalsPerDay").Return([]models.CountryEntry{
+		{
+			Timestamp: time.Date(2022, 1, 18, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			Timestamp: time.Date(2022, 1, 19, 0, 0, 0, 0, time.UTC),
+			Confirmed: 14,
+			Deaths:    6,
+		},
+	}, nil)
 	covidDB.
 		On("GetAllForRange",
 			time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC),

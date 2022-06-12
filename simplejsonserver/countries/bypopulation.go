@@ -44,12 +44,16 @@ func (handler *ByCountryByPopulationHandler) tableQuery(_ context.Context, req q
 
 	ts := d.GetTimestamps()
 
-	for _, country := range d.GetColumns() {
+	for idx, country := range d.GetColumns() {
+		if idx == 0 {
+			continue
+		}
+
 		code, codeFound := fetcher.CountryCodes[country]
 		if !codeFound {
 			code = country
 		}
-		values, found := d.GetValues(country)
+		values, found := d.GetFloatValues(country)
 		if !found {
 			continue
 		}

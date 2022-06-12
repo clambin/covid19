@@ -19,7 +19,7 @@ import (
 
 func TestCumulativeHandler_Global(t *testing.T) {
 	dbh := &mockCovidStore.CovidStore{}
-	dbh.On("GetAll").Return(dbContents, nil)
+	dbh.On("GetTotalsPerDay").Return(dbTotals, nil)
 
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := summarized.CumulativeHandler{Cache: c}
@@ -31,9 +31,14 @@ func TestCumulativeHandler_Global(t *testing.T) {
 	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 	require.NoError(t, err)
 	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC)}},
-		{Text: "confirmed", Data: query.NumberColumn{1, 6, 10}},
-		{Text: "deaths", Data: query.NumberColumn{0, 0, 1}},
+		{Text: "timestamp", Data: query.TimeColumn{
+			time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
+			time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC),
+			time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
+		}},
+		{Text: "confirmed", Data: query.NumberColumn{1, 3, 3, 10}},
+		{Text: "deaths", Data: query.NumberColumn{0, 0, 0, 1}},
 	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -42,7 +47,7 @@ func TestCumulativeHandler_Global(t *testing.T) {
 func BenchmarkCumulativeHandler_Global(b *testing.B) {
 	from, to, bigContents := buildBigDatabase()
 	dbh := &mockCovidStore.CovidStore{}
-	dbh.On("GetAll").Return(bigContents, nil)
+	dbh.On("GetTotalsPerDay").Return(bigContents, nil)
 
 	c := &cache.Cache{DB: dbh, Retention: 20 * time.Minute}
 	h := summarized.CumulativeHandler{Cache: c}
@@ -65,7 +70,7 @@ func BenchmarkCumulativeHandler_Global(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
-	mock.AssertExpectationsForObjects(b, dbh)
+	//mock.AssertExpectationsForObjects(b, dbh)
 }
 
 func buildBigDatabase() (from, to time.Time, content []models.CountryEntry) {
@@ -144,40 +149,69 @@ func TestCumulativeHandler_Tags(t *testing.T) {
 	mock.AssertExpectationsForObjects(t, dbh)
 }
 
-var dbContents = []models.CountryEntry{
-	{
-		Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
-		Code:      "A",
-		Name:      "A",
-		Confirmed: 1,
-		Recovered: 0,
-		Deaths:    0,
-	},
-	{
-		Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
-		Code:      "B",
-		Name:      "B",
-		Confirmed: 3,
-		Recovered: 0,
-		Deaths:    0,
-	},
-	{
-		Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
-		Code:      "A",
-		Name:      "A",
-		Confirmed: 3,
-		Recovered: 1,
-		Deaths:    0,
-	},
-	{
-		Timestamp: time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
-		Code:      "B",
-		Name:      "B",
-		Confirmed: 10,
-		Recovered: 5,
-		Deaths:    1,
-	},
-}
+var (
+	dbContents = []models.CountryEntry{
+		{
+			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
+			Code:      "A",
+			Name:      "A",
+			Confirmed: 1,
+			Recovered: 0,
+			Deaths:    0,
+		},
+		{
+			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
+			Code:      "B",
+			Name:      "B",
+			Confirmed: 3,
+			Recovered: 0,
+			Deaths:    0,
+		},
+		{
+			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
+			Code:      "A",
+			Name:      "A",
+			Confirmed: 3,
+			Recovered: 1,
+			Deaths:    0,
+		},
+		{
+			Timestamp: time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
+			Code:      "B",
+			Name:      "B",
+			Confirmed: 10,
+			Recovered: 5,
+			Deaths:    1,
+		},
+	}
+
+	dbTotals = []models.CountryEntry{
+		{
+			Timestamp: time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
+			Confirmed: 1,
+			Recovered: 0,
+			Deaths:    0,
+		},
+		{
+			Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
+			Confirmed: 3,
+			Recovered: 0,
+			Deaths:    0,
+		},
+		{
+			Timestamp: time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC),
+			Confirmed: 3,
+			Recovered: 1,
+			Deaths:    0,
+		},
+		{
+			Timestamp: time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
+			Confirmed: 10,
+			Recovered: 5,
+			Deaths:    1,
+		},
+	}
+)
 
 func filterByName(input []models.CountryEntry, name string) (output []models.CountryEntry) {
 	for _, entry := range input {

@@ -141,6 +141,14 @@ func TestDB(t *testing.T) {
 		assert.True(t, ts.Equal(first) || ts.Equal(last))
 		assert.Equal(t, 1, value)
 	}
+
+	totals, err := covidStore.GetTotalsPerDay()
+	require.NoError(t, err)
+	require.Len(t, totals, 2)
+	assert.Equal(t, int64(3), totals[0].Confirmed)
+	assert.Equal(t, int64(2), totals[0].Deaths)
+	assert.Equal(t, int64(6), totals[1].Confirmed)
+	assert.Equal(t, int64(5), totals[1].Deaths)
 }
 
 func TestNew_Failure(t *testing.T) {

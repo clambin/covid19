@@ -5,8 +5,9 @@ import (
 	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/dataset"
+	"github.com/clambin/simplejson/v3/data"
 	"github.com/clambin/simplejson/v3/query"
+	"sort"
 	"time"
 )
 
@@ -30,15 +31,15 @@ func (handler ByCountryHandler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *ByCountryHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var d *dataset.Dataset
+	var d *data.Table
 	d, err = getStatsByCountry(handler.CovidDB, req.Args, handler.Mode)
 	if err != nil {
 		return
 	}
-	return d.GenerateTableResponse(), nil
+	return d.CreateTableResponse(), nil
 }
 
-func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (response *dataset.Dataset, err error) {
+func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (response *data.Table, err error) {
 	var names []string
 	names, err = db.GetAllCountryNames()
 
@@ -58,11 +59,21 @@ func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (res
 	}
 
 	var timestamp time.Time
-	d := dataset.New()
 
-	for name, entry := range entries {
+	columns := make([]data.Column, 0, len(entries))
+
+	countries := make([]string, 0, len(entries))
+	for name := range entries {
+		countries = append(countries, name)
+	}
+	sort.Strings(countries)
+
+	for _, name := range countries {
+		entry := entries[name]
+
 		if timestamp.IsZero() {
 			timestamp = entry.Timestamp
+			columns = append(columns, data.Column{Name: "timestamp", Values: []time.Time{timestamp}})
 		}
 
 		var value float64
@@ -73,10 +84,8 @@ func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (res
 			value = float64(entry.Deaths)
 		}
 
-		d.Add(timestamp, name, value)
+		columns = append(columns, data.Column{Name: name, Values: []float64{value}})
 	}
 
-	d.FilterByRange(args.Range.From, args.Range.To)
-
-	return d, nil
+	return data.New(columns...).Filter(args), nil
 }

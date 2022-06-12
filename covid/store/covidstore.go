@@ -23,6 +23,7 @@ type CovidStore interface {
 	Add(entries []models.CountryEntry) (err error)
 	GetAllCountryNames() (names []string, err error)
 	CountEntriesByTime(from, to time.Time) (count map[time.Time]int, err error)
+	GetTotalsPerDay() (entries []models.CountryEntry, err error)
 }
 
 var _ CovidStore = &PGCovidStore{}
@@ -215,6 +216,30 @@ func (store *PGCovidStore) CountEntriesByTime(from, to time.Time) (updates map[t
 			updates[timestamp] = count
 		}
 	}
+	_ = rows.Close()
+
+	return
+}
+
+// GetTotalsPerDay returns the total new cases per day across all countries
+func (store *PGCovidStore) GetTotalsPerDay() (entries []models.CountryEntry, err error) {
+	var rows *sql.Rows
+	rows, err = store.DB.Handle.Query(`SELECT time, SUM(confirmed), SUM(death) FROM covid19 GROUP BY time ORDER BY time`)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return entries, nil
+	}
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		var entry models.CountryEntry
+		if rows.Scan(&entry.Timestamp, &entry.Confirmed, &entry.Deaths) == nil {
+			entries = append(entries, entry)
+		}
+	}
+	_ = rows.Close()
 
 	return
 }
