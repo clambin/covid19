@@ -69,8 +69,8 @@ github.com/clambin/go-metrics v0.5.0 h1:ckw/yLAPSKQVBdP2ZZI5UcrbVc2c/FHPFEfi35dc
 github.com/clambin/go-metrics v0.5.0/go.mod h1:MxABHHW4cOOLOG55GouoMSJQLRZf19xAnM+KJkLvdq0=
 github.com/clambin/go-rapidapi v0.2.0 h1:xNsMAhL9o3HXF4dvurwhnYwAWmAnn5J/ykf+JjGSdTU=
 github.com/clambin/go-rapidapi v0.2.0/go.mod h1:jIgXVGiR0D5wopGCdhUpLatsBOeEix8Ydz7pKooJu1g=
-github.com/clambin/simplejson/v3 v3.4.1 h1:PqeL8YLn6z5K+YfDgK2PebAgtoTJGFt62w7WHDT7PkI=
-github.com/clambin/simplejson/v3 v3.4.1/go.mod h1:LBXsQ4KeBHdrw9fzy1QXovXEN6sAOIAsjnCMny4ZdDQ=
+github.com/clambin/simplejson/v3 v3.4.2 h1:FgI0PWuLcd/qkirmGpYWvX4PocVH85WkHu3ERv3Vz28=
+github.com/clambin/simplejson/v3 v3.4.2/go.mod h1:zdPt0GKi18mvsNcAZXV3auLnh+3D1oXO6nQKu+y3lv4=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
@@ -188,8 +188,8 @@ github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORR
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
-github.com/grafana/grafana-plugin-sdk-go v0.136.0 h1:DSw/RLUI8pr/zunJUhbTjHyaRzf0IoOZgu2PjLsJ6Wc=
-github.com/grafana/grafana-plugin-sdk-go v0.136.0/go.mod h1:jmrxelOJKrIK0yrsIzcotS8pbqPZozbmJgGy7k3hK1k=
+github.com/grafana/grafana-plugin-sdk-go v0.138.0 h1:uJWNwHL4RoQF3axoi3RDSwoNu/KHy5F+5dnrK0fx5yc=
+github.com/grafana/grafana-plugin-sdk-go v0.138.0/go.mod h1:Y+Ps2sesZ62AyCnX+hzrYnyDQYe/ZZl+A8yKLOBm12c=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgfV/d3M/q6VIi02HzZEHgUlZvzk=
 github.com/grpc-ecosystem/grpc-gateway v1.9.0/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=

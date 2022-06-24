@@ -24,7 +24,7 @@ require (
 require (
 	github.com/clambin/go-metrics v0.5.0
 	github.com/clambin/go-rapidapi v0.2.0
-	github.com/clambin/simplejson/v3 v3.4.1
+	github.com/clambin/simplejson/v3 v3.4.2
 )
 
 require (
@@ -39,7 +39,7 @@ require (
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.136.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.138.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
