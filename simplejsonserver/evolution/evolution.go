@@ -27,24 +27,39 @@ func (handler Handler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var entries map[string][]int64
-	entries, err = handler.getLatestEntries(req.Args.Range.To)
+	end := req.Args.Range.To
+
+	var entries []models.CountryEntry
+
+	if end.IsZero() {
+		entries, err = handler.CovidDB.GetAll()
+	} else {
+		entries, err = handler.CovidDB.GetAllForRange(end.Add(-Window*24*time.Hour), end)
+	}
 	if err != nil {
 		return
 	}
 
-	increases := getIncreases(entries)
-	names := getSortedCountryNames(increases)
-
 	var (
 		timestamps []time.Time
+		names      []string
 		values     []float64
 	)
 
-	for _, name := range names {
-		// TODO: if To is zero, all reported timestamps are zero
-		timestamps = append(timestamps, req.Args.Range.To)
-		values = append(values, increases[name])
+	if len(entries) > 0 {
+		start := entries[len(entries)-1].Timestamp.Add(-Window * 24 * time.Hour)
+
+		increases := processEntries(entries, start)
+		names = getSortedCountryNames(increases)
+
+		timestamps = make([]time.Time, len(names))
+		values = make([]float64, len(names))
+
+		for idx, name := range names {
+			// TODO: if To is zero, all reported timestamps are zero
+			timestamps[idx] = req.Args.Range.To
+			values[idx] = increases[name]
+		}
 	}
 
 	return &query.TableResponse{
@@ -56,55 +71,66 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (respon
 	}, nil
 }
 
-func (handler *Handler) getLatestEntries(end time.Time) (confirmed map[string][]int64, err error) {
-	var entries []models.CountryEntry
-
-	if end.IsZero() {
-		entries, err = handler.CovidDB.GetAll()
-	} else {
-		entries, err = handler.CovidDB.GetAllForRange(end.Add(-Window*24*time.Hour), end)
-	}
-
-	if err != nil || len(entries) == 0 {
-		return
-	}
-
-	if end.IsZero() {
-		start := entries[len(entries)-1].Timestamp.Add(-Window * 24 * time.Hour)
-
-		for len(entries) > 0 && entries[0].Timestamp.Before(start) {
-			entries = entries[1:]
-		}
-	}
-
-	confirmed = make(map[string][]int64)
-
-	for index := len(entries) - 1; index >= 0; index-- {
-		list := confirmed[entries[index].Code]
-		list = append(list, entries[index].Confirmed)
-		confirmed[entries[index].Code] = list
-	}
-
-	return
-}
-
-func getIncreases(confirmed map[string][]int64) (increases map[string]float64) {
-	increases = make(map[string]float64)
-	for key, list := range confirmed {
-		var increase float64
-		count := len(list)
-		if count > 0 {
-			increase = float64(list[0]-list[len(list)-1]) / float64(count)
-		}
-		increases[key] = increase
-	}
-	return
-}
-
 func getSortedCountryNames(averages map[string]float64) (names []string) {
 	for name := range averages {
 		names = append(names, name)
 	}
 	sort.Strings(names)
 	return
+}
+
+func processEntries(entries []models.CountryEntry, start time.Time) (output map[string]float64) {
+	summary := summarizeEntries(entries, start)
+
+	output = make(map[string]float64)
+	for key, entry := range summary {
+		output[key] = entry.increase()
+	}
+	return
+}
+
+func summarizeEntries(entries []models.CountryEntry, start time.Time) (summary map[string]*evolution) {
+	summary = make(map[string]*evolution)
+	for i := 0; i < len(entries); i++ {
+		if entries[i].Timestamp.Before(start) {
+			continue
+		}
+		current, ok := summary[entries[i].Code]
+		if !ok {
+			current = &evolution{}
+			summary[entries[i].Code] = current
+		}
+		current.process(entries[i])
+		//summary[entries[i].Code] = current
+	}
+	return
+}
+
+type evolution struct {
+	first evolutionEntry
+	last  evolutionEntry
+}
+
+func (e *evolution) process(entry models.CountryEntry) {
+	if e.first.timestamp.IsZero() {
+		e.first.timestamp = entry.Timestamp
+		e.first.value = entry.Confirmed
+	} else {
+		e.last.timestamp = entry.Timestamp
+		e.last.value = entry.Confirmed
+	}
+}
+
+func (e evolution) increase() float64 {
+	if e.first.timestamp.IsZero() || e.last.timestamp.IsZero() {
+		return 0
+	}
+	days := float64(e.last.timestamp.Sub(e.first.timestamp).Hours()) / 24.0
+
+	return float64(e.last.value-e.first.value) / days
+}
+
+type evolutionEntry struct {
+	timestamp time.Time
+	value     int64
 }

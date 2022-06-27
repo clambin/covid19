@@ -36,7 +36,7 @@ func TestEvolution(t *testing.T) {
 	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
 		{Text: "timestamp", Data: query.TimeColumn{time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC), time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC)}},
 		{Text: "country", Data: query.StringColumn{"A", "B"}},
-		{Text: "increase", Data: query.NumberColumn{1, 3.5}},
+		{Text: "increase", Data: query.NumberColumn{2, 3.5}},
 	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)
@@ -69,7 +69,7 @@ func TestEvolution_NoEndDate(t *testing.T) {
 	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
 		{Text: "timestamp", Data: query.TimeColumn{time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)}},
 		{Text: "country", Data: query.StringColumn{"A", "B"}},
-		{Text: "increase", Data: query.NumberColumn{1, 3.5}},
+		{Text: "increase", Data: query.NumberColumn{2, 3.5}},
 	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)

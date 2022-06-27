@@ -204,7 +204,7 @@ func TestServer_Query(t *testing.T) {
 		},
 		{
 			input: `{"targets": [{"target": "evolution","type": "table"}],"range": {"to": "2022-01-20T00:00:00Z"}}`,
-			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"increase","type":"number"}],"rows":[["2022-01-20T00:00:00Z","A",2],["2022-01-20T00:00:00Z","B",5]]}]
+			output: `[{"type":"table","columns":[{"text":"timestamp","type":"time"},{"text":"country","type":"string"},{"text":"increase","type":"number"}],"rows":[["2022-01-20T00:00:00Z","A",4],["2022-01-20T00:00:00Z","B",10]]}]
 `,
 		},
 		{
