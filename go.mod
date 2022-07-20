@@ -5,7 +5,7 @@ go 1.18
 require (
 	bou.ke/monkey v1.0.2
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
-	github.com/containrrr/shoutrrr v0.6.0
+	github.com/containrrr/shoutrrr v0.6.1
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/lib/pq v1.10.6
 	github.com/prometheus/client_golang v1.12.2
