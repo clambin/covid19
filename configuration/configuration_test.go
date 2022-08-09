@@ -5,7 +5,6 @@ import (
 	"github.com/clambin/covid19/configuration"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -41,7 +40,7 @@ grafana:
 		cfg *configuration.Configuration
 	)
 
-	f, err = ioutil.TempFile("", "tmp")
+	f, err = os.CreateTemp("", "tmp")
 	if err != nil {
 		panic(err)
 	}
@@ -49,6 +48,7 @@ grafana:
 	defer func(filename string) {
 		_ = os.Remove(filename)
 	}(f.Name())
+
 	_, _ = f.Write([]byte(configString))
 	_ = f.Close()
 
@@ -86,30 +86,23 @@ monitor:
       - Belgium
       - US
 `
-	var (
-		err error
-		cfg *configuration.Configuration
-	)
-
 	_ = os.Setenv("RAPID_API_KEY", "")
 	_ = os.Setenv("NOTIFICATION_URL", "")
 
-	cfg, err = configuration.LoadConfiguration([]byte(configString))
+	cfg, err := configuration.LoadConfiguration([]byte(configString))
 
-	if assert.Nil(t, err) {
-		assert.Empty(t, cfg.Monitor.RapidAPIKey.Value)
-		assert.Empty(t, cfg.Monitor.Notifications.URL.Value)
-	}
+	require.NoError(t, err)
+	assert.Empty(t, cfg.Monitor.RapidAPIKey.Value)
+	assert.Empty(t, cfg.Monitor.Notifications.URL.Value)
 
 	_ = os.Setenv("RAPID_API_KEY", "1234")
 	_ = os.Setenv("NOTIFICATION_URL", "https://example.com/")
 
 	cfg, err = configuration.LoadConfiguration([]byte(configString))
 
-	if assert.Nil(t, err) {
-		assert.Equal(t, "1234", cfg.Monitor.RapidAPIKey.Value)
-		assert.Equal(t, "https://example.com/", cfg.Monitor.Notifications.URL.Value)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "1234", cfg.Monitor.RapidAPIKey.Value)
+	assert.Equal(t, "https://example.com/", cfg.Monitor.Notifications.URL.Value)
 }
 
 func TestLoadConfiguration_Defaults(t *testing.T) {
@@ -119,7 +112,7 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 
 	cfg, err := configuration.LoadConfiguration([]byte{})
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 8080, cfg.Port)
 	assert.False(t, cfg.Debug)
 	assert.Equal(t, "postgres", cfg.Postgres.Host)
