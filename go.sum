@@ -65,8 +65,8 @@ github.com/cheekybits/genny v1.0.0/go.mod h1:+tQajlRqAUrPI7DOSpB0XAqZYtQakVtB7wX
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
-github.com/clambin/go-metrics v0.5.0 h1:ckw/yLAPSKQVBdP2ZZI5UcrbVc2c/FHPFEfi35dcmNA=
-github.com/clambin/go-metrics v0.5.0/go.mod h1:MxABHHW4cOOLOG55GouoMSJQLRZf19xAnM+KJkLvdq0=
+github.com/clambin/go-metrics v0.5.1 h1:94keFDQSSiVh+H55oKw9tr02LlOkcON4zmZh9OohLGo=
+github.com/clambin/go-metrics v0.5.1/go.mod h1:z3hpFI7lxGIHH+156BR/lPhwM+oYBgr9pP9Wov1/plc=
 github.com/clambin/go-rapidapi v0.2.0 h1:xNsMAhL9o3HXF4dvurwhnYwAWmAnn5J/ykf+JjGSdTU=
 github.com/clambin/go-rapidapi v0.2.0/go.mod h1:jIgXVGiR0D5wopGCdhUpLatsBOeEix8Ydz7pKooJu1g=
 github.com/clambin/simplejson/v3 v3.4.2 h1:FgI0PWuLcd/qkirmGpYWvX4PocVH85WkHu3ERv3Vz28=
