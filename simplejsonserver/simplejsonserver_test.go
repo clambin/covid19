@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
+	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
-	mockPopulationStore "github.com/clambin/covid19/population/store/mocks"
 	"github.com/clambin/covid19/simplejsonserver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,7 +20,7 @@ import (
 
 func TestServer_Query(t *testing.T) {
 	covidDB := &mockCovidStore.CovidStore{}
-	popDB := &mockPopulationStore.PopulationStore{}
+	popDB := &mockCovidStore.PopulationStore{}
 	s := simplejsonserver.MakeServer(covidDB, popDB)
 
 	wg := sync.WaitGroup{}

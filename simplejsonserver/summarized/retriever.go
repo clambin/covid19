@@ -1,7 +1,7 @@
 package summarized
 
 import (
-	"github.com/clambin/covid19/covid/store"
+	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v3/data"
 	"github.com/clambin/simplejson/v3/query"
@@ -9,7 +9,7 @@ import (
 )
 
 type Retriever struct {
-	DB store.CovidStore
+	DB db.CovidStore
 }
 
 func (r *Retriever) getTotalsForCountry(args query.Args) (entries []models.CountryEntry, err error) {

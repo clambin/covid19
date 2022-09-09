@@ -3,7 +3,7 @@ package backfill
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/clambin/covid19/covid/store"
+	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -13,11 +13,11 @@ import (
 // Backfiller retrieves historic COVID19 data and adds it to the database
 type Backfiller struct {
 	URL   string
-	Store store.CovidStore
+	Store db.CovidStore
 }
 
 // New creates a new Backfiller object
-func New(store store.CovidStore) *Backfiller {
+func New(store db.CovidStore) *Backfiller {
 	return &Backfiller{URL: covid19url, Store: store}
 }
 

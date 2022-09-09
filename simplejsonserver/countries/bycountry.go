@@ -2,7 +2,7 @@ package countries
 
 import (
 	"context"
-	covidStore "github.com/clambin/covid19/covid/store"
+	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/data"

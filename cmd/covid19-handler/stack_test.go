@@ -2,8 +2,7 @@ package main
 
 import (
 	"github.com/clambin/covid19/configuration"
-	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
-	mockPopulationStore "github.com/clambin/covid19/population/store/mocks"
+	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"net/http"
@@ -22,14 +21,14 @@ func TestCovidHandler(t *testing.T) {
 			Debug:    false,
 			Postgres: pg,
 		}
-		stack = CreateStack(cfg)
+		stack, _ = CreateStack(cfg)
 	} else {
 		cfg := &configuration.Configuration{
 			Port:  8080,
 			Debug: false,
 		}
 		covidStore := &mockCovidStore.CovidStore{}
-		populationStore := &mockPopulationStore.PopulationStore{}
+		populationStore := &mockCovidStore.PopulationStore{}
 		stack = CreateStackWithStores(cfg, covidStore, populationStore)
 	}
 
@@ -55,7 +54,7 @@ func TestBackfill(t *testing.T) {
 		Debug: false,
 	}
 	covidStore := &mockCovidStore.CovidStore{}
-	populationStore := &mockPopulationStore.PopulationStore{}
+	populationStore := &mockCovidStore.PopulationStore{}
 	stack := CreateStackWithStores(cfg, covidStore, populationStore)
 
 	covidStore.On("GetFirstEntry").Return(time.Time{}, false, nil)

@@ -1,8 +1,7 @@
 package simplejsonserver
 
 import (
-	covidStore "github.com/clambin/covid19/covid/store"
-	populationStore "github.com/clambin/covid19/population/store"
+	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/simplejsonserver/countries"
 	"github.com/clambin/covid19/simplejsonserver/evolution"
 	"github.com/clambin/covid19/simplejsonserver/mortality"
@@ -11,7 +10,7 @@ import (
 	"github.com/clambin/simplejson/v3"
 )
 
-func MakeServer(covidDB covidStore.CovidStore, popDB populationStore.PopulationStore) *simplejson.Server {
+func MakeServer(covidDB covidStore.CovidStore, popDB covidStore.PopulationStore) *simplejson.Server {
 	return &simplejson.Server{
 		Name: "covid19",
 		Handlers: map[string]simplejson.Handler{

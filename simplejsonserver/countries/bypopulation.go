@@ -2,9 +2,8 @@ package countries
 
 import (
 	"context"
-	"github.com/clambin/covid19/covid/probe/fetcher"
-	covidStore "github.com/clambin/covid19/covid/store"
-	populationStore "github.com/clambin/covid19/population/store"
+	"github.com/clambin/covid19/covid/fetcher"
+	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/query"
 	"time"
@@ -13,7 +12,7 @@ import (
 // ByCountryByPopulationHandler returns the latest stats by country
 type ByCountryByPopulationHandler struct {
 	CovidDB covidStore.CovidStore
-	PopDB   populationStore.PopulationStore
+	PopDB   covidStore.PopulationStore
 	Mode    int
 }
 

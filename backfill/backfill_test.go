@@ -2,7 +2,7 @@ package backfill_test
 
 import (
 	"github.com/clambin/covid19/backfill"
-	"github.com/clambin/covid19/covid/store/mocks"
+	"github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

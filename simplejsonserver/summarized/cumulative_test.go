@@ -3,7 +3,7 @@ package summarized_test
 import (
 	"context"
 	"errors"
-	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
+	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
 	"github.com/clambin/simplejson/v3/common"

@@ -2,7 +2,7 @@ package updates_test
 
 import (
 	"context"
-	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
+	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/simplejsonserver/updates"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"

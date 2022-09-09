@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"github.com/clambin/covid19/configuration"
-	covidProbe "github.com/clambin/covid19/covid/probe"
-	covidStore "github.com/clambin/covid19/covid/store"
+	covidProbe "github.com/clambin/covid19/covid"
 	"github.com/clambin/covid19/db"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
@@ -17,12 +17,12 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	dbh, err := db.NewWithConfiguration(cfg.Postgres)
+	dbh, err := db.NewWithConfiguration(cfg.Postgres, prometheus.DefaultRegisterer)
 	if err != nil {
 		panic(err)
 	}
 
-	store := covidStore.New(dbh)
+	store := db.NewCovidStore(dbh)
 	cp := covidProbe.New(&cfg.Monitor, store)
 
 	err = cp.Update(context.Background())

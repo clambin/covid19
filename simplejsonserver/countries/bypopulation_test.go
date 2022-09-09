@@ -3,9 +3,8 @@ package countries_test
 import (
 	"context"
 	"errors"
-	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
+	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
-	mockPopulationStore "github.com/clambin/covid19/population/store/mocks"
 	"github.com/clambin/covid19/simplejsonserver/countries"
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
@@ -28,7 +27,7 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
 		}, nil)
 
-	dbh2 := &mockPopulationStore.PopulationStore{}
+	dbh2 := &mockCovidStore.PopulationStore{}
 	dbh2.On("List").Return(map[string]int64{
 		"BE": 10,
 		"US": 20,
@@ -66,7 +65,7 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Deaths: 200},
 		}, nil)
 
-	dbh2 := &mockPopulationStore.PopulationStore{}
+	dbh2 := &mockCovidStore.PopulationStore{}
 	dbh2.On("List").Return(map[string]int64{
 		"BE": 10,
 		"US": 20,
@@ -104,7 +103,7 @@ func TestConfirmedByCountryByPopulation_Errors(t *testing.T) {
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
 		}, nil)
 
-	dbh2 := &mockPopulationStore.PopulationStore{}
+	dbh2 := &mockCovidStore.PopulationStore{}
 
 	h := countries.ByCountryByPopulationHandler{
 		CovidDB: dbh,

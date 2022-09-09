@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/configuration"
-	covidStore "github.com/clambin/covid19/covid/store"
 	"github.com/clambin/covid19/db"
-	populationStore "github.com/clambin/covid19/population/store"
 	"github.com/clambin/covid19/simplejsonserver"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"net/http"
@@ -24,7 +23,10 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	s := CreateStack(cfg)
+	s, err := CreateStack(cfg)
+	if err != nil {
+		log.WithError(err).Fatal("app init failed")
+	}
 	go s.Run()
 	<-shutdown.Chan()
 	s.Stop()
@@ -32,23 +34,23 @@ func main() {
 
 // Stack groups the different components that make up the application
 type Stack struct {
-	CovidStore      covidStore.CovidStore
-	PopulationStore populationStore.PopulationStore
+	CovidStore      db.CovidStore
+	PopulationStore db.PopulationStore
 	HTTPServer      *http.Server
 	SkipBackfill    bool
 }
 
 // CreateStack creates an application stack for the provided configuration
-func CreateStack(cfg *configuration.Configuration) (stack *Stack) {
-	dbh, err := db.NewWithConfiguration(cfg.Postgres)
+func CreateStack(cfg *configuration.Configuration) (*Stack, error) {
+	dbh, err := db.NewWithConfiguration(cfg.Postgres, prometheus.DefaultRegisterer)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return CreateStackWithStores(cfg, covidStore.New(dbh), populationStore.New(dbh))
+	return CreateStackWithStores(cfg, db.NewCovidStore(dbh), db.NewPopulationStore(dbh)), nil
 }
 
 // CreateStackWithStores creates an application stack for the provided configuration and Covid-19 store
-func CreateStackWithStores(cfg *configuration.Configuration, covidDB covidStore.CovidStore, populationStore populationStore.PopulationStore) (stack *Stack) {
+func CreateStackWithStores(cfg *configuration.Configuration, covidDB db.CovidStore, populationStore db.PopulationStore) (stack *Stack) {
 	stack = &Stack{
 		CovidStore:      covidDB,
 		PopulationStore: populationStore,

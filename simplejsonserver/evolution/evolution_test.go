@@ -2,8 +2,8 @@ package evolution_test
 
 import (
 	"context"
-	"github.com/clambin/covid19/covid/probe/fetcher"
-	mockCovidStore "github.com/clambin/covid19/covid/store/mocks"
+	"github.com/clambin/covid19/covid/fetcher"
+	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/evolution"
 	"github.com/clambin/simplejson/v3/common"
