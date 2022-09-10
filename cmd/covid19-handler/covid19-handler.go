@@ -8,7 +8,6 @@ import (
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/simplejsonserver"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"net/http"
@@ -42,7 +41,7 @@ type Stack struct {
 
 // CreateStack creates an application stack for the provided configuration
 func CreateStack(cfg *configuration.Configuration) (*Stack, error) {
-	dbh, err := db.NewWithConfiguration(cfg.Postgres, prometheus.DefaultRegisterer)
+	dbh, err := db.New(cfg.Postgres)
 	if err != nil {
 		return nil, err
 	}

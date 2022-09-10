@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
@@ -23,13 +23,14 @@ func TestServer_Query(t *testing.T) {
 	popDB := &mockCovidStore.PopulationStore{}
 	s := simplejsonserver.MakeServer(covidDB, popDB)
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
+	g := errgroup.Group{}
+	g.Go(func() error {
 		err := s.Run(8080)
-		require.True(t, errors.Is(err, http.ErrServerClosed))
-		wg.Done()
-	}()
+		if errors.Is(err, http.ErrServerClosed) {
+			err = nil
+		}
+		return err
+	})
 
 	require.Eventually(t, func() bool {
 		_, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/", 8080))
@@ -232,19 +233,20 @@ func TestServer_Query(t *testing.T) {
 
 	err := s.Shutdown(context.Background(), 15*time.Second)
 	require.NoError(t, err)
-	wg.Wait()
+	assert.NoError(t, g.Wait())
 }
 
 func TestServer_Search(t *testing.T) {
 	s := simplejsonserver.MakeServer(nil, nil)
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
+	g := errgroup.Group{}
+	g.Go(func() error {
 		err := s.Run(8080)
-		require.True(t, errors.Is(err, http.ErrServerClosed))
-		wg.Done()
-	}()
+		if errors.Is(err, http.ErrServerClosed) {
+			err = nil
+		}
+		return err
+	})
 
 	require.Eventually(t, func() bool {
 		_, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/", 8080))
@@ -262,4 +264,6 @@ func TestServer_Search(t *testing.T) {
 	body, err = io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.Equal(t, `["country-confirmed","country-confirmed-population","country-deaths","country-deaths-population","country-deaths-vs-confirmed","cumulative","evolution","incremental","updates"]`, string(body))
+
+	assert.NoError(t, g.Wait())
 }

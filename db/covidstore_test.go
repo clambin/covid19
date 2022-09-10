@@ -1,43 +1,11 @@
 package db_test
 
 import (
-	"fmt"
-	"github.com/clambin/covid19/configuration"
-	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"os"
 	"testing"
 	"time"
-)
-
-func TestMain(m *testing.M) {
-	pg := configuration.LoadPGEnvironment()
-
-	if !pg.IsValid() {
-		fmt.Println("Could not find all CovidDB env variables. Skipping this test")
-		return
-	}
-
-	var err error
-	DB, err = db.NewWithConfiguration(pg, prometheus.NewRegistry())
-	if err != nil {
-		fmt.Printf("unable to connect to database: %s", err.Error())
-		os.Exit(1)
-	}
-
-	covidStore = db.NewCovidStore(DB)
-
-	m.Run()
-
-	_ = DB.RemoveAll()
-}
-
-var (
-	DB         *db.DB
-	covidStore db.CovidStore
 )
 
 func TestCovidStore(t *testing.T) {

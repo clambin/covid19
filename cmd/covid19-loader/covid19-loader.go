@@ -5,7 +5,6 @@ import (
 	"github.com/clambin/covid19/configuration"
 	covidProbe "github.com/clambin/covid19/covid"
 	"github.com/clambin/covid19/db"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
@@ -17,7 +16,7 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	dbh, err := db.NewWithConfiguration(cfg.Postgres, prometheus.DefaultRegisterer)
+	dbh, err := db.New(cfg.Postgres)
 	if err != nil {
 		panic(err)
 	}

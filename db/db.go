@@ -23,19 +23,8 @@ type DB struct {
 	database string
 }
 
-// New created a new DB object and connects to the database
-func New(host string, port int, database string, user string, password string, registry prometheus.Registerer) (db *DB, err error) {
-	return NewWithConfiguration(configuration.PostgresDB{
-		Host:     host,
-		Port:     port,
-		Database: database,
-		User:     user,
-		Password: password,
-	}, registry)
-}
-
-// NewWithConfiguration creates a new DB connector
-func NewWithConfiguration(cfg configuration.PostgresDB, registry prometheus.Registerer) (db *DB, err error) {
+// New creates a new DB connector
+func New(cfg configuration.PostgresDB) (db *DB, err error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database)
 	db = &DB{
@@ -45,15 +34,20 @@ func NewWithConfiguration(cfg configuration.PostgresDB, registry prometheus.Regi
 	if db.Handle, err = sql.Open("postgres", db.psqlInfo); err != nil {
 		return
 	}
+
+	defer func() {
+		if err != nil {
+			_ = db.Handle.Close()
+		}
+	}()
+
 	if err = db.Handle.Ping(); err != nil {
 		return
 	}
 	if err = db.migrate(); err != nil {
 		return
 	}
-	if registry != nil {
-		registry.MustRegister(collectors.NewDBStatsCollector(db.Handle, db.database))
-	}
+	err = prometheus.Register(collectors.NewDBStatsCollector(db.Handle, db.database))
 	return
 }
 

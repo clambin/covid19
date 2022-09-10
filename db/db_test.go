@@ -1,30 +1,45 @@
 package db_test
 
 import (
+	"fmt"
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/db"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 )
 
-func TestDB_Failure(t *testing.T) {
-	_, err := db.New("127.0.0.1", 5432, "test", "test", "test", nil)
-	assert.Error(t, err)
-}
+var (
+	DB         *db.DB
+	covidStore db.CovidStore
+	popStore   db.PopulationStore
+)
 
-func TestDB(t *testing.T) {
-	cfg := configuration.LoadPGEnvironment()
+func TestMain(m *testing.M) {
+	pg := configuration.LoadPGEnvironment()
 
-	if !cfg.IsValid() {
-		t.Log("postgres environment variables not set. skipping test")
+	if !pg.IsValid() {
+		fmt.Println("Could not find all CovidDB env variables. Skipping this test")
 		return
 	}
 
-	r := prometheus.NewRegistry()
-	store, err := db.New(cfg.Host, cfg.Port, cfg.Database, cfg.User, cfg.Password, r)
-	require.NoError(t, err)
-	err = store.Handle.Ping()
-	assert.NoError(t, err)
+	var err error
+	DB, err = db.New(pg)
+	if err != nil {
+		fmt.Printf("unable to connect to database: %s", err.Error())
+		os.Exit(1)
+	}
+
+	covidStore = db.NewCovidStore(DB)
+	popStore = db.NewPopulationStore(DB)
+
+	m.Run()
+
+	_ = DB.RemoveAll()
+}
+
+func TestDB_Failure(t *testing.T) {
+	cfg := configuration.PostgresDB{Host: "127.0.0.1", Port: 5432, Database: "test", User: "test", Password: "test"}
+	_, err := db.New(cfg)
+	assert.Error(t, err)
 }
