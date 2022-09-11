@@ -23,7 +23,7 @@ func TestProbe_Update(t *testing.T) {
 	store.On("Add", "US", int64(330)).Return(nil)
 	store.On("Add", "BE", int64(11)).Return(nil)
 
-	err := p.Update(context.Background())
+	_, err := p.Update(context.Background())
 	require.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, store, apiClient)

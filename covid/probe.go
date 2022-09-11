@@ -8,11 +8,9 @@ import (
 	notifier2 "github.com/clambin/covid19/covid/notifier"
 	"github.com/clambin/covid19/covid/saver"
 	"github.com/clambin/covid19/db"
-	"github.com/clambin/covid19/models"
 	"github.com/clambin/go-rapidapi"
 	log "github.com/sirupsen/logrus"
 	"sync"
-	"time"
 )
 
 // Covid19Probe gets new COVID-19 stats for each country and, if they are new, adds them to the database
@@ -47,31 +45,23 @@ func New(cfg *configuration.MonitorConfiguration, db db.CovidStore) *Covid19Prob
 }
 
 // Update gets new COVID-19 stats for each country and, if they are new, adds them to the database
-func (probe *Covid19Probe) Update(ctx context.Context) (err error) {
-	start := time.Now()
-
-	var countryStats []models.CountryEntry
-	countryStats, err = probe.Fetcher.GetCountryStats(ctx)
+func (probe *Covid19Probe) Update(ctx context.Context) (int, error) {
+	countryStats, err := probe.Fetcher.GetCountryStats(ctx)
 	if err == nil {
-		log.WithField("entries", len(countryStats)).Info("found covid-19 data")
 		countryStats, err = probe.Saver.SaveNewEntries(countryStats)
-		log.WithField("entries", len(countryStats)).Info("saved covid-19 data")
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to get Covid figures: " + err.Error())
+		return 0, fmt.Errorf("failed to get Covid figures: " + err.Error())
 	}
 
 	if probe.Notifier != nil {
-		err2 := probe.Notifier.Notify(countryStats)
-		if err2 != nil {
-			log.WithError(err2).Error("failed to send notification")
+		if err = probe.Notifier.Notify(countryStats); err != nil {
+			log.WithError(err).Error("failed to send notification")
 		}
 	}
 
 	probe.setCountryUpdates(countryStats)
 
-	log.Infof("discovered %d country figures in %v", len(countryStats), time.Since(start))
-
-	return
+	return len(countryStats), nil
 }

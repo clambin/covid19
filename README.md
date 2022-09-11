@@ -9,21 +9,22 @@
 A lightweight Covid-19 tracker.
 
 ## Introduction
-This package tracks global Covid-19 data. It consists of three executables:
+This package tracks global Covid-19 data. It provides three commands:
 
-- covid19-loader retrieves the latest updates from a public Covid-19 tracker and stores them in an external Postgres DB
-- covid19-population-loader retrieves the latest population figures from a public tracker and stores them in an external Postgres DB
-- covid19-handler implements the targets for the contained Grafana dashboards
+- loader: retrieves the latest updates from a public Covid-19 tracker and stores them in an external Postgres DB
+- population: retrieves the latest population figures from a public tracker and stores them in an external Postgres DB
+- handler: implements the targets for the provided Grafana dashboards
 
 
 ## Installation
-Docker images for the different programs is available on ghcr.io:
+Docker images are available on ghcr.io:
 
-- [covid19-loader](https://github.com/clambin/covid19/pkgs/container/covid19-loader)
-- [covid19-population-loader](https://github.com/clambin/covid19/pkgs/container/covid19-population-loader)
-- [covid19-handler](https://github.com/clambin/covid19/pkgs/container/covid19-handler)
+- [covid19](https://github.com/clambin/covid19/pkgs/container/covid19)
 
 Images are available for amd64, arm64 & arm32. Binaries are also available on [github](https://github.com/clambin/covid19/releases).
+
+A helm chart is available at https://clambin.github.io/helm-charts. It runs the handler as a deployment and configures
+two CronJobs to load covid and population data on a daily basis.
 
 ## Configuration
 ### Configuration file
@@ -109,16 +110,31 @@ datasources:
 
 ## Running
 ### Command-line options
-Each program supports the same command-line arguments:
+Each mode supports the same command-line arguments:
 
 ```
-usage: covid19-loader --config=CONFIG [<flags>]
+usage: covid19 --config=CONFIG [<flags>] <command> [<args> ...]
+
+covid19
 
 Flags:
--h, --help       Show context-sensitive help (also try --help-long and --help-man).
--v, --version    Show application version.
---debug          Log debug messages
---config=CONFIG  Configuration file
+  -h, --help           Show context-sensitive help (also try --help-long and --help-man).
+  -v, --version        Show application version.
+      --debug          Log debug messages
+      --config=CONFIG  Configuration file
+
+Commands:
+  help [<command>...]
+    Show help.
+
+  handler
+    runs the simplejson handler
+
+  loader
+    retrieves new covid data
+
+  population
+    retrieves latest population data
 ```
 
 ## Grafana

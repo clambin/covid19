@@ -265,5 +265,7 @@ func TestServer_Search(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, `["country-confirmed","country-confirmed-population","country-deaths","country-deaths-population","country-deaths-vs-confirmed","cumulative","evolution","incremental","updates"]`, string(body))
 
+	err = s.Shutdown(context.Background(), 5*time.Second)
+	require.NoError(t, err)
 	assert.NoError(t, g.Wait())
 }

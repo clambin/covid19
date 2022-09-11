@@ -1,12 +1,9 @@
 package configuration
 
 import (
-	"github.com/clambin/covid19/version"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/yaml.v3"
 	"os"
-	"path/filepath"
 )
 
 // Configuration for covid19 app
@@ -83,37 +80,4 @@ func LoadConfiguration(content []byte) (*Configuration, error) {
 	log.WithField("err", err).Debug("LoadConfiguration")
 
 	return &configuration, err
-}
-
-// GetConfiguration parses the provided commandline arguments and creates the required configuration
-func GetConfiguration(application string, args []string) (cfg *Configuration) {
-	var (
-		debug          bool
-		configFileName string
-	)
-
-	log.WithField("version", version.BuildVersion).Info(application + " starting")
-	a := kingpin.New(filepath.Base(args[0]), application)
-
-	a.Version(version.BuildVersion)
-	a.HelpFlag.Short('h')
-	a.VersionFlag.Short('v')
-	a.Flag("debug", "Log debug messages").BoolVar(&debug)
-	a.Flag("config", "Configuration file").Required().StringVar(&configFileName)
-
-	_, err := a.Parse(args[1:])
-	if err != nil {
-		a.Usage(args[1:])
-		os.Exit(1)
-	}
-
-	if cfg, err = LoadConfigurationFile(configFileName); err != nil {
-		log.WithField("err", err).Fatal("Failed to read config file")
-	}
-
-	if debug {
-		cfg.Debug = true
-	}
-
-	return
 }

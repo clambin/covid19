@@ -4,10 +4,8 @@ import (
 	"context"
 	"github.com/clambin/covid19/covid/fetcher"
 	"github.com/clambin/covid19/db"
-	"golang.org/x/sync/semaphore"
-	"time"
-
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 )
 
 // Probe downloads the latest population stats per country and stores them in the database
@@ -27,10 +25,8 @@ func New(apiKey string, store db.PopulationStore) *Probe {
 const maxConcurrentJobs = 5
 
 // Update gets the current population for each supported country and stores it in the database
-func (probe *Probe) Update(ctx context.Context) (err error) {
-	start := time.Now()
+func (probe *Probe) Update(ctx context.Context) (count int, err error) {
 	maxJobs := semaphore.NewWeighted(maxConcurrentJobs)
-	codes := 0
 	for _, code := range countryCodes() {
 		country, found := countryNames[code]
 
@@ -39,7 +35,7 @@ func (probe *Probe) Update(ctx context.Context) (err error) {
 			continue
 		}
 
-		codes++
+		count++
 
 		_ = maxJobs.Acquire(ctx, 1)
 		go func(ctx context.Context, code, country string) {
@@ -55,8 +51,7 @@ func (probe *Probe) Update(ctx context.Context) (err error) {
 
 	_ = maxJobs.Acquire(ctx, maxConcurrentJobs)
 
-	log.Infof("discovered %d country population figures in %v", codes, time.Since(start))
-	return nil
+	return count, err
 }
 
 func countryCodes() (codes []string) {

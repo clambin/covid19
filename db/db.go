@@ -64,6 +64,7 @@ func (db *DB) migrate() error {
 	return err
 }
 
+// RemoveAll deletes all database tables
 func (db *DB) RemoveAll() error {
 	m, err := db.prepareMigration()
 	if err != nil {

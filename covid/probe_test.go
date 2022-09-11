@@ -70,7 +70,7 @@ func TestCovid19Probe_Update(t *testing.T) {
 		Return(nil).
 		Once()
 
-	err := p.Update(context.Background())
+	_, err := p.Update(context.Background())
 	require.NoError(t, err)
 
 	ch := make(chan prometheus.Metric)
@@ -106,7 +106,7 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 		Return(nil, fmt.Errorf("unable to get new country stats")).
 		Once()
 
-	err := p.Update(context.Background())
+	_, err := p.Update(context.Background())
 	require.Error(t, err)
 
 	timeStamp := time.Now()
@@ -125,7 +125,7 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 		Return(nil, fmt.Errorf("unable to store new entries")).
 		Once()
 
-	err = p.Update(context.Background())
+	_, err = p.Update(context.Background())
 	require.Error(t, err)
 
 	f.
@@ -141,7 +141,7 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 		Return(fmt.Errorf("unable to send notifications")).
 		Once()
 
-	err = p.Update(context.Background())
+	_, err = p.Update(context.Background())
 	require.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, f, s, n)
