@@ -18,12 +18,12 @@ var (
 )
 
 // Describe implements the prometheus collector Describe interface
-func (probe *Covid19Probe) Describe(ch chan<- *prometheus.Desc) {
+func (probe *Probe) Describe(ch chan<- *prometheus.Desc) {
 	ch <- metricUpdates
 }
 
 // Collect implements the prometheus collector Collect interface
-func (probe *Covid19Probe) Collect(ch chan<- prometheus.Metric) {
+func (probe *Probe) Collect(ch chan<- prometheus.Metric) {
 	start := time.Now()
 	probe.lock.RLock()
 	defer probe.lock.RUnlock()
@@ -35,7 +35,7 @@ func (probe *Covid19Probe) Collect(ch chan<- prometheus.Metric) {
 	log.WithField("duration", time.Since(start)).Debug("prometheus scrape done")
 }
 
-func (probe *Covid19Probe) setCountryUpdates(newEntries []models.CountryEntry) {
+func (probe *Probe) setCountryUpdates(newEntries []models.CountryEntry) {
 	probe.lock.Lock()
 	defer probe.lock.Unlock()
 

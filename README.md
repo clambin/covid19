@@ -37,7 +37,7 @@ port: 8080
 debug: false
 # Configuration for Postgres DB
 postgres:
-  # Postgres Host IP or host
+  # Postgres Host IP or host. Default is 'postgres'
   host: postgres
   # Postgres Port. Default is 5432
   port: 5432

@@ -1,7 +1,6 @@
 package configuration
 
 import (
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"io"
 	"os"
@@ -15,78 +14,53 @@ type Configuration struct {
 	Monitor  MonitorConfiguration `yaml:"monitor"`
 }
 
-// MonitorConfiguration parameters
-type MonitorConfiguration struct {
-	RapidAPIKey   ValueOrEnvVar             `yaml:"rapidAPIKey"`
-	Notifications NotificationConfiguration `yaml:"notifications"`
+// PostgresDB configuration parameters
+type PostgresDB struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Database string `yaml:"database"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
 }
 
-// ValueOrEnvVar allows a value to be specified directly, or via environment variable
-type ValueOrEnvVar struct {
-	Value  string `yaml:"value"`
-	EnvVar string `yaml:"envVar"`
+// IsValid checks if the postgres configuration is valid
+func (pg PostgresDB) IsValid() bool {
+	return pg.Host != "" &&
+		pg.Port != 0 &&
+		pg.Database != "" &&
+		pg.User != "" &&
+		pg.Password != ""
+}
+
+// MonitorConfiguration parameters
+type MonitorConfiguration struct {
+	RapidAPIKey   string                    `yaml:"rapidAPIKey"`
+	Notifications NotificationConfiguration `yaml:"notifications"`
 }
 
 // NotificationConfiguration allows to set a notification when a country gets new data
 type NotificationConfiguration struct {
-	Enabled   bool          `yaml:"enabled"`
-	URL       ValueOrEnvVar `yaml:"url"`
-	Countries []string      `yaml:"countries"`
-}
-
-// UnmarshalYAML unmarshalls a ValueOrEnvVar.  If the value is just a string, it will be converted to a ValueOrEnvVar.
-func (v *ValueOrEnvVar) UnmarshalYAML(value *yaml.Node) error {
-	if value.Kind == yaml.ScalarNode {
-		v.Value = value.Value
-		v.EnvVar = ""
-		return nil
-	}
-	type tmp ValueOrEnvVar
-	var v2 tmp
-	if err := value.Decode(&v2); err != nil {
-		return err
-	}
-	*v = ValueOrEnvVar(v2)
-	return nil
-}
-
-// Set a ValueOrEnvVar
-func (v *ValueOrEnvVar) Set() {
-	if v.EnvVar != "" {
-		v.Value = os.Getenv(v.EnvVar)
-
-		if v.Value == "" {
-			log.WithField("envVar", v.EnvVar).Warning("environment variable not set")
-		}
-	}
-}
-
-// Get a ValueOrEnvVar
-func (v *ValueOrEnvVar) Get() (value string) {
-	value = v.Value
-	if v.EnvVar != "" {
-		value = os.Getenv(v.EnvVar)
-	}
-	return value
+	Enabled   bool     `yaml:"enabled"`
+	URL       string   `yaml:"url"`
+	Countries []string `yaml:"countries"`
 }
 
 // LoadConfiguration loads the configuration file from memory
 func LoadConfiguration(content io.Reader) (*Configuration, error) {
 	configuration := Configuration{
-		Port:     8080,
-		Postgres: LoadPGEnvironmentWithDefaults(),
-		Monitor:  MonitorConfiguration{},
+		Port: 8080,
+		Postgres: PostgresDB{
+			Host:     "postgres",
+			Port:     5432,
+			Database: "covid19",
+			User:     "covid",
+		},
+		Monitor: MonitorConfiguration{},
 	}
 	body, err := io.ReadAll(content)
-	if err != nil {
-		return nil, err
-	}
-
-	body = []byte(os.ExpandEnv(string(body)))
-
-	if err = yaml.Unmarshal(body, &configuration); err == nil {
-		configuration.Monitor.RapidAPIKey.Set()
-		configuration.Monitor.Notifications.URL.Set()
+	if err == nil {
+		body = []byte(os.ExpandEnv(string(body)))
+		err = yaml.Unmarshal(body, &configuration)
 	}
 
 	return &configuration, err

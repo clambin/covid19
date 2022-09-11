@@ -22,9 +22,7 @@ import (
 
 func TestCovid19Probe_Update(t *testing.T) {
 	cfg := &configuration.MonitorConfiguration{
-		RapidAPIKey: configuration.ValueOrEnvVar{
-			Value: "1234",
-		},
+		RapidAPIKey: "1234",
 		Notifications: configuration.NotificationConfiguration{
 			Enabled:   true,
 			Countries: []string{"Belgium", "US"},
@@ -95,7 +93,7 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 	s := &mockSaver.Saver{}
 	n := &mockNotifier.Notifier{}
 
-	p := covid.Covid19Probe{
+	p := covid.Probe{
 		Fetcher:  f,
 		Saver:    s,
 		Notifier: n,
@@ -148,7 +146,7 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 }
 
 func TestCovid19Probe_Describe(t *testing.T) {
-	p := covid.Covid19Probe{}
+	p := covid.Probe{}
 	ch := make(chan *prometheus.Desc)
 	go p.Describe(ch)
 

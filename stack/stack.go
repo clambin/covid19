@@ -101,7 +101,7 @@ func (stack *Stack) loadIfEmpty() bool {
 // LoadPopulation retrieves the latest population figures and stores them in the database
 func (stack *Stack) LoadPopulation() {
 	start := time.Now()
-	cp := populationProbe.New(stack.Cfg.Monitor.RapidAPIKey.Get(), stack.PopulationStore)
+	cp := populationProbe.New(stack.Cfg.Monitor.RapidAPIKey, stack.PopulationStore)
 	if count, err := cp.Update(context.Background()); err == nil {
 		log.Infof("discovered %d country population figures in %v", count, time.Since(start))
 	} else {
