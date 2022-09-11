@@ -101,57 +101,55 @@ func (store *PGCovidStore) GetLatestForCountriesByTime(countryNames []string, en
 }
 
 func (store *PGCovidStore) queryEntries(conditions string) (entries []models.CountryEntry, err error) {
-	if len(conditions) > 0 {
-		conditions = " " + conditions
-	}
 	var rows *sql.Rows
-	rows, err = store.DB.Handle.Query(`SELECT time, country_name, country_code, confirmed, recovered, death FROM covid19` + conditions)
+	rows, err = store.DB.Handle.Query(`SELECT time, country_name, country_code, confirmed, recovered, death FROM covid19 ` + conditions)
 
-	if err == nil {
-		for rows.Next() {
-			var entry models.CountryEntry
-			if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
-				entries = append(entries, entry)
-			}
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = nil
 		}
-		_ = rows.Close()
+		return
 	}
 
-	if err == sql.ErrNoRows {
-		err = nil
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	for rows.Next() {
+		var entry models.CountryEntry
+		if rows.Scan(&entry.Timestamp, &entry.Code, &entry.Name, &entry.Confirmed, &entry.Recovered, &entry.Deaths) == nil {
+			entries = append(entries, entry)
+		}
 	}
 	return
 }
 
 // Add inserts new entries in the database
-func (store *PGCovidStore) Add(entries []models.CountryEntry) (err error) {
-	var tx *sql.Tx
-	tx, err = store.DB.Handle.Begin()
+func (store *PGCovidStore) Add(entries []models.CountryEntry) error {
+	tx, err := store.DB.Handle.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		// will be ignored if we commit before the function returns
+		_ = tx.Rollback()
+	}()
 
-	if err == nil {
-		var stmt *sql.Stmt
-		stmt, err = tx.Prepare(pq.CopyIn(
-			"covid19",
-			"time", "country_code", "country_name", "confirmed", "death", "recovered",
-		))
+	stmt, err := tx.Prepare(pq.CopyIn("covid19", "time", "country_code", "country_name", "confirmed", "death", "recovered"))
+	if err != nil {
+		return err
+	}
 
-		if err == nil {
-			for _, entry := range entries {
-				_, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered)
-				if err != nil {
-					break
-				}
-			}
-			if err == nil {
-				_, err = stmt.Exec()
-			}
-			if err == nil {
-				err = tx.Commit()
-			}
-			_ = stmt.Close()
+	for _, entry := range entries {
+		if _, err = stmt.Exec(entry.Timestamp, entry.Code, entry.Name, entry.Confirmed, entry.Deaths, entry.Recovered); err != nil {
+			return err
 		}
 	}
-	return
+
+	if _, err = stmt.Exec(); err == nil {
+		err = tx.Commit()
+	}
+	return err
 }
 
 // GetFirstEntry gets the timestamp of the first entry in the database
@@ -162,7 +160,7 @@ func (store *PGCovidStore) GetFirstEntry() (first time.Time, found bool, err err
 	err = store.DB.Handle.QueryRow(query).Scan(&first)
 	found = err == nil
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
 	return
@@ -176,17 +174,22 @@ func (store *PGCovidStore) GetAllCountryNames() (names []string, err error) {
 func (store *PGCovidStore) doLookup(statement string) (names []string, err error) {
 	var rows *sql.Rows
 	rows, err = store.DB.Handle.Query(statement)
-
-	if err == nil {
-		for rows.Next() {
-			var name string
-			if rows.Scan(&name) == nil {
-				names = append(names, name)
-			}
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = nil
 		}
-		_ = rows.Close()
+		return
 	}
+	defer func() {
+		_ = rows.Close()
+	}()
 
+	for rows.Next() {
+		var name string
+		if rows.Scan(&name) == nil {
+			names = append(names, name)
+		}
+	}
 	return
 }
 
@@ -195,12 +198,16 @@ func (store *PGCovidStore) CountEntriesByTime(from, to time.Time) (updates map[t
 	var rows *sql.Rows
 	rows, err = store.DB.Handle.Query(fmt.Sprintf(`SELECT time, COUNT(*) FROM covid19 %s GROUP BY time`, makeTimestampClause(from, to)))
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return updates, nil
-	}
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = nil
+		}
 		return
 	}
+
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	updates = make(map[time.Time]int)
 	for rows.Next() {
@@ -211,8 +218,6 @@ func (store *PGCovidStore) CountEntriesByTime(from, to time.Time) (updates map[t
 			updates[timestamp] = count
 		}
 	}
-	_ = rows.Close()
-
 	return
 }
 
@@ -221,12 +226,16 @@ func (store *PGCovidStore) GetTotalsPerDay() (entries []models.CountryEntry, err
 	var rows *sql.Rows
 	rows, err = store.DB.Handle.Query(`SELECT time, SUM(confirmed), SUM(death) FROM covid19 GROUP BY time ORDER BY time`)
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return entries, nil
-	}
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = nil
+		}
 		return
 	}
+
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	for rows.Next() {
 		var entry models.CountryEntry
@@ -234,8 +243,6 @@ func (store *PGCovidStore) GetTotalsPerDay() (entries []models.CountryEntry, err
 			entries = append(entries, entry)
 		}
 	}
-	_ = rows.Close()
-
 	return
 }
 
