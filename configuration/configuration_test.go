@@ -1,6 +1,7 @@
 package configuration_test
 
 import (
+	"bytes"
 	"github.com/clambin/covid19/configuration"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -8,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestLoadConfigurationFile(t *testing.T) {
+func TestLoadConfiguration(t *testing.T) {
 	const configString = `
 port: 9090
 debug: true
@@ -17,36 +18,22 @@ postgres:
   port: 31000
   database: "test"
   user: "test19"
-  password: "some-password"
+  password: "$pg_password"
 monitor:
-  enabled: true
   interval: 1h
-  rapidAPIKey: 
-    value: "some-key"
+  rapidAPIKey: "some-key"
   notifications:
     enabled: true
-    url: 
-      value: https://example.com/123
+    url: https://example.com/123
     countries:
       - Belgium
       - US
-grafana:
-  enabled: true
 `
-	f, err := os.CreateTemp("", "tmp")
-	if err != nil {
-		panic(err)
-	}
 
-	defer func(filename string) {
-		_ = os.Remove(filename)
-	}(f.Name())
+	err := os.Setenv("pg_password", "some-password")
+	require.NoError(t, err)
 
-	_, _ = f.Write([]byte(configString))
-	_ = f.Close()
-
-	var cfg *configuration.Configuration
-	cfg, err = configuration.LoadConfigurationFile(f.Name())
+	cfg, err := configuration.LoadConfiguration(bytes.NewBufferString(configString))
 
 	require.NoError(t, err)
 	assert.Equal(t, 9090, cfg.Port)
@@ -56,9 +43,9 @@ grafana:
 	assert.Equal(t, "test", cfg.Postgres.Database)
 	assert.Equal(t, "test19", cfg.Postgres.User)
 	assert.Equal(t, "some-password", cfg.Postgres.Password)
-	assert.Equal(t, "some-key", cfg.Monitor.RapidAPIKey.Value)
+	assert.Equal(t, "some-key", cfg.Monitor.RapidAPIKey.Get())
 	assert.True(t, cfg.Monitor.Notifications.Enabled)
-	assert.Equal(t, "https://example.com/123", cfg.Monitor.Notifications.URL.Value)
+	assert.Equal(t, "https://example.com/123", cfg.Monitor.Notifications.URL.Get())
 	require.Len(t, cfg.Monitor.Notifications.Countries, 2)
 	assert.Equal(t, "Belgium", cfg.Monitor.Notifications.Countries[0])
 	assert.Equal(t, "US", cfg.Monitor.Notifications.Countries[1])
@@ -67,7 +54,6 @@ grafana:
 func TestLoadConfiguration_EnvVars(t *testing.T) {
 	const configString = `
 monitor:
-  enabled: true
   rapidAPIKey: 
     envVar: "RAPID_API_KEY"
   notifications:
@@ -81,7 +67,7 @@ monitor:
 	_ = os.Setenv("RAPID_API_KEY", "")
 	_ = os.Setenv("NOTIFICATION_URL", "")
 
-	cfg, err := configuration.LoadConfiguration([]byte(configString))
+	cfg, err := configuration.LoadConfiguration(bytes.NewBufferString(configString))
 
 	require.NoError(t, err)
 	assert.Empty(t, cfg.Monitor.RapidAPIKey.Value)
@@ -90,7 +76,7 @@ monitor:
 	_ = os.Setenv("RAPID_API_KEY", "1234")
 	_ = os.Setenv("NOTIFICATION_URL", "https://example.com/")
 
-	cfg, err = configuration.LoadConfiguration([]byte(configString))
+	cfg, err = configuration.LoadConfiguration(bytes.NewBufferString(configString))
 
 	require.NoError(t, err)
 	assert.Equal(t, "1234", cfg.Monitor.RapidAPIKey.Value)
@@ -102,7 +88,8 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 		_ = os.Setenv(envVar, "")
 	}
 
-	cfg, err := configuration.LoadConfiguration([]byte{})
+	content := bytes.NewBufferString("foo: bar")
+	cfg, err := configuration.LoadConfiguration(content)
 
 	require.NoError(t, err)
 	assert.Equal(t, 8080, cfg.Port)

@@ -56,7 +56,7 @@ func GetConfiguration(application string, args []string) (cmd string, cfg *confi
 	a.HelpFlag.Short('h')
 	a.VersionFlag.Short('v')
 	a.Flag("debug", "Log debug messages").BoolVar(&debug)
-	a.Flag("config", "Configuration file").Required().StringVar(&configFileName)
+	a.Flag("config", "Configuration file").Required().ExistingFileVar(&configFileName)
 	handlerCmd = a.Command("handler", "runs the simplejson handler")
 	loaderCmd = a.Command("loader", "retrieves new covid data")
 	populationLoaderCmd = a.Command("population", "retrieves latest population data")
@@ -66,8 +66,14 @@ func GetConfiguration(application string, args []string) (cmd string, cfg *confi
 		a.Usage(args[1:])
 	}
 
-	if cfg, err = configuration.LoadConfigurationFile(configFileName); err != nil {
-		log.WithField("err", err).Fatal("Failed to read config file")
+	var f *os.File
+	if f, err = os.OpenFile(configFileName, os.O_RDONLY, 0); err != nil {
+		log.WithField("err", err).Fatal("Failed to access config file")
+	}
+	defer func() { _ = f.Close() }()
+
+	if cfg, err = configuration.LoadConfiguration(f); err != nil {
+		log.WithField("err", err).Fatal("Invalid config file")
 	}
 
 	if debug {

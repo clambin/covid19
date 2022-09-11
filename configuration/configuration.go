@@ -3,6 +3,7 @@ package configuration
 import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+	"io"
 	"os"
 )
 
@@ -33,6 +34,22 @@ type NotificationConfiguration struct {
 	Countries []string      `yaml:"countries"`
 }
 
+// UnmarshalYAML unmarshalls a ValueOrEnvVar.  If the value is just a string, it will be converted to a ValueOrEnvVar.
+func (v *ValueOrEnvVar) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		v.Value = value.Value
+		v.EnvVar = ""
+		return nil
+	}
+	type tmp ValueOrEnvVar
+	var v2 tmp
+	if err := value.Decode(&v2); err != nil {
+		return err
+	}
+	*v = ValueOrEnvVar(v2)
+	return nil
+}
+
 // Set a ValueOrEnvVar
 func (v *ValueOrEnvVar) Set() {
 	if v.EnvVar != "" {
@@ -45,7 +62,7 @@ func (v *ValueOrEnvVar) Set() {
 }
 
 // Get a ValueOrEnvVar
-func (v ValueOrEnvVar) Get() (value string) {
+func (v *ValueOrEnvVar) Get() (value string) {
 	value = v.Value
 	if v.EnvVar != "" {
 		value = os.Getenv(v.EnvVar)
@@ -53,31 +70,24 @@ func (v ValueOrEnvVar) Get() (value string) {
 	return value
 }
 
-// LoadConfigurationFile loads the configuration file from file
-func LoadConfigurationFile(fileName string) (configuration *Configuration, err error) {
-	var content []byte
-	if content, err = os.ReadFile(fileName); err == nil {
-		configuration, err = LoadConfiguration(content)
-	}
-	return configuration, err
-}
-
 // LoadConfiguration loads the configuration file from memory
-func LoadConfiguration(content []byte) (*Configuration, error) {
+func LoadConfiguration(content io.Reader) (*Configuration, error) {
 	configuration := Configuration{
 		Port:     8080,
 		Postgres: LoadPGEnvironmentWithDefaults(),
 		Monitor:  MonitorConfiguration{},
 	}
-	err := yaml.Unmarshal(content, &configuration)
+	body, err := io.ReadAll(content)
+	if err != nil {
+		return nil, err
+	}
 
-	if err == nil {
-		// TODO: make postgres password a ValueOrEnvVar too
+	body = []byte(os.ExpandEnv(string(body)))
+
+	if err = yaml.Unmarshal(body, &configuration); err == nil {
 		configuration.Monitor.RapidAPIKey.Set()
 		configuration.Monitor.Notifications.URL.Set()
 	}
-
-	log.WithField("err", err).Debug("LoadConfiguration")
 
 	return &configuration, err
 }

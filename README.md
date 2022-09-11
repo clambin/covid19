@@ -15,7 +15,6 @@ This package tracks global Covid-19 data. It provides three commands:
 - population: retrieves the latest population figures from a public tracker and stores them in an external Postgres DB
 - handler: implements the targets for the provided Grafana dashboards
 
-
 ## Installation
 Docker images are available on ghcr.io:
 
@@ -47,29 +46,35 @@ postgres:
   # Postgres owner of the database. Default is "covid"
   user: "covid"
   # Password for user. 
-  # Alternatively, can be provided through pg_password environment variable
   password: "some-password"
 # Monitor section to configure how new covid data should be retrieved
 monitor:
   # API Key for the APIs. See below.
-  rapidAPIKey:
-    value: "long-rapid-api-key"
-    # alternatively, specify an environment variable that holds the API Key:
-    # envVar: "KEY_ENV_VAR_NAME"
+  rapidAPIKey: "rapid-api-key"
   # covid19 can be configured to send a notification when new data is found for a set of countries
   notifications:
     # Turn on notifications. Default is true
     enabled: true
     # URL to send notifications to. See https://github.com/containrrr/shoutrrr for options
-    url:
-      value: https://hooks.slack.com/services/token1/token2/token3
-      # alternatively, specify an environment variable that holds the API Key:
-      # envVar: "URL_ENV_VAR_NAME"
+    url: https://hooks.slack.com/services/token1/token2/token3
     # List of country names for which to send an event
     countries:
       - Belgium
       - US
 ```
+
+covid19 will substitute any environment variables referenced in the configuration file. E.g.:
+
+```
+postgres:
+  host: postgres
+  port: 5432
+  database: "covid19"
+  user: "covid"
+  password: "$pg_password"
+```
+
+will use the value of the environment variable 'pg_password' is the password for the Postgres DB.
 
 ## Postgres
 Covid19 uses a Postgres database to store collected data. Create a database and postgres user with permissions to create new tables & indexes. 
