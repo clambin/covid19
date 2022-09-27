@@ -8,10 +8,11 @@ import (
 
 // Configuration for covid19 app
 type Configuration struct {
-	Port     int                  `yaml:"port"`
-	Debug    bool                 `yaml:"debug"`
-	Postgres PostgresDB           `yaml:"postgres"`
-	Monitor  MonitorConfiguration `yaml:"monitor"`
+	Port           int                  `yaml:"port"`
+	PrometheusPort int                  `yaml:"prometheusPort"`
+	Debug          bool                 `yaml:"debug"`
+	Postgres       PostgresDB           `yaml:"postgres"`
+	Monitor        MonitorConfiguration `yaml:"monitor"`
 }
 
 // PostgresDB configuration parameters
@@ -48,7 +49,8 @@ type NotificationConfiguration struct {
 // LoadConfiguration loads the configuration file from memory
 func LoadConfiguration(content io.Reader) (*Configuration, error) {
 	configuration := Configuration{
-		Port: 8080,
+		Port:           8080,
+		PrometheusPort: 9090,
 		Postgres: PostgresDB{
 			Host:     "postgres",
 			Port:     5432,

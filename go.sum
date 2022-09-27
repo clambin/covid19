@@ -204,12 +204,12 @@ github.com/cilium/ebpf v0.2.0/go.mod h1:To2CFviqOWL/M0gIMsvSMlqe7em/l1ALkX1PyjrX
 github.com/cilium/ebpf v0.4.0/go.mod h1:4tRaxcgiL706VnOzHOdBlY8IEAIdxINsQBcU4xJJXRs=
 github.com/cilium/ebpf v0.6.2/go.mod h1:4tRaxcgiL706VnOzHOdBlY8IEAIdxINsQBcU4xJJXRs=
 github.com/cilium/ebpf v0.7.0/go.mod h1:/oI2+1shJiTGAMgl6/RgJr36Eo1jzrRcAWbcXO2usCA=
-github.com/clambin/go-metrics v0.5.1 h1:94keFDQSSiVh+H55oKw9tr02LlOkcON4zmZh9OohLGo=
-github.com/clambin/go-metrics v0.5.1/go.mod h1:z3hpFI7lxGIHH+156BR/lPhwM+oYBgr9pP9Wov1/plc=
+github.com/clambin/go-metrics v0.6.0 h1:ACBCD9tqDWdCV3xDSCYK249AKKh3oeCUbtpjhDvojpU=
+github.com/clambin/go-metrics v0.6.0/go.mod h1:v/FFsSZlvDqUIf1NgtYwthrOb5efirZONt62uLlv6hM=
 github.com/clambin/go-rapidapi v0.2.0 h1:xNsMAhL9o3HXF4dvurwhnYwAWmAnn5J/ykf+JjGSdTU=
 github.com/clambin/go-rapidapi v0.2.0/go.mod h1:jIgXVGiR0D5wopGCdhUpLatsBOeEix8Ydz7pKooJu1g=
-github.com/clambin/simplejson/v3 v3.4.2 h1:FgI0PWuLcd/qkirmGpYWvX4PocVH85WkHu3ERv3Vz28=
-github.com/clambin/simplejson/v3 v3.4.2/go.mod h1:zdPt0GKi18mvsNcAZXV3auLnh+3D1oXO6nQKu+y3lv4=
+github.com/clambin/simplejson/v3 v3.5.0 h1:GhORKre+vUgaDRXNU2E7dq84pEtFZ27xJRdeZQ+Nxms=
+github.com/clambin/simplejson/v3 v3.5.0/go.mod h1:eWWLbfLGUvmfj+XKTeTrvCGEfwILfMY4lAvf52UJdto=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58/go.mod h1:EOBUe0h4xcZ5GoxqC5SDxFQ8gwyZPKQoEzownBlhI80=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
@@ -630,8 +630,8 @@ github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB7
 github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/grafana-plugin-sdk-go v0.138.0 h1:uJWNwHL4RoQF3axoi3RDSwoNu/KHy5F+5dnrK0fx5yc=
-github.com/grafana/grafana-plugin-sdk-go v0.138.0/go.mod h1:Y+Ps2sesZ62AyCnX+hzrYnyDQYe/ZZl+A8yKLOBm12c=
+github.com/grafana/grafana-plugin-sdk-go v0.140.0 h1:cxU8M99Z/V4FJNyseJrR8x509fSttJAoV+GWVL6ZdRY=
+github.com/grafana/grafana-plugin-sdk-go v0.140.0/go.mod h1:srvRQ+de4C5h7FqA5lSFUkFCs5pJolWT+PGV2AyBOFk=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=

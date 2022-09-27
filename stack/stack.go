@@ -10,8 +10,10 @@ import (
 	"github.com/clambin/covid19/db"
 	populationProbe "github.com/clambin/covid19/population"
 	"github.com/clambin/covid19/simplejsonserver"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -20,6 +22,7 @@ type Stack struct {
 	Cfg             *configuration.Configuration
 	CovidStore      db.CovidStore
 	PopulationStore db.PopulationStore
+	PromServer      *http.Server
 	HTTPServer      *http.Server
 	SkipBackFill    bool
 }
@@ -34,30 +37,43 @@ func CreateStack(cfg *configuration.Configuration) (*Stack, error) {
 }
 
 // CreateStackWithStores creates an application stack for the provided configuration and stores
-func CreateStackWithStores(cfg *configuration.Configuration, covidDB db.CovidStore, populationStore db.PopulationStore) (stack *Stack) {
+func CreateStackWithStores(cfg *configuration.Configuration, covidStore db.CovidStore, populationStore db.PopulationStore) (stack *Stack) {
+	m := http.NewServeMux()
+	m.Handle("/metrics", promhttp.Handler())
+
+	server := simplejsonserver.MakeServer(covidStore, populationStore)
+	r := server.GetRouter()
+
 	return &Stack{
 		Cfg:             cfg,
-		CovidStore:      covidDB,
+		CovidStore:      covidStore,
 		PopulationStore: populationStore,
+		PromServer:      &http.Server{Addr: fmt.Sprintf(":%d", cfg.PrometheusPort), Handler: m},
+		HTTPServer:      &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: r},
 	}
 }
 
 // RunHandler runs the simplejson server
 func (stack *Stack) RunHandler() {
-	server := simplejsonserver.MakeServer(stack.CovidStore, stack.PopulationStore)
-	r := server.GetRouter()
-	r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
-	stack.HTTPServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", stack.Cfg.Port),
-		Handler: r,
-	}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		if err := stack.PromServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.WithError(err).Fatal("unable to start Prometheus handler")
+		}
+		wg.Done()
+	}()
+
 	if err := stack.HTTPServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		log.WithError(err).Fatal("unable to start grafana SimpleJson server")
 	}
+
+	wg.Wait()
 }
 
 // StopHandler stops the simplejson server
 func (stack *Stack) StopHandler() {
+	_ = stack.PromServer.Shutdown(context.Background())
 	_ = stack.HTTPServer.Shutdown(context.Background())
 }
 
