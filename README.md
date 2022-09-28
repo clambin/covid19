@@ -31,8 +31,10 @@ two CronJobs to load covid and population data on a daily basis.
 Use the following yaml file to configure parameters & desired behaviour:
 
 ```
-# HTTP port for Prometheus (optional) & Grafana. Default is 8080
+# HTTP port for Grafana SimpleJSON server. Default is 8080
 port: 8080
+# HTTP port for Prometheus metrics. Default is 9090.
+prometheusPort: 9090
 # Turn on debug logging. Default is false
 debug: false
 # Configuration for Postgres DB
@@ -53,7 +55,7 @@ monitor:
   rapidAPIKey: "rapid-api-key"
   # covid19 can be configured to send a notification when new data is found for a set of countries
   notifications:
-    # Turn on notifications. Default is true
+    # Turn on notifications. Default is false
     enabled: true
     # URL to send notifications to. See https://github.com/containrrr/shoutrrr for options
     url: https://hooks.slack.com/services/token1/token2/token3

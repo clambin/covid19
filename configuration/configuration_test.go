@@ -12,6 +12,7 @@ import (
 func TestLoadConfiguration(t *testing.T) {
 	const configString = `
 port: 9090
+prometheusPort: 9092
 debug: true
 postgres:
   host: localhost
@@ -39,6 +40,7 @@ monitor:
 	assert.True(t, cfg.Postgres.IsValid())
 
 	assert.Equal(t, 9090, cfg.Port)
+	assert.Equal(t, 9092, cfg.PrometheusPort)
 	assert.True(t, cfg.Debug)
 	assert.Equal(t, "localhost", cfg.Postgres.Host)
 	assert.Equal(t, 31000, cfg.Postgres.Port)
@@ -63,10 +65,12 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 8080, cfg.Port)
+	assert.Equal(t, 9090, cfg.PrometheusPort)
 	assert.False(t, cfg.Debug)
 	assert.Equal(t, "postgres", cfg.Postgres.Host)
 	assert.Equal(t, 5432, cfg.Postgres.Port)
 	assert.Equal(t, "covid19", cfg.Postgres.Database)
 	assert.Equal(t, "covid", cfg.Postgres.User)
 	assert.Equal(t, "", cfg.Postgres.Password)
+	assert.False(t, cfg.Monitor.Notifications.Enabled)
 }
