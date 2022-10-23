@@ -5,6 +5,7 @@ import (
 	"github.com/clambin/covid19/configuration"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 	"os"
 	"testing"
 )
@@ -39,20 +40,26 @@ monitor:
 
 	assert.True(t, cfg.Postgres.IsValid())
 
-	assert.Equal(t, 9090, cfg.Port)
-	assert.Equal(t, 9092, cfg.PrometheusPort)
-	assert.True(t, cfg.Debug)
-	assert.Equal(t, "localhost", cfg.Postgres.Host)
-	assert.Equal(t, 31000, cfg.Postgres.Port)
-	assert.Equal(t, "test", cfg.Postgres.Database)
-	assert.Equal(t, "test19", cfg.Postgres.User)
-	assert.Equal(t, "some-password", cfg.Postgres.Password)
-	assert.Equal(t, "some-key", cfg.Monitor.RapidAPIKey)
-	assert.True(t, cfg.Monitor.Notifications.Enabled)
-	assert.Equal(t, "https://example.com/123", cfg.Monitor.Notifications.URL)
-	require.Len(t, cfg.Monitor.Notifications.Countries, 2)
-	assert.Equal(t, "Belgium", cfg.Monitor.Notifications.Countries[0])
-	assert.Equal(t, "US", cfg.Monitor.Notifications.Countries[1])
+	body, err := yaml.Marshal(&cfg)
+	require.NoError(t, err)
+	assert.Equal(t, `port: 9090
+prometheusPort: 9092
+debug: true
+postgres:
+    host: localhost
+    port: 31000
+    database: test
+    user: test19
+    password: some-password
+monitor:
+    rapidAPIKey: some-key
+    notifications:
+        enabled: true
+        url: https://example.com/123
+        countries:
+            - Belgium
+            - US
+`, string(body))
 }
 
 func TestLoadConfiguration_Defaults(t *testing.T) {
@@ -64,13 +71,22 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 	cfg, err := configuration.LoadConfiguration(content)
 	require.NoError(t, err)
 
-	assert.Equal(t, 8080, cfg.Port)
-	assert.Equal(t, 9090, cfg.PrometheusPort)
-	assert.False(t, cfg.Debug)
-	assert.Equal(t, "postgres", cfg.Postgres.Host)
-	assert.Equal(t, 5432, cfg.Postgres.Port)
-	assert.Equal(t, "covid19", cfg.Postgres.Database)
-	assert.Equal(t, "covid", cfg.Postgres.User)
-	assert.Equal(t, "", cfg.Postgres.Password)
-	assert.False(t, cfg.Monitor.Notifications.Enabled)
+	body, err := yaml.Marshal(&cfg)
+	require.NoError(t, err)
+	assert.Equal(t, `port: 8080
+prometheusPort: 9090
+debug: false
+postgres:
+    host: postgres
+    port: 5432
+    database: covid19
+    user: covid
+    password: ""
+monitor:
+    rapidAPIKey: ""
+    notifications:
+        enabled: false
+        url: ""
+        countries: []
+`, string(body))
 }

@@ -2,7 +2,6 @@ package stack
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/configuration"
@@ -22,8 +21,7 @@ type Stack struct {
 	Cfg             *configuration.Configuration
 	CovidStore      db.CovidStore
 	PopulationStore db.PopulationStore
-	PromServer      *http.Server
-	HTTPServer      *http.Server
+	Servers         HTTPServers
 	SkipBackFill    bool
 }
 
@@ -48,33 +46,23 @@ func CreateStackWithStores(cfg *configuration.Configuration, covidStore db.Covid
 		Cfg:             cfg,
 		CovidStore:      covidStore,
 		PopulationStore: populationStore,
-		PromServer:      &http.Server{Addr: fmt.Sprintf(":%d", cfg.PrometheusPort), Handler: m},
-		HTTPServer:      &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: r},
+		Servers: HTTPServers{
+			"prometheus": &http.Server{Addr: fmt.Sprintf(":%d", cfg.PrometheusPort), Handler: m},
+			"SimpleJSON": &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: r},
+		},
 	}
 }
 
-// RunHandler runs the simplejson server
+// RunHandler runs the SimpleJSON server
 func (stack *Stack) RunHandler() {
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		if err := stack.PromServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.WithError(err).Fatal("unable to start Prometheus handler")
-		}
-		wg.Done()
-	}()
-
-	if err := stack.HTTPServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-		log.WithError(err).Fatal("unable to start grafana SimpleJson server")
-	}
-
+	stack.Servers.Start(&wg)
 	wg.Wait()
 }
 
-// StopHandler stops the simplejson server
+// StopHandler stops the SimpleJSON server
 func (stack *Stack) StopHandler() {
-	_ = stack.PromServer.Shutdown(context.Background())
-	_ = stack.HTTPServer.Shutdown(context.Background())
+	stack.Servers.Stop(5 * time.Second)
 }
 
 // Load retrieves the latest covid19 figures and stores them in the database

@@ -74,16 +74,15 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.18
-      - id: vars
-        name: Version number
-        run: echo ::set-output name=version::${GITHUB_REF##*/}
-        shell: bash
+      - name: Version number
+        run: |
+          echo "build_version=${GITHUB_REF##*/}" >> $GITHUB_ENV
       - name: build
         env:
           TARGET: ${{ matrix.target }}
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          VERSION: ${{ steps.vars.outputs.version }}
+          VERSION: ${{ env.build_version }}
         run: |
           CGO_ENABLED=0 go build \
               -ldflags "-X github.com/$GITHUB_REPOSITORY/version.BuildVersion=$VERSION" \
