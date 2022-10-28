@@ -18,8 +18,8 @@ func TestHandler_Updates(t *testing.T) {
 	dbh.
 		On("CountEntriesByTime", time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC)).
 		Return(map[time.Time]int{
-			time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC): 1,
 			time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC): 5,
+			time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC): 1,
 		}, nil)
 
 	h := updates.Handler{CovidDB: dbh}
