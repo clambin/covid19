@@ -24,7 +24,7 @@ require (
 require (
 	github.com/clambin/go-metrics v0.6.0
 	github.com/clambin/go-rapidapi v0.2.0
-	github.com/clambin/simplejson/v3 v3.6.0
+	github.com/clambin/simplejson/v3 v3.6.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 )
 
@@ -39,7 +39,7 @@ require (
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.140.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.141.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -55,7 +55,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/pierrec/lz4/v4 v4.1.8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
