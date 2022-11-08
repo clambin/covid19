@@ -8,7 +8,7 @@ require (
 	github.com/containrrr/shoutrrr v0.6.1
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/lib/pq v1.10.7
-	github.com/prometheus/client_golang v1.13.1
+	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/sirupsen/logrus v1.9.0
