@@ -2,27 +2,24 @@ package stack
 
 import (
 	"context"
-	"fmt"
 	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/configuration"
 	covidProbe "github.com/clambin/covid19/covid"
 	"github.com/clambin/covid19/db"
 	populationProbe "github.com/clambin/covid19/population"
 	"github.com/clambin/covid19/simplejsonserver"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/clambin/simplejson/v3"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"sync"
 	"time"
 )
 
 // Stack groups the different components that make up the application
 type Stack struct {
-	Cfg             *configuration.Configuration
-	CovidStore      db.CovidStore
-	PopulationStore db.PopulationStore
-	Servers         HTTPServers
-	SkipBackFill    bool
+	Cfg              *configuration.Configuration
+	CovidStore       db.CovidStore
+	PopulationStore  db.PopulationStore
+	SimpleJSONServer *simplejson.Server
+	SkipBackFill     bool
 }
 
 // CreateStack creates an application stack for the provided configuration
@@ -31,38 +28,32 @@ func CreateStack(cfg *configuration.Configuration) (*Stack, error) {
 	if err != nil {
 		log.WithError(err).Fatal("failed to connect to database")
 	}
-	return CreateStackWithStores(cfg, db.NewCovidStore(dbh), db.NewPopulationStore(dbh)), nil
+	return CreateStackWithStores(cfg, db.NewCovidStore(dbh), db.NewPopulationStore(dbh))
 }
 
 // CreateStackWithStores creates an application stack for the provided configuration and stores
-func CreateStackWithStores(cfg *configuration.Configuration, covidStore db.CovidStore, populationStore db.PopulationStore) (stack *Stack) {
-	m := http.NewServeMux()
-	m.Handle("/metrics", promhttp.Handler())
-
-	server := simplejsonserver.MakeServer(covidStore, populationStore)
-	r := server.GetRouter()
+func CreateStackWithStores(cfg *configuration.Configuration, covidStore db.CovidStore, populationStore db.PopulationStore) (*Stack, error) {
+	s, err := simplejsonserver.New(cfg, covidStore, populationStore)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Stack{
-		Cfg:             cfg,
-		CovidStore:      covidStore,
-		PopulationStore: populationStore,
-		Servers: HTTPServers{
-			"prometheus": &http.Server{Addr: fmt.Sprintf(":%d", cfg.PrometheusPort), Handler: m},
-			"SimpleJSON": &http.Server{Addr: fmt.Sprintf(":%d", cfg.Port), Handler: r},
-		},
-	}
+		Cfg:              cfg,
+		CovidStore:       covidStore,
+		PopulationStore:  populationStore,
+		SimpleJSONServer: s,
+	}, nil
 }
 
 // RunHandler runs the SimpleJSON server
-func (stack *Stack) RunHandler() {
-	wg := sync.WaitGroup{}
-	stack.Servers.Start(&wg)
-	wg.Wait()
+func (stack *Stack) RunHandler() error {
+	return stack.SimpleJSONServer.Run()
 }
 
 // StopHandler stops the SimpleJSON server
-func (stack *Stack) StopHandler() {
-	stack.Servers.Stop(5 * time.Second)
+func (stack *Stack) StopHandler() error {
+	return stack.SimpleJSONServer.Shutdown(5 * time.Second)
 }
 
 // Load retrieves the latest covid19 figures and stores them in the database

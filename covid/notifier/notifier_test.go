@@ -8,15 +8,14 @@ import (
 	mockStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"os"
 	"testing"
 	"time"
 )
 
 func TestNotifier_Notify(t *testing.T) {
-	db := &mockStore.CovidStore{}
-	sender := &mockNotificationSender.NotificationSender{}
+	db := mockStore.NewCovidStore(t)
+	sender := mockNotificationSender.NewNotificationSender(t)
 
 	timestamp := time.Now()
 	db.
@@ -47,13 +46,11 @@ func TestNotifier_Notify(t *testing.T) {
 
 	err = n.Notify([]models.CountryEntry{{Name: "Belgium", Code: "BE", Timestamp: timestamp.Add(48 * time.Hour), Confirmed: 15, Recovered: 8, Deaths: 2}})
 	assert.NoError(t, err)
-
-	mock.AssertExpectationsForObjects(t, db, sender)
 }
 
 func TestNotifier_Notify_Failure(t *testing.T) {
-	db := &mockStore.CovidStore{}
-	router := &mockNotificationSender.NotificationSender{}
+	db := mockStore.NewCovidStore(t)
+	router := mockNotificationSender.NewNotificationSender(t)
 
 	timestamp := time.Now()
 	db.
@@ -88,12 +85,11 @@ func TestNotifier_Notify_Failure(t *testing.T) {
 		},
 	})
 	assert.Error(t, err)
-	mock.AssertExpectationsForObjects(t, db, router)
 }
 
 func TestNotifier_DB_Failure(t *testing.T) {
-	db := &mockStore.CovidStore{}
-	router := &mockNotificationSender.NotificationSender{}
+	db := mockStore.NewCovidStore(t)
+	router := mockNotificationSender.NewNotificationSender(t)
 
 	db.
 		On("GetLatestForCountries", []string{"Belgium"}).
@@ -109,6 +105,4 @@ func TestNotifier_DB_Failure(t *testing.T) {
 	assert.Panics(t, func() {
 		_ = notifier.NewNotifier(router, []string{"Belgium"}, db)
 	})
-
-	mock.AssertExpectationsForObjects(t, db, router)
 }

@@ -28,7 +28,7 @@ func TestCovid19Probe_Update(t *testing.T) {
 			Countries: []string{"Belgium", "US"},
 		},
 	}
-	db := &mockCovidStore.CovidStore{}
+	db := mockCovidStore.NewCovidStore(t)
 	timeStamp := time.Now()
 	db.
 		On("GetLatestForCountries", []string{"Belgium", "US"}).
@@ -41,9 +41,9 @@ func TestCovid19Probe_Update(t *testing.T) {
 		)
 	p := covid.New(cfg, db)
 
-	f := &mockFetcher.Fetcher{}
-	n := &mockNotifier.Notifier{}
-	s := &mockSaver.Saver{}
+	f := mockFetcher.NewFetcher(t)
+	n := mockNotifier.NewNotifier(t)
+	s := mockSaver.NewSaver(t)
 
 	p.Fetcher = f
 	p.Saver = s
@@ -84,14 +84,12 @@ func TestCovid19Probe_Update(t *testing.T) {
 
 		assert.Equal(t, target, tools.MetricValue(metric).GetCounter().GetValue(), country)
 	}
-
-	mock.AssertExpectationsForObjects(t, db, s, f, n)
 }
 
 func TestCovid19Probe_Update_Errors(t *testing.T) {
-	f := &mockFetcher.Fetcher{}
-	s := &mockSaver.Saver{}
-	n := &mockNotifier.Notifier{}
+	f := mockFetcher.NewFetcher(t)
+	s := mockSaver.NewSaver(t)
+	n := mockNotifier.NewNotifier(t)
 
 	p := covid.Probe{
 		Fetcher:  f,
@@ -141,8 +139,6 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 
 	_, err = p.Update(context.Background())
 	require.NoError(t, err)
-
-	mock.AssertExpectationsForObjects(t, f, s, n)
 }
 
 func TestCovid19Probe_Describe(t *testing.T) {

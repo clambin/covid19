@@ -9,14 +9,13 @@ import (
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 func TestConfirmedByCountryByPopulation(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
 		On("GetAllCountryNames").
 		Return([]string{"Belgium", "US"}, nil)
@@ -27,7 +26,7 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
 		}, nil)
 
-	dbh2 := &mockCovidStore.PopulationStore{}
+	dbh2 := mockCovidStore.NewPopulationStore(t)
 	dbh2.On("List").Return(map[string]int64{
 		"BE": 10,
 		"US": 20,
@@ -49,12 +48,10 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 		{Text: "country", Data: query.StringColumn{"BE", "US"}},
 		{Text: "confirmed", Data: query.NumberColumn{20, 10}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh, dbh2)
 }
 
 func TestDeathsByCountryByPopulation(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
 		On("GetAllCountryNames").
 		Return([]string{"Belgium", "US"}, nil)
@@ -65,7 +62,7 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Deaths: 200},
 		}, nil)
 
-	dbh2 := &mockCovidStore.PopulationStore{}
+	dbh2 := mockCovidStore.NewPopulationStore(t)
 	dbh2.On("List").Return(map[string]int64{
 		"BE": 10,
 		"US": 20,
@@ -87,12 +84,10 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 		{Text: "country", Data: query.StringColumn{"BE", "US"}},
 		{Text: "deaths", Data: query.NumberColumn{20, 10}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh, dbh2)
 }
 
 func TestConfirmedByCountryByPopulation_Errors(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
 		On("GetAllCountryNames").
 		Return([]string{"Belgium", "US"}, nil)
@@ -103,7 +98,7 @@ func TestConfirmedByCountryByPopulation_Errors(t *testing.T) {
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
 		}, nil)
 
-	dbh2 := &mockCovidStore.PopulationStore{}
+	dbh2 := mockCovidStore.NewPopulationStore(t)
 
 	h := countries.ByCountryByPopulationHandler{
 		CovidDB: dbh,
@@ -117,6 +112,4 @@ func TestConfirmedByCountryByPopulation_Errors(t *testing.T) {
 	dbh2.On("List").Return(nil, errors.New("db error"))
 	_, err := h.Endpoints().Query(ctx, query.Request{Args: args})
 	assert.Error(t, err)
-
-	mock.AssertExpectationsForObjects(t, dbh, dbh2)
 }

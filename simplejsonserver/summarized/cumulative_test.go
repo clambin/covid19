@@ -17,7 +17,7 @@ import (
 )
 
 func TestCumulativeHandler_Global(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.On("GetTotalsPerDay").Return(dbTotals, nil)
 
 	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
@@ -38,8 +38,6 @@ func TestCumulativeHandler_Global(t *testing.T) {
 		{Text: "confirmed", Data: query.NumberColumn{1, 3, 3, 10}},
 		{Text: "deaths", Data: query.NumberColumn{0, 0, 0, 1}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func BenchmarkCumulativeHandler_Global(b *testing.B) {

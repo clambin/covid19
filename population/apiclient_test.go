@@ -41,6 +41,8 @@ func TestGetPopulation(t *testing.T) {
 		Once()
 	_, err = apiClient.GetPopulation(ctx, "??")
 	require.Error(t, err)
+
+	mock.AssertExpectationsForObjects(t, rapidMock)
 }
 
 func TestGetCountries(t *testing.T) {
@@ -60,4 +62,6 @@ func TestGetCountries(t *testing.T) {
 	assert.Len(t, countries, 2)
 	assert.Contains(t, countries, "Belgium")
 	assert.Contains(t, countries, "United States")
+
+	mock.AssertExpectationsForObjects(t, rapidMock)
 }

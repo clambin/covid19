@@ -9,14 +9,13 @@ import (
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 func TestEvolution(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
 		On(
 			"GetAllForRange",
@@ -38,12 +37,10 @@ func TestEvolution(t *testing.T) {
 		{Text: "country", Data: query.StringColumn{"A", "B"}},
 		{Text: "increase", Data: query.NumberColumn{2, 3.5}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestEvolution_NoEndDate(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	h := evolution.Handler{CovidDB: dbh}
 
 	args := query.Args{}
@@ -71,12 +68,10 @@ func TestEvolution_NoEndDate(t *testing.T) {
 		{Text: "country", Data: query.StringColumn{"A", "B"}},
 		{Text: "increase", Data: query.NumberColumn{2, 3.5}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestEvolution_NoData(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
 		On(
 			"GetAllForRange",
@@ -97,8 +92,6 @@ func TestEvolution_NoData(t *testing.T) {
 		{Text: "country", Data: query.StringColumn(nil)},
 		{Text: "increase", Data: query.NumberColumn(nil)},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func BenchmarkHandler_TableQuery_Evolution(b *testing.B) {

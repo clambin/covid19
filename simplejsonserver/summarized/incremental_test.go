@@ -7,14 +7,13 @@ import (
 	"github.com/clambin/simplejson/v3/common"
 	"github.com/clambin/simplejson/v3/query"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 func TestIncrementalHandler_Global(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.On("GetTotalsPerDay").Return(dbTotals, nil)
 
 	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
@@ -35,12 +34,10 @@ func TestIncrementalHandler_Global(t *testing.T) {
 		{Text: "confirmed", Data: query.NumberColumn{1, 2, 0, 7}},
 		{Text: "deaths", Data: query.NumberColumn{0, 0, 0, 1}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestIncrementalHandler_Country(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.On("GetAllForCountryName", "A").Return(filterByName(dbContents, "A"), nil)
 
 	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
@@ -69,12 +66,10 @@ func TestIncrementalHandler_Country(t *testing.T) {
 		{Text: "confirmed", Data: query.NumberColumn{1, 2}},
 		{Text: "deaths", Data: query.NumberColumn{0, 0}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestIncrementalHandler_Tags(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
 
 	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
@@ -87,6 +82,4 @@ func TestIncrementalHandler_Tags(t *testing.T) {
 	values, err := h.Endpoints().TagValues(ctx, keys[0])
 	require.NoError(t, err)
 	assert.Equal(t, []string{"A", "B"}, values)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }

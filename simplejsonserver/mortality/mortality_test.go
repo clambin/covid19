@@ -16,7 +16,7 @@ import (
 )
 
 func TestHandler(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
 		On("GetAllCountryNames").
 		Return([]string{"AA", "BB", "CC"}, nil)
@@ -52,12 +52,10 @@ func TestHandler(t *testing.T) {
 		{Text: "country", Data: query.StringColumn{"A", "B"}},
 		{Text: "ratio", Data: query.NumberColumn{0.1, 0.05}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestHandler_Errors(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 	h := mortality.Handler{CovidDB: dbh}
 
 	args := query.Args{}
@@ -81,6 +79,4 @@ func TestHandler_Errors(t *testing.T) {
 
 	_, err = h.Endpoints().Query(ctx, query.Request{Args: args})
 	require.Error(t, err)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }

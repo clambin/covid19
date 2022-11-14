@@ -99,11 +99,11 @@ func TestCovidStore(t *testing.T) {
 
 	updates, err := covidStore.CountEntriesByTime(first, last)
 	require.NoError(t, err)
-	assert.Len(t, updates, 2)
-	for ts, value := range updates {
-		assert.True(t, ts.Equal(first) || ts.Equal(last))
-		assert.Equal(t, 1, value)
-	}
+	require.Len(t, updates, 2)
+	assert.True(t, updates[0].Timestamp.Equal(first))
+	assert.Equal(t, 1, updates[0].Count)
+	assert.True(t, updates[1].Timestamp.Equal(last))
+	assert.Equal(t, 1, updates[1].Count)
 
 	totals, err := covidStore.GetTotalsPerDay()
 	require.NoError(t, err)

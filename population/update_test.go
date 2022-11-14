@@ -11,8 +11,8 @@ import (
 )
 
 func TestProbe_Update(t *testing.T) {
-	store := &popDBMock.PopulationStore{}
-	apiClient := &probeMock.APIClient{}
+	store := popDBMock.NewPopulationStore(t)
+	apiClient := probeMock.NewAPIClient(t)
 
 	p := population.New("1234", store)
 	p.APIClient = apiClient
@@ -25,6 +25,4 @@ func TestProbe_Update(t *testing.T) {
 
 	_, err := p.Update(context.Background())
 	require.NoError(t, err)
-
-	mock.AssertExpectationsForObjects(t, store, apiClient)
 }

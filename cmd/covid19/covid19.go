@@ -1,14 +1,19 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/stack"
 	"github.com/clambin/covid19/version"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 func main() {
@@ -24,9 +29,18 @@ func main() {
 
 	switch cmd {
 	case handlerCmd.FullCommand():
-		go s.RunHandler()
+		go runPrometheusServer(cfg.PrometheusPort)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			if err = s.RunHandler(); err != nil {
+				log.WithError(err).Fatal("failed to start simplejson handler")
+			}
+			wg.Done()
+		}()
 		<-shutdown.Chan()
-		s.StopHandler()
+		_ = s.StopHandler()
+		wg.Wait()
 	case loaderCmd.FullCommand():
 		s.Load()
 	case populationLoaderCmd.FullCommand():
@@ -81,4 +95,11 @@ func GetConfiguration(application string, args []string) (cmd string, cfg *confi
 	}
 
 	return
+}
+
+func runPrometheusServer(port int) {
+	http.Handle("/metrics", promhttp.Handler())
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); !errors.Is(err, http.ErrServerClosed) {
+		log.WithError(err).Fatal("failed to start Prometheus listener")
+	}
 }

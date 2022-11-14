@@ -5,14 +5,13 @@ import (
 	"github.com/clambin/covid19/covid/saver"
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 func TestStoreSaver_SaveNewEntries(t *testing.T) {
-	db := &mockCovidStore.CovidStore{}
+	db := mockCovidStore.NewCovidStore(t)
 	timeStamp := time.Now()
 	db.
 		On("GetLatestForCountries", []string{"Belgium", "US"}).
@@ -38,12 +37,10 @@ func TestStoreSaver_SaveNewEntries(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, newEntries, 1)
-
-	mock.AssertExpectationsForObjects(t, db)
 }
 
 func TestStoreSaver_SaveNewEntries_Errors(t *testing.T) {
-	db := &mockCovidStore.CovidStore{}
+	db := mockCovidStore.NewCovidStore(t)
 	timeStamp := time.Now()
 	db.
 		On("GetLatestForCountries", []string{"Belgium", "US"}).
@@ -80,6 +77,4 @@ func TestStoreSaver_SaveNewEntries_Errors(t *testing.T) {
 	})
 
 	require.Error(t, err)
-
-	mock.AssertExpectationsForObjects(t, db)
 }

@@ -16,7 +16,7 @@ import (
 )
 
 func TestConfirmedByCountry(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 
 	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
@@ -48,12 +48,10 @@ func TestConfirmedByCountry(t *testing.T) {
 			{Text: "B", Data: query.NumberColumn{10}},
 		}}, response)
 	}
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestDeathsByCountry(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 
 	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
 	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
@@ -84,12 +82,10 @@ func TestDeathsByCountry(t *testing.T) {
 			{Text: "B", Data: query.NumberColumn{1}},
 		}}, response)
 	}
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestConfirmedByCountry_Errors(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
+	dbh := mockCovidStore.NewCovidStore(t)
 
 	h := countries.ByCountryHandler{
 		CovidDB: dbh,
@@ -108,6 +104,4 @@ func TestConfirmedByCountry_Errors(t *testing.T) {
 
 	_, err = h.Endpoints().Query(ctx, query.Request{Args: args})
 	assert.Error(t, err)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }

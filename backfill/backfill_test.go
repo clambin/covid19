@@ -4,7 +4,6 @@ import (
 	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"math/rand"
 	"net/http"
@@ -14,7 +13,7 @@ import (
 )
 
 func TestBackfiller_Run(t *testing.T) {
-	db := &mocks.CovidStore{}
+	db := mocks.NewCovidStore(t)
 
 	server := httptest.NewServer(http.HandlerFunc(covidAPI))
 	defer server.Close()
@@ -52,8 +51,6 @@ func TestBackfiller_Run(t *testing.T) {
 
 	err := backFiller.Run()
 	require.NoError(t, err)
-
-	mock.AssertExpectationsForObjects(t, db)
 }
 
 // covidAPI emulates the Covid API Server

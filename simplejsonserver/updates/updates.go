@@ -6,7 +6,6 @@ import (
 	"github.com/clambin/simplejson/v3"
 	"github.com/clambin/simplejson/v3/data"
 	"github.com/clambin/simplejson/v3/query"
-	"sort"
 	"time"
 )
 
@@ -23,43 +22,23 @@ func (handler *Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
-	var entries map[time.Time]int
-	entries, err = handler.CovidDB.CountEntriesByTime(req.Args.Range.From, req.Args.Range.To)
+func (handler *Handler) tableQuery(_ context.Context, req query.Request) (query.Response, error) {
+	// TODO: have CountEntriesByTime return a (sorted) slice of timestamp/count pairs so we don't have to sort here.
+	entries, err := handler.CovidDB.CountEntriesByTime(req.Args.Range.From, req.Args.Range.To)
 	if err != nil {
-		return
+		return nil, err
 	}
-
-	timestamps, updates := getSortedUpdates(entries)
-	d := data.New(
-		data.Column{Name: "timestamp", Values: timestamps},
-		data.Column{Name: "updates", Values: updates},
-	)
-
-	return d.CreateTableResponse(), nil
-}
-
-func getSortedUpdates(entries map[time.Time]int) ([]time.Time, []float64) {
-	type updateEntry struct {
-		timestamp time.Time
-		updates   float64
-	}
-	var result []updateEntry
-	for timestamp, update := range entries {
-		result = append(result, updateEntry{
-			timestamp: timestamp,
-			updates:   float64(update),
-		})
-	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].timestamp.Before(result[j].timestamp)
-	})
 
 	var timestamps []time.Time
-	var updates []float64
-	for _, entry := range result {
-		timestamps = append(timestamps, entry.timestamp)
-		updates = append(updates, entry.updates)
+	var counts []float64
+
+	for _, entry := range entries {
+		timestamps = append(timestamps, entry.Timestamp)
+		counts = append(counts, float64(entry.Count))
 	}
-	return timestamps, updates
+
+	return data.New(
+		data.Column{Name: "timestamp", Values: timestamps},
+		data.Column{Name: "updates", Values: counts},
+	).CreateTableResponse(), nil
 }

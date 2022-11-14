@@ -1,73 +1,42 @@
 package simplejsonserver_test
 
 import (
-	"context"
-	"errors"
-	"fmt"
+	"github.com/clambin/covid19/configuration"
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/sync/errgroup"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 )
 
-func TestServer_Query(t *testing.T) {
-	covidDB := &mockCovidStore.CovidStore{}
-	popDB := &mockCovidStore.PopulationStore{}
-	s := simplejsonserver.MakeServer(covidDB, popDB)
+func TestServer(t *testing.T) {
+	cfg := configuration.Configuration{}
+	covidDB := mockCovidStore.NewCovidStore(t)
+	popDB := mockCovidStore.NewPopulationStore(t)
+	s, err := simplejsonserver.New(&cfg, covidDB, popDB)
+	require.NoError(t, err)
 
-	g := errgroup.Group{}
-	g.Go(func() error {
-		err := s.Run(8080)
-		if errors.Is(err, http.ErrServerClosed) {
-			err = nil
-		}
-		return err
-	})
+	req, _ := http.NewRequest(http.MethodPost, "/search", nil)
+	resp := httptest.NewRecorder()
 
-	require.Eventually(t, func() bool {
-		_, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/", 8080))
-		return err == nil
+	s.Search(resp, req)
 
-	}, time.Second, 10*time.Millisecond)
+	require.Equal(t, http.StatusOK, resp.Code)
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.Equal(t, `["country-confirmed","country-confirmed-population","country-deaths","country-deaths-population","country-deaths-vs-confirmed","cumulative","evolution","incremental","updates"]`, string(body))
 
 	covidDB.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
 	covidDB.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
 		"A": {Timestamp: time.Date(2022, 1, 19, 0, 0, 0, 0, time.UTC), Code: "A", Confirmed: 4, Deaths: 1},
 		"B": {Timestamp: time.Date(2022, 1, 19, 0, 0, 0, 0, time.UTC), Code: "B", Confirmed: 10, Deaths: 5},
-	}, nil)
-	covidDB.On("GetAll").Return([]models.CountryEntry{
-		{
-			Timestamp: time.Date(2022, 1, 18, 0, 0, 0, 0, time.UTC),
-			Code:      "A",
-			Name:      "A",
-		},
-		{
-			Timestamp: time.Date(2022, 1, 19, 0, 0, 0, 0, time.UTC),
-			Code:      "A",
-			Name:      "A",
-			Confirmed: 4,
-			Deaths:    1,
-		},
-		{
-			Timestamp: time.Date(2022, 1, 18, 0, 0, 0, 0, time.UTC),
-			Code:      "B",
-			Name:      "B",
-		},
-		{
-			Timestamp: time.Date(2022, 1, 19, 0, 0, 0, 0, time.UTC),
-			Code:      "B",
-			Name:      "B",
-			Confirmed: 10,
-			Deaths:    5,
-		},
 	}, nil)
 	covidDB.On("GetTotalsPerDay").Return([]models.CountryEntry{
 		{
@@ -79,27 +48,6 @@ func TestServer_Query(t *testing.T) {
 			Deaths:    6,
 		},
 	}, nil)
-	covidDB.
-		On("GetAllForRange",
-			time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC),
-			time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC),
-		).
-		Return([]models.CountryEntry{
-			{
-				Timestamp: time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC),
-				Code:      "A",
-				Name:      "A",
-				Confirmed: 4,
-				Deaths:    1,
-			},
-			{
-				Timestamp: time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC),
-				Code:      "B",
-				Name:      "B",
-				Confirmed: 10,
-				Deaths:    5,
-			},
-		}, nil)
 	covidDB.
 		On("GetAllForRange", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
 		Return([]models.CountryEntry{
@@ -145,7 +93,13 @@ func TestServer_Query(t *testing.T) {
 			}}, nil)
 	covidDB.
 		On("CountEntriesByTime", time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC), time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC)).
-		Return(map[time.Time]int{time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC): 2}, nil)
+		Return([]struct {
+			Timestamp time.Time
+			Count     int
+		}{
+			{Timestamp: time.Date(2022, time.January, 20, 0, 0, 0, 0, time.UTC), Count: 2},
+		},
+			nil)
 
 	popDB.On("List").Return(map[string]int64{
 		"A": 10,
@@ -214,58 +168,19 @@ func TestServer_Query(t *testing.T) {
 		},
 	}
 
-	for index, testCase := range testCases {
-		resp, err := http.Post(
-			fmt.Sprintf("http://127.0.0.1:%d/query", 8080),
-			"application/json",
-			strings.NewReader(testCase.input),
-		)
-		if testCase.fail {
-			require.Error(t, err, index)
+	for index, tt := range testCases {
+		req, _ = http.NewRequest(http.MethodPost, "/query", strings.NewReader(tt.input))
+		resp = httptest.NewRecorder()
+		s.Query(resp, req)
+
+		if tt.fail {
+			require.NotEqual(t, http.StatusOK, resp.Code)
 			continue
 		}
-		require.NoError(t, err, index)
-		var body []byte
+
+		require.Equal(t, http.StatusOK, resp.Code)
 		body, err = io.ReadAll(resp.Body)
 		require.NoError(t, err, index)
-		assert.Equal(t, testCase.output, string(body), testCase.input)
+		assert.Equal(t, tt.output, string(body), tt.input)
 	}
-
-	err := s.Shutdown(context.Background(), 15*time.Second)
-	require.NoError(t, err)
-	assert.NoError(t, g.Wait())
-}
-
-func TestServer_Search(t *testing.T) {
-	s := simplejsonserver.MakeServer(nil, nil)
-
-	g := errgroup.Group{}
-	g.Go(func() error {
-		err := s.Run(8080)
-		if errors.Is(err, http.ErrServerClosed) {
-			err = nil
-		}
-		return err
-	})
-
-	require.Eventually(t, func() bool {
-		_, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/", 8080))
-		return err == nil
-
-	}, time.Second, 10*time.Millisecond)
-
-	resp, err := http.Post(
-		fmt.Sprintf("http://127.0.0.1:%d/search", 8080),
-		"application/json",
-		nil,
-	)
-	require.NoError(t, err)
-	var body []byte
-	body, err = io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	assert.Equal(t, `["country-confirmed","country-confirmed-population","country-deaths","country-deaths-population","country-deaths-vs-confirmed","cumulative","evolution","incremental","updates"]`, string(body))
-
-	err = s.Shutdown(context.Background(), 5*time.Second)
-	require.NoError(t, err)
-	assert.NoError(t, g.Wait())
 }
