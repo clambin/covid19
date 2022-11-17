@@ -208,8 +208,8 @@ github.com/clambin/go-metrics v0.6.3 h1:awuonTV7BCr0xYoVVkuS1W0HQblzZ/1AiIj9RUO1
 github.com/clambin/go-metrics v0.6.3/go.mod h1:6XBV5IpnL9N4xGV50i6eo7AB5mPcLb7XUtTtv3wD7qE=
 github.com/clambin/go-rapidapi v0.2.0 h1:xNsMAhL9o3HXF4dvurwhnYwAWmAnn5J/ykf+JjGSdTU=
 github.com/clambin/go-rapidapi v0.2.0/go.mod h1:jIgXVGiR0D5wopGCdhUpLatsBOeEix8Ydz7pKooJu1g=
-github.com/clambin/httpserver v0.3.2 h1:kI+mfCg4klwymZv7T8TYmzxAe9OslnnJikL/RQs1KAs=
-github.com/clambin/httpserver v0.3.2/go.mod h1:QfashUAIoGpaUtNMUIv4JBLk+4V3v/pEJc0dpc6KpZ8=
+github.com/clambin/httpserver v0.4.0 h1:YyhtOCIIWPrJ0a0N2lPceAxoLAPyz34kghrJ9cuY86M=
+github.com/clambin/httpserver v0.4.0/go.mod h1:QfashUAIoGpaUtNMUIv4JBLk+4V3v/pEJc0dpc6KpZ8=
 github.com/clambin/simplejson/v3 v3.7.2 h1:XgNmJA+wwnPKAd3d+7PHmiFx0bZ3oWnosrOYUlmigkE=
 github.com/clambin/simplejson/v3 v3.7.2/go.mod h1:CFmjcsKUSAUkg2/f4ypI8exLJCXv50bbh2xTFyBs+iA=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
