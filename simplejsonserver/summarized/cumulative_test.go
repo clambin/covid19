@@ -6,8 +6,7 @@ import (
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
-	"github.com/clambin/simplejson/v3/common"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,21 +21,21 @@ func TestCumulativeHandler_Global(t *testing.T) {
 
 	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
 
-	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
+	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{
+	assert.Equal(t, &simplejson.TableResponse{Columns: []simplejson.Column{
+		{Text: "timestamp", Data: simplejson.TimeColumn{
 			time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC),
 			time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC),
 			time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC),
 			time.Date(2020, time.November, 4, 0, 0, 0, 0, time.UTC),
 		}},
-		{Text: "confirmed", Data: query.NumberColumn{1, 3, 3, 10}},
-		{Text: "deaths", Data: query.NumberColumn{0, 0, 0, 1}},
+		{Text: "confirmed", Data: simplejson.NumberColumn{1, 3, 3, 10}},
+		{Text: "deaths", Data: simplejson.NumberColumn{0, 0, 0, 1}},
 	}}, response)
 }
 
@@ -47,20 +46,16 @@ func BenchmarkCumulativeHandler_Global(b *testing.B) {
 
 	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
 
-	args := query.Args{
-		Args: common.Args{
-			Range: common.Range{
-				From: from,
-				To:   to,
-			},
-		},
-	}
+	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{
+		From: from,
+		To:   to,
+	}}}
 
 	ctx := context.Background()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+		_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -92,12 +87,12 @@ func TestCumulativeHandler_Country(t *testing.T) {
 
 	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
 
-	args := query.Args{
-		Args: common.Args{
-			Range: common.Range{
+	args := simplejson.QueryArgs{
+		Args: simplejson.Args{
+			Range: simplejson.Range{
 				To: time.Now(),
 			},
-			AdHocFilters: []common.AdHocFilter{
+			AdHocFilters: []simplejson.AdHocFilter{
 				{
 					Key:      "Country Name",
 					Operator: "=",
@@ -109,12 +104,12 @@ func TestCumulativeHandler_Country(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC)}},
-		{Text: "confirmed", Data: query.NumberColumn{1, 3}},
-		{Text: "deaths", Data: query.NumberColumn{0, 0}},
+	assert.Equal(t, &simplejson.TableResponse{Columns: []simplejson.Column{
+		{Text: "timestamp", Data: simplejson.TimeColumn{time.Date(2020, time.November, 1, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC)}},
+		{Text: "confirmed", Data: simplejson.NumberColumn{1, 3}},
+		{Text: "deaths", Data: simplejson.NumberColumn{0, 0}},
 	}}, response)
 
 	mock.AssertExpectationsForObjects(t, dbh)

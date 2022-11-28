@@ -3,9 +3,8 @@ package updates
 import (
 	"context"
 	covidStore "github.com/clambin/covid19/db"
-	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/data"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/simplejson/v4/pkg/data"
 	"time"
 )
 
@@ -22,7 +21,7 @@ func (handler *Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, req query.Request) (query.Response, error) {
+func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
 	// TODO: have CountEntriesByTime return a (sorted) slice of timestamp/count pairs so we don't have to sort here.
 	entries, err := handler.CovidDB.CountEntriesByTime(req.Args.Range.From, req.Args.Range.To)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/clambin/covid19/simplejsonserver/summarized"
 	"github.com/clambin/covid19/simplejsonserver/updates"
 	"github.com/clambin/httpserver"
-	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v4"
 )
 
 func New(cfg *configuration.Configuration, covidDB covidStore.CovidStore, popDB covidStore.PopulationStore) (*simplejson.Server, error) {

@@ -4,8 +4,7 @@ import (
 	"context"
 	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
 	"sort"
 	"time"
 )
@@ -20,13 +19,13 @@ type Handler struct {
 
 var _ simplejson.Handler = &Handler{}
 
-func (handler Handler) Endpoints() (endpoints simplejson.Endpoints) {
+func (handler *Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	return simplejson.Endpoints{
 		Query: handler.tableQuery,
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
+func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (response simplejson.Response, err error) {
 	end := req.Args.Range.To
 
 	var entries []models.CountryEntry
@@ -62,11 +61,11 @@ func (handler *Handler) tableQuery(_ context.Context, req query.Request) (respon
 		}
 	}
 
-	return &query.TableResponse{
-		Columns: []query.Column{
-			{Text: "timestamp", Data: query.TimeColumn(timestamps)},
-			{Text: "country", Data: query.StringColumn(names)},
-			{Text: "increase", Data: query.NumberColumn(values)},
+	return &simplejson.TableResponse{
+		Columns: []simplejson.Column{
+			{Text: "timestamp", Data: simplejson.TimeColumn(timestamps)},
+			{Text: "country", Data: simplejson.StringColumn(names)},
+			{Text: "increase", Data: simplejson.NumberColumn(values)},
 		},
 	}, nil
 }

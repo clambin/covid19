@@ -2,10 +2,10 @@ package summarized
 
 import (
 	"fmt"
-	"github.com/clambin/simplejson/v3/common"
+	"github.com/clambin/simplejson/v4"
 )
 
-func evaluateAdHocFilter(adHocFilters []common.AdHocFilter) (name string, err error) {
+func evaluateAdHocFilter(adHocFilters []simplejson.AdHocFilter) (name string, err error) {
 	if len(adHocFilters) != 1 {
 		err = fmt.Errorf("only one ad hoc filter supported. got %d", len(adHocFilters))
 	} else if adHocFilters[0].Key != "Country Name" {

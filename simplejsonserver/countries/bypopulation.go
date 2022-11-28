@@ -4,8 +4,7 @@ import (
 	"context"
 	"github.com/clambin/covid19/covid/fetcher"
 	covidStore "github.com/clambin/covid19/db"
-	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
 	"time"
 )
 
@@ -18,14 +17,14 @@ type ByCountryByPopulationHandler struct {
 
 var _ simplejson.Handler = &ByCountryHandler{}
 
-func (handler ByCountryByPopulationHandler) Endpoints() (endpoints simplejson.Endpoints) {
+func (handler *ByCountryByPopulationHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	return simplejson.Endpoints{
 		Query: handler.tableQuery,
 	}
 }
 
-func (handler *ByCountryByPopulationHandler) tableQuery(_ context.Context, req query.Request) (query.Response, error) {
-	d, err := getStatsByCountry(handler.CovidDB, req.Args, handler.Mode)
+func (handler *ByCountryByPopulationHandler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
+	d, err := getStatsByCountry(handler.CovidDB, req.QueryArgs, handler.Mode)
 	if err != nil {
 		return nil, err
 	}
@@ -77,18 +76,9 @@ func (handler *ByCountryByPopulationHandler) tableQuery(_ context.Context, req q
 		title = "deaths"
 	}
 
-	return &query.TableResponse{Columns: []query.Column{
-		{
-			Text: "timestamp",
-			Data: query.TimeColumn(timestamps),
-		},
-		{
-			Text: "country",
-			Data: query.StringColumn(codes),
-		},
-		{
-			Text: title,
-			Data: query.NumberColumn(rates),
-		},
+	return &simplejson.TableResponse{Columns: []simplejson.Column{
+		{Text: "timestamp", Data: simplejson.TimeColumn(timestamps)},
+		{Text: "country", Data: simplejson.StringColumn(codes)},
+		{Text: title, Data: simplejson.NumberColumn(rates)},
 	}}, nil
 }

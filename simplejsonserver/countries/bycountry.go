@@ -4,9 +4,8 @@ import (
 	"context"
 	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/data"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/simplejson/v4/pkg/data"
 	"sort"
 	"time"
 )
@@ -24,22 +23,22 @@ type ByCountryHandler struct {
 
 var _ simplejson.Handler = &ByCountryHandler{}
 
-func (handler ByCountryHandler) Endpoints() (endpoints simplejson.Endpoints) {
+func (handler *ByCountryHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	return simplejson.Endpoints{
 		Query: handler.tableQuery,
 	}
 }
 
-func (handler *ByCountryHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
+func (handler *ByCountryHandler) tableQuery(_ context.Context, req simplejson.QueryRequest) (response simplejson.Response, err error) {
 	var d *data.Table
-	d, err = getStatsByCountry(handler.CovidDB, req.Args, handler.Mode)
+	d, err = getStatsByCountry(handler.CovidDB, req.QueryArgs, handler.Mode)
 	if err != nil {
 		return
 	}
 	return d.CreateTableResponse(), nil
 }
 
-func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (response *data.Table, err error) {
+func getStatsByCountry(db covidStore.CovidStore, args simplejson.QueryArgs, mode int) (response *data.Table, err error) {
 	var names []string
 	names, err = db.GetAllCountryNames()
 
@@ -87,5 +86,5 @@ func getStatsByCountry(db covidStore.CovidStore, args query.Args, mode int) (res
 		columns = append(columns, data.Column{Name: name, Values: []float64{value}})
 	}
 
-	return data.New(columns...).Filter(args), nil
+	return data.New(columns...).Filter(args.Args), nil
 }

@@ -3,8 +3,8 @@ package summarized
 import (
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v3/data"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/simplejson/v4/pkg/data"
 	"time"
 )
 
@@ -12,7 +12,7 @@ type Retriever struct {
 	DB db.CovidStore
 }
 
-func (r *Retriever) getTotalsForCountry(args query.Args) (entries []models.CountryEntry, err error) {
+func (r *Retriever) getTotalsForCountry(args simplejson.QueryArgs) (entries []models.CountryEntry, err error) {
 	var countryName string
 	countryName, err = evaluateAdHocFilter(args.AdHocFilters)
 

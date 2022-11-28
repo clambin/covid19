@@ -6,8 +6,7 @@ import (
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/evolution"
-	"github.com/clambin/simplejson/v3/common"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -26,16 +25,16 @@ func TestEvolution(t *testing.T) {
 
 	h := evolution.Handler{CovidDB: dbh}
 
-	args := query.Args{Args: common.Args{Range: common.Range{To: dbContents[len(dbContents)-1].Timestamp}}}
+	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: dbContents[len(dbContents)-1].Timestamp}}}
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC), time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC)}},
-		{Text: "country", Data: query.StringColumn{"A", "B"}},
-		{Text: "increase", Data: query.NumberColumn{2, 3.5}},
+	assert.Equal(t, &simplejson.TableResponse{Columns: []simplejson.Column{
+		{Text: "timestamp", Data: simplejson.TimeColumn{time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC), time.Date(2022, time.January, 4, 0, 0, 0, 0, time.UTC)}},
+		{Text: "country", Data: simplejson.StringColumn{"A", "B"}},
+		{Text: "increase", Data: simplejson.NumberColumn{2, 3.5}},
 	}}, response)
 }
 
@@ -43,7 +42,7 @@ func TestEvolution_NoEndDate(t *testing.T) {
 	dbh := mockCovidStore.NewCovidStore(t)
 	h := evolution.Handler{CovidDB: dbh}
 
-	args := query.Args{}
+	args := simplejson.QueryArgs{}
 	ctx := context.Background()
 
 	dbContents2 := []models.CountryEntry{
@@ -61,12 +60,12 @@ func TestEvolution_NoEndDate(t *testing.T) {
 		On("GetAll").
 		Return(dbContents2, nil)
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)}},
-		{Text: "country", Data: query.StringColumn{"A", "B"}},
-		{Text: "increase", Data: query.NumberColumn{2, 3.5}},
+	assert.Equal(t, &simplejson.TableResponse{Columns: []simplejson.Column{
+		{Text: "timestamp", Data: simplejson.TimeColumn{time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)}},
+		{Text: "country", Data: simplejson.StringColumn{"A", "B"}},
+		{Text: "increase", Data: simplejson.NumberColumn{2, 3.5}},
 	}}, response)
 }
 
@@ -82,15 +81,15 @@ func TestEvolution_NoData(t *testing.T) {
 
 	h := evolution.Handler{CovidDB: dbh}
 
-	args := query.Args{Args: common.Args{Range: common.Range{To: time.Date(2020, time.October, 31, 0, 0, 0, 0, time.UTC)}}}
+	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Date(2020, time.October, 31, 0, 0, 0, 0, time.UTC)}}}
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn(nil)},
-		{Text: "country", Data: query.StringColumn(nil)},
-		{Text: "increase", Data: query.NumberColumn(nil)},
+	assert.Equal(t, &simplejson.TableResponse{Columns: []simplejson.Column{
+		{Text: "timestamp", Data: simplejson.TimeColumn(nil)},
+		{Text: "country", Data: simplejson.StringColumn(nil)},
+		{Text: "increase", Data: simplejson.NumberColumn(nil)},
 	}}, response)
 }
 
@@ -113,13 +112,13 @@ func BenchmarkHandler_TableQuery_Evolution(b *testing.B) {
 
 	h := evolution.Handler{CovidDB: dbh}
 
-	args := query.Args{Args: common.Args{Range: common.Range{To: timestamp}}}
+	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: timestamp}}}
 
 	ctx := context.Background()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+		_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 		if err != nil {
 			panic(err)
 		}

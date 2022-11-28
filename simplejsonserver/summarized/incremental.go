@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v3"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
 )
 
 // IncrementalHandler returns the incremental number of cases & deaths. If an adhoc filter exists, it returns the
@@ -24,10 +23,10 @@ func (handler IncrementalHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *IncrementalHandler) tableQuery(_ context.Context, req query.Request) (response query.Response, err error) {
+func (handler *IncrementalHandler) tableQuery(_ context.Context, req simplejson.QueryRequest) (response simplejson.Response, err error) {
 	var entries []models.CountryEntry
 	if len(req.Args.AdHocFilters) > 0 {
-		entries, err = handler.Retriever.getTotalsForCountry(req.Args)
+		entries, err = handler.Retriever.getTotalsForCountry(req.QueryArgs)
 	} else {
 		entries, err = handler.Retriever.DB.GetTotalsPerDay()
 	}

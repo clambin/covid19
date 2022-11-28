@@ -8,7 +8,7 @@ import (
 	"github.com/clambin/covid19/db"
 	populationProbe "github.com/clambin/covid19/population"
 	"github.com/clambin/covid19/simplejsonserver"
-	"github.com/clambin/simplejson/v3"
+	"github.com/clambin/simplejson/v4"
 	log "github.com/sirupsen/logrus"
 	"time"
 )

@@ -6,8 +6,7 @@ import (
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/mortality"
-	"github.com/clambin/simplejson/v3/common"
-	"github.com/clambin/simplejson/v3/query"
+	"github.com/clambin/simplejson/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -41,16 +40,16 @@ func TestHandler(t *testing.T) {
 
 	h := mortality.Handler{CovidDB: dbh}
 
-	args := query.Args{Args: common.Args{Range: common.Range{To: time.Now()}}}
+	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 
 	ctx := context.Background()
 
-	response, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	response, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.NoError(t, err)
-	assert.Equal(t, &query.TableResponse{Columns: []query.Column{
-		{Text: "timestamp", Data: query.TimeColumn{time.Date(2021, time.December, 17, 0, 0, 0, 0, time.UTC), time.Date(2021, time.December, 17, 0, 0, 0, 0, time.UTC)}},
-		{Text: "country", Data: query.StringColumn{"A", "B"}},
-		{Text: "ratio", Data: query.NumberColumn{0.1, 0.05}},
+	assert.Equal(t, &simplejson.TableResponse{Columns: []simplejson.Column{
+		{Text: "timestamp", Data: simplejson.TimeColumn{time.Date(2021, time.December, 17, 0, 0, 0, 0, time.UTC), time.Date(2021, time.December, 17, 0, 0, 0, 0, time.UTC)}},
+		{Text: "country", Data: simplejson.StringColumn{"A", "B"}},
+		{Text: "ratio", Data: simplejson.NumberColumn{0.1, 0.05}},
 	}}, response)
 }
 
@@ -58,7 +57,7 @@ func TestHandler_Errors(t *testing.T) {
 	dbh := mockCovidStore.NewCovidStore(t)
 	h := mortality.Handler{CovidDB: dbh}
 
-	args := query.Args{}
+	args := simplejson.QueryArgs{}
 
 	ctx := context.Background()
 
@@ -67,7 +66,7 @@ func TestHandler_Errors(t *testing.T) {
 		Return(nil, errors.New("db error")).
 		Once()
 
-	_, err := h.Endpoints().Query(ctx, query.Request{Args: args})
+	_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.Error(t, err)
 
 	dbh.
@@ -77,6 +76,6 @@ func TestHandler_Errors(t *testing.T) {
 		On("GetLatestForCountriesByTime", []string{"AA", "BB", "CC"}, mock.AnythingOfType("time.Time")).
 		Return(nil, errors.New("db error"))
 
-	_, err = h.Endpoints().Query(ctx, query.Request{Args: args})
+	_, err = h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.Error(t, err)
 }

@@ -6,7 +6,7 @@ require (
 	bou.ke/monkey v1.0.2
 	github.com/clambin/go-metrics v0.6.3
 	github.com/clambin/go-rapidapi v0.2.0
-	github.com/clambin/simplejson/v3 v3.7.2
+	github.com/clambin/simplejson/v4 v4.0.0
 	github.com/containrrr/shoutrrr v0.6.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/lib/pq v1.10.7
@@ -18,13 +18,18 @@ require (
 )
 
 require (
+	github.com/josharian/intern v1.0.0 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
+)
+
+require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/clambin/httpserver v0.3.2
+	github.com/clambin/httpserver v0.4.0
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.10.0 // indirect
@@ -32,7 +37,7 @@ require (
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.142.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.144.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
