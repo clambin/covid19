@@ -1,45 +1,51 @@
 package notifier
 
 import (
+	"fmt"
 	"github.com/containrrr/shoutrrr"
 	"github.com/containrrr/shoutrrr/pkg/router"
 	"github.com/containrrr/shoutrrr/pkg/types"
-	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
-// NotificationSender provides an interface to send notifications (e.g. to Shoutrrr)
+// Router interface for underlying notification routers
 //
-//go:generate mockery --name NotificationSender
-type NotificationSender interface {
+//go:generate mockery --name Router
+type Router interface {
 	Send(title, message string) (err error)
 }
 
-// ShoutrrrSender implements the NotificationSender interface for Shoutrrr
-type ShoutrrrSender struct {
+// ShoutrrrRouter implements the Router interface for Shoutrrr
+type ShoutrrrRouter struct {
 	router *router.ServiceRouter
 }
 
-// NewNotificationSender creates a new ShoutrrrSender
-func NewNotificationSender(url string) *ShoutrrrSender {
+// NewRouter creates a new ShoutrrrRouter
+func NewRouter(url string) (*ShoutrrrRouter, error) {
 	r, err := shoutrrr.CreateSender(url)
 	if err != nil {
-		log.WithError(err).Error("unable to create shoutrrr sender")
-		return nil
+		return nil, fmt.Errorf("shoutrrr: %w", err)
 	}
-	return &ShoutrrrSender{router: r}
+	return &ShoutrrrRouter{router: r}, nil
 }
 
 // Send a notification
-func (s *ShoutrrrSender) Send(title, message string) (err error) {
-	if s.router != nil {
-		params := types.Params{}
-		params.SetTitle(title)
-		errs := s.router.Send(message, &params)
-		for _, e := range errs {
-			if e != nil {
-				return e
-			}
+func (s *ShoutrrrRouter) Send(title, message string) error {
+	if s.router == nil {
+		return fmt.Errorf("router not initialized")
+	}
+
+	params := types.Params{}
+	params.SetTitle(title)
+	errs := s.router.Send(message, &params)
+	var errors []string
+	for _, err := range errs {
+		if err != nil {
+			errors = append(errors, err.Error())
 		}
+	}
+	if len(errors) > 0 {
+		return fmt.Errorf("router: send failed: %s", strings.Join(errors, ","))
 	}
 	return nil
 }

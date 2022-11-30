@@ -4,47 +4,33 @@ import (
 	"fmt"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
-	log "github.com/sirupsen/logrus"
 )
 
-// Notifier will send notifications when we receive new updates for selected countries
-//
-//go:generate mockery --name Notifier
-type Notifier interface {
-	Notify(entries []models.CountryEntry) (err error)
-}
-
-// RealNotifier will send notifications when we receive new updates for selected countries
-type RealNotifier struct {
-	Sender        NotificationSender
+// Notifier sends notifications when we receive new updates for selected countries
+type Notifier struct {
+	Router        Router
 	lastDBEntries map[string]models.CountryEntry
 }
 
-var _ Notifier = &RealNotifier{}
-
 // NewNotifier creates a new RealNotifier
-func NewNotifier(sender NotificationSender, countries []string, db db.CovidStore) *RealNotifier {
+func NewNotifier(r Router, countries []string, db db.CovidStore) (*Notifier, error) {
 	lastDBEntries := make(map[string]models.CountryEntry)
 
 	entries, err := db.GetLatestForCountries(countries)
 	if err != nil {
-		log.WithError(err).Fatal("unable to access database")
+		return nil, fmt.Errorf("database: %w", err)
 	}
 
 	for name, entry := range entries {
 		lastDBEntries[name] = entry
 	}
 
-	return &RealNotifier{
-		Sender:        sender,
-		lastDBEntries: lastDBEntries,
-	}
+	return &Notifier{Router: r, lastDBEntries: lastDBEntries}, nil
 }
 
-// Notify sends notification when we receive updates for selected countries
-func (notifier *RealNotifier) Notify(entries []models.CountryEntry) (err error) {
+func (n *Notifier) Notify(entries []models.CountryEntry) (err error) {
 	for _, record := range entries {
-		lastDBEntry, ok := notifier.lastDBEntries[record.Name]
+		lastDBEntry, ok := n.lastDBEntries[record.Name]
 
 		if !ok || !record.Timestamp.After(lastDBEntry.Timestamp) {
 			continue
@@ -56,7 +42,7 @@ func (notifier *RealNotifier) Notify(entries []models.CountryEntry) (err error) 
 			continue
 		}
 
-		err = notifier.Sender.Send(
+		err = n.Router.Send(
 			"New probe data for "+record.Name,
 			fmt.Sprintf("Confirmed: %d, deaths: %d, recovered: %d",
 				record.Confirmed-lastDBEntry.Confirmed,
@@ -70,7 +56,7 @@ func (notifier *RealNotifier) Notify(entries []models.CountryEntry) (err error) 
 			break
 		}
 
-		notifier.lastDBEntries[record.Name] = record
+		n.lastDBEntries[record.Name] = record
 	}
 	return
 }

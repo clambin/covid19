@@ -7,7 +7,8 @@ import (
 	"github.com/clambin/covid19/covid"
 	"github.com/clambin/covid19/covid/fetcher"
 	mockFetcher "github.com/clambin/covid19/covid/fetcher/mocks"
-	mockNotifier "github.com/clambin/covid19/covid/notifier/mocks"
+	"github.com/clambin/covid19/covid/notifier"
+	mockRouter "github.com/clambin/covid19/covid/notifier/mocks"
 	mockSaver "github.com/clambin/covid19/covid/saver/mocks"
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
@@ -21,12 +22,8 @@ import (
 )
 
 func TestCovid19Probe_Update(t *testing.T) {
-	cfg := &configuration.MonitorConfiguration{
+	cfg := configuration.MonitorConfiguration{
 		RapidAPIKey: "1234",
-		Notifications: configuration.NotificationConfiguration{
-			Enabled:   true,
-			Countries: []string{"Belgium", "US"},
-		},
 	}
 	db := mockCovidStore.NewCovidStore(t)
 	timeStamp := time.Now()
@@ -39,10 +36,11 @@ func TestCovid19Probe_Update(t *testing.T) {
 			},
 			nil,
 		)
-	p := covid.New(cfg, db)
+	p := covid.New(&cfg, db)
 
 	f := mockFetcher.NewFetcher(t)
-	n := mockNotifier.NewNotifier(t)
+	r := mockRouter.NewRouter(t)
+	n, _ := notifier.NewNotifier(r, []string{"Belgium", "US"}, db)
 	s := mockSaver.NewSaver(t)
 
 	p.Fetcher = f
@@ -63,8 +61,8 @@ func TestCovid19Probe_Update(t *testing.T) {
 		On("SaveNewEntries", countryStats).
 		Return(newCountryStats, nil).
 		Once()
-	n.
-		On("Notify", newCountryStats).
+	r.
+		On("Send", "New probe data for US", "Confirmed: 20, deaths: 5, recovered: 5").
 		Return(nil).
 		Once()
 
@@ -89,7 +87,13 @@ func TestCovid19Probe_Update(t *testing.T) {
 func TestCovid19Probe_Update_Errors(t *testing.T) {
 	f := mockFetcher.NewFetcher(t)
 	s := mockSaver.NewSaver(t)
-	n := mockNotifier.NewNotifier(t)
+	r := mockRouter.NewRouter(t)
+	db := mockCovidStore.NewCovidStore(t)
+	db.On("GetLatestForCountries", []string{"Belgium", "US"}).Return(map[string]models.CountryEntry{
+		"US":      {},
+		"Belgium": {},
+	}, nil)
+	n, _ := notifier.NewNotifier(r, []string{"Belgium", "US"}, db)
 
 	p := covid.Probe{
 		Fetcher:  f,
@@ -132,8 +136,8 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 		On("SaveNewEntries", countryStats).
 		Return(newCountryStats, nil).
 		Once()
-	n.
-		On("Notify", newCountryStats).
+	r.
+		On("Send", "New probe data for US", "Confirmed: 120, deaths: 25, recovered: 15").
 		Return(fmt.Errorf("unable to send notifications")).
 		Once()
 
@@ -141,6 +145,7 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 	require.NoError(t, err)
 }
 
+/*
 func TestCovid19Probe_Describe(t *testing.T) {
 	p := covid.Probe{}
 	ch := make(chan *prometheus.Desc)
@@ -153,3 +158,4 @@ func TestCovid19Probe_Describe(t *testing.T) {
 		assert.Contains(t, metric.String(), "\""+name+"\"")
 	}
 }
+*/

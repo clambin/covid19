@@ -17,7 +17,7 @@ import (
 type Probe struct {
 	fetcher.Fetcher
 	saver.Saver
-	notifier.Notifier
+	Notifier   *notifier.Notifier
 	newUpdates map[string]int
 	lock       sync.RWMutex
 }
@@ -28,17 +28,19 @@ const (
 
 // New creates a new Probe
 func New(cfg *configuration.MonitorConfiguration, db db.CovidStore) *Probe {
-	var n notifier.Notifier
+	var n *notifier.Notifier
 	if cfg.Notifications.Enabled {
-		n = notifier.NewNotifier(
-			notifier.NewNotificationSender(cfg.Notifications.URL),
-			cfg.Notifications.Countries,
-			db)
+		r, err := notifier.NewRouter(cfg.Notifications.URL)
+		if err == nil {
+			n, err = notifier.NewNotifier(r, cfg.Notifications.Countries, db)
+		}
+		if err != nil {
+			log.WithError(err).Fatal("failed to create notification router")
+		}
+
 	}
 	return &Probe{
-		Fetcher: &fetcher.Client{
-			API: rapidapi.New(rapidAPIHost, cfg.RapidAPIKey),
-		},
+		Fetcher:  &fetcher.Client{API: rapidapi.New(rapidAPIHost, cfg.RapidAPIKey)},
 		Saver:    &saver.StoreSaver{Store: db},
 		Notifier: n,
 	}
