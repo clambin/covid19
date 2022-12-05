@@ -3,7 +3,6 @@ module github.com/clambin/covid19
 go 1.18
 
 require (
-	bou.ke/monkey v1.0.2
 	github.com/clambin/go-metrics v0.6.3
 	github.com/clambin/go-rapidapi v0.2.0
 	github.com/clambin/simplejson/v4 v4.0.0
@@ -29,7 +28,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/clambin/httpserver v0.4.0
+	github.com/clambin/httpserver v0.5.0
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.10.0 // indirect
