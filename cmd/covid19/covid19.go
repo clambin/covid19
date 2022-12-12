@@ -6,6 +6,7 @@ import (
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/stack"
 	"github.com/clambin/covid19/version"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
@@ -26,6 +27,7 @@ func main() {
 	if s, err = stack.CreateStack(cfg); err != nil {
 		log.WithError(err).Fatal("app init failed")
 	}
+	prometheus.DefaultRegisterer.MustRegister(s.SimpleJSONServer)
 
 	switch cmd {
 	case handlerCmd.FullCommand():

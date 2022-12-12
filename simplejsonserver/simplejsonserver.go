@@ -8,8 +8,8 @@ import (
 	"github.com/clambin/covid19/simplejsonserver/mortality"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
 	"github.com/clambin/covid19/simplejsonserver/updates"
-	"github.com/clambin/httpserver"
-	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/go-common/httpserver"
+	"github.com/clambin/simplejson/v5"
 )
 
 func New(cfg *configuration.Configuration, covidDB covidStore.CovidStore, popDB covidStore.PopulationStore) (*simplejson.Server, error) {
@@ -49,7 +49,8 @@ func New(cfg *configuration.Configuration, covidDB covidStore.CovidStore, popDB 
 		},
 	}
 
-	return simplejson.New("covid19", handlers,
-		httpserver.WithPort{Port: cfg.Port},
+	return simplejson.New(handlers,
+		simplejson.WithQueryMetrics{Name: "covid19"},
+		simplejson.WithHTTPServerOption{Option: httpserver.WithPort{Port: cfg.Port}},
 	)
 }

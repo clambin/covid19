@@ -2,7 +2,7 @@ package summarized
 
 import (
 	"fmt"
-	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/simplejson/v5"
 )
 
 func evaluateAdHocFilter(adHocFilters []simplejson.AdHocFilter) (name string, err error) {

@@ -6,7 +6,7 @@ import (
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
-	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/simplejson/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

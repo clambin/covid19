@@ -2,14 +2,16 @@ package stack
 
 import (
 	"context"
+	"errors"
 	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/configuration"
 	covidProbe "github.com/clambin/covid19/covid"
 	"github.com/clambin/covid19/db"
 	populationProbe "github.com/clambin/covid19/population"
 	"github.com/clambin/covid19/simplejsonserver"
-	"github.com/clambin/simplejson/v4"
+	"github.com/clambin/simplejson/v5"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"time"
 )
 
@@ -48,7 +50,15 @@ func CreateStackWithStores(cfg *configuration.Configuration, covidStore db.Covid
 
 // RunHandler runs the SimpleJSON server
 func (stack *Stack) RunHandler() error {
-	return stack.SimpleJSONServer.Run()
+	err := stack.SimpleJSONServer.Serve()
+	if err != nil {
+		if errors.Is(err, http.ErrServerClosed) {
+			err = nil
+		} else {
+			log.WithError(err).Error("failed to start SimpleJSON server")
+		}
+	}
+	return err
 }
 
 // StopHandler stops the SimpleJSON server
