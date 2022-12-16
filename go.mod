@@ -9,6 +9,7 @@ require (
 	github.com/clambin/simplejson/v5 v5.1.0
 	github.com/containrrr/shoutrrr v0.6.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
+	github.com/jmoiron/sqlx v1.3.1
 	github.com/lib/pq v1.10.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
