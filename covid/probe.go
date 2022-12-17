@@ -54,7 +54,7 @@ func (probe *Probe) Update(ctx context.Context) (int, error) {
 	}
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to get Covid figures: " + err.Error())
+		return 0, fmt.Errorf("update: %w", err)
 	}
 
 	if probe.Notifier != nil {

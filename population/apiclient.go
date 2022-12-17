@@ -47,13 +47,12 @@ type populationResponseBody struct {
 func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string) (int64, error) {
 	var stats populationResponse
 	body, err := client.Call(ctx, "/population?country_name="+url.QueryEscape(country))
-	if err == nil {
-		decoder := json.NewDecoder(bytes.NewReader(body))
-		err = decoder.Decode(&stats)
+	if err != nil {
+		return 0, fmt.Errorf("call: %w", err)
 	}
 
-	if err != nil {
-		return 0, err
+	if err = json.NewDecoder(bytes.NewReader(body)).Decode(&stats); err != nil {
+		return 0, fmt.Errorf("decode: %w", err)
 	}
 
 	if !stats.OK {
@@ -73,12 +72,12 @@ func (client *RapidAPIClient) GetCountries(ctx context.Context) ([]string, error
 	}
 
 	body, err := client.Call(ctx, "/allcountriesname")
-	if err == nil {
-		err = json.NewDecoder(bytes.NewReader(body)).Decode(&stats)
+	if err != nil {
+		return nil, fmt.Errorf("call: %w", err)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("invalid response received from %s", rapidAPIHost)
+	if err = json.NewDecoder(bytes.NewReader(body)).Decode(&stats); err != nil {
+		return nil, fmt.Errorf("decode : %w", err)
 	}
 
 	return stats.Body.Countries, nil

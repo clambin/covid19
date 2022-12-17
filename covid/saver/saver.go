@@ -22,22 +22,22 @@ type StoreSaver struct {
 var _ Saver = &StoreSaver{}
 
 // SaveNewEntries takes a list of entries and adds any newer stats to the database
-func (storeSaver *StoreSaver) SaveNewEntries(entries []models.CountryEntry) (newEntries []models.CountryEntry, err error) {
-	newEntries, err = storeSaver.getNewRecords(entries)
+func (storeSaver *StoreSaver) SaveNewEntries(entries []models.CountryEntry) ([]models.CountryEntry, error) {
+	newEntries, err := storeSaver.getNewRecords(entries)
 	if err != nil {
-		err = fmt.Errorf("failed to process Covid figures: %s", err.Error())
-		return
+		return nil, fmt.Errorf("SaveNewEntries: %w", err)
 	}
 
-	if len(newEntries) > 0 {
-		log.WithField("entries", len(newEntries)).Debug("adding new probe-19 data to the database")
-
-		err = storeSaver.Store.Add(newEntries)
-		if err != nil {
-			err = fmt.Errorf("failed to add new entries in the database: %s", err.Error())
-		}
+	if len(newEntries) == 0 {
+		return newEntries, nil
 	}
-	return
+
+	log.WithField("entries", len(newEntries)).Debug("adding new probe-19 data to the database")
+	err = storeSaver.Store.Add(newEntries)
+	if err != nil {
+		err = fmt.Errorf("SaveNewEntries: %w", err)
+	}
+	return newEntries, err
 }
 
 func (storeSaver *StoreSaver) getNewRecords(entries []models.CountryEntry) (newEntries []models.CountryEntry, err error) {

@@ -2,7 +2,6 @@ package backfill
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	log "github.com/sirupsen/logrus"
@@ -28,7 +27,7 @@ func (backFiller *Backfiller) Run() error {
 
 	countries, err := backFiller.getCountries()
 	if err != nil {
-		return fmt.Errorf("could not retrieve supported countries: %s", err.Error())
+		return err
 	}
 
 	for slug, details := range countries {
