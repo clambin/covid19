@@ -109,7 +109,7 @@ func (store *PGCovidStore) getLatestForCountry(countryName string, endTime time.
 	statement := `SELECT time "timestamp", country_code "code", country_name "name", confirmed, recovered, death "deaths" FROM covid19 WHERE country_name = '%s'` + timestampClause + ` ORDER BY 1 DESC`
 
 	var entry models.CountryEntry
-	err := store.DB.Handle.Get(&entry, fmt.Sprintf(statement, countryName))
+	err := store.DB.Handle.Get(&entry, fmt.Sprintf(statement, escapeString(countryName)))
 	return entry, err
 }
 
