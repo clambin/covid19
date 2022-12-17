@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/clambin/go-common/httpserver v0.2.0
 	github.com/clambin/go-common/set v0.1.2
-	github.com/clambin/go-metrics v0.6.3
 	github.com/clambin/go-rapidapi v0.2.0
 	github.com/clambin/simplejson/v5 v5.1.0
 	github.com/containrrr/shoutrrr v0.6.1

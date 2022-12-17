@@ -208,8 +208,6 @@ github.com/clambin/go-common/httpserver v0.2.0 h1:v4VxeteodlLz7I19gLnm7Q+2275MQB
 github.com/clambin/go-common/httpserver v0.2.0/go.mod h1:IlwlVQklRfkEbmWhsBiZWrUMHNUxkftklQDgYSCh5wU=
 github.com/clambin/go-common/set v0.1.2 h1:Pr0FXPVJsH4dc/OelhjXYo0xVmOLIUurg3saMh8KTz8=
 github.com/clambin/go-common/set v0.1.2/go.mod h1:GFjAZynNo4BNjlx2hzDMHIU4ays7QjpJUSHXB/3b1ZE=
-github.com/clambin/go-metrics v0.6.3 h1:awuonTV7BCr0xYoVVkuS1W0HQblzZ/1AiIj9RUO1Ruk=
-github.com/clambin/go-metrics v0.6.3/go.mod h1:6XBV5IpnL9N4xGV50i6eo7AB5mPcLb7XUtTtv3wD7qE=
 github.com/clambin/go-rapidapi v0.2.0 h1:xNsMAhL9o3HXF4dvurwhnYwAWmAnn5J/ykf+JjGSdTU=
 github.com/clambin/go-rapidapi v0.2.0/go.mod h1:jIgXVGiR0D5wopGCdhUpLatsBOeEix8Ydz7pKooJu1g=
 github.com/clambin/simplejson/v5 v5.1.0 h1:MmN3tDoTKAlN1UWirCbrTaVqo1iO0J/hRebyhrCJsJY=
