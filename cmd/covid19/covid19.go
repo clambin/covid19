@@ -27,7 +27,7 @@ func main() {
 	if s, err = stack.CreateStack(cfg); err != nil {
 		log.WithError(err).Fatal("app init failed")
 	}
-	prometheus.DefaultRegisterer.MustRegister(s.SimpleJSONServer)
+	prometheus.DefaultRegisterer.MustRegister(s)
 
 	switch cmd {
 	case handlerCmd.FullCommand():
@@ -89,7 +89,7 @@ func GetConfiguration(application string, args []string) (cmd string, cfg *confi
 	defer func() { _ = f.Close() }()
 
 	if cfg, err = configuration.LoadConfiguration(f); err != nil {
-		log.WithField("err", err).Fatal("Invalid config file")
+		return "", nil, fmt.Errorf("load configuration: %w", err)
 	}
 
 	if debug {
