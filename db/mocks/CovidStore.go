@@ -155,34 +155,6 @@ func (_m *CovidStore) GetAllForRange(from time.Time, to time.Time) ([]models.Cou
 	return r0, r1
 }
 
-// GetFirstEntry provides a mock function with given fields:
-func (_m *CovidStore) GetFirstEntry() (time.Time, bool, error) {
-	ret := _m.Called()
-
-	var r0 time.Time
-	if rf, ok := ret.Get(0).(func() time.Time); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(time.Time)
-	}
-
-	var r1 bool
-	if rf, ok := ret.Get(1).(func() bool); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Get(1).(bool)
-	}
-
-	var r2 error
-	if rf, ok := ret.Get(2).(func() error); ok {
-		r2 = rf()
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
 // GetLatestForCountries provides a mock function with given fields:
 func (_m *CovidStore) GetLatestForCountries() (map[string]models.CountryEntry, error) {
 	ret := _m.Called()
@@ -240,6 +212,27 @@ func (_m *CovidStore) GetTotalsPerDay() ([]models.CountryEntry, error) {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.CountryEntry)
 		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Rows provides a mock function with given fields:
+func (_m *CovidStore) Rows() (int, error) {
+	ret := _m.Called()
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func() int); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int)
 	}
 
 	var r1 error

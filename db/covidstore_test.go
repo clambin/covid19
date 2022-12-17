@@ -31,25 +31,24 @@ func TestCovidStore(t *testing.T) {
 	}
 
 	var (
-		found     bool
-		timestamp time.Time
+		found bool
+		rows  int
 	)
 
 	entries, err := covidStore.GetAll()
 	require.NoError(t, err)
 	assert.Len(t, entries, 0)
 
-	_, found, err = covidStore.GetFirstEntry()
+	rows, err = covidStore.Rows()
 	require.NoError(t, err)
-	assert.False(t, found)
+	assert.Zero(t, rows)
 
 	err = covidStore.Add(newEntries)
 	require.NoError(t, err)
 
-	timestamp, found, err = covidStore.GetFirstEntry()
+	rows, err = covidStore.Rows()
 	require.NoError(t, err)
-	require.True(t, found)
-	assert.True(t, timestamp.Equal(first))
+	assert.Equal(t, 2, rows)
 
 	entries, err = covidStore.GetAll()
 	require.NoError(t, err)

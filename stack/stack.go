@@ -84,9 +84,9 @@ func (stack *Stack) Load() {
 }
 
 func (stack *Stack) loadIfEmpty() bool {
-	if _, found, err := stack.CovidStore.GetFirstEntry(); err != nil {
+	if rows, err := stack.CovidStore.Rows(); err != nil {
 		log.WithError(err).Fatal("could not access database")
-	} else if found {
+	} else if rows > 0 {
 		return false
 	}
 

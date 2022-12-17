@@ -19,7 +19,7 @@ type CovidStore interface {
 	GetAllForCountryName(name string) (entries []models.CountryEntry, err error)
 	GetLatestForCountries() (entries map[string]models.CountryEntry, err error)
 	GetLatestForCountriesByTime(endTime time.Time) (entries map[string]models.CountryEntry, err error)
-	GetFirstEntry() (first time.Time, found bool, err error)
+	Rows() (rows int, err error)
 	Add(entries []models.CountryEntry) (err error)
 	GetAllCountryNames() (names []string, err error)
 	CountEntriesByTime(from, to time.Time) (entries []struct {
@@ -138,19 +138,11 @@ func (store *PGCovidStore) Add(entries []models.CountryEntry) error {
 	return err
 }
 
-// GetFirstEntry gets the timestamp of the first entry in the database
-func (store *PGCovidStore) GetFirstEntry() (time.Time, bool, error) {
-	// TODO: SELECT MIN(time) may be more efficient, but makes Scan throw the following error:
-	// "sql: Scan error on column index 0, name \"min\": unsupported Scan, storing driver.Value type <nil> into type *time.Time"
-	var first time.Time
-	err := store.DB.Handle.Get(&first, `SELECT time FROM covid19 ORDER BY 1 LIMIT 1`)
-
-	found := true
-	if errors.Is(err, sql.ErrNoRows) {
-		found = false
-		err = nil
-	}
-	return first, found, err
+// Rows returns the number of rows in the store
+func (store *PGCovidStore) Rows() (int, error) {
+	var rows int
+	err := store.DB.Handle.Get(&rows, `SELECT COUNT(*) AS rows FROM covid19`)
+	return rows, err
 }
 
 // GetAllCountryNames gets all unique country names from the database
