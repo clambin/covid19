@@ -28,7 +28,7 @@ func TestCovid19Probe_Update(t *testing.T) {
 	db := mockCovidStore.NewCovidStore(t)
 	timeStamp := time.Now()
 	db.
-		On("GetLatestForCountries", []string{"Belgium", "US"}).
+		On("GetLatestForCountries").
 		Return(
 			map[string]models.CountryEntry{
 				"Belgium": {Timestamp: timeStamp, Name: "Belgium", Code: "BE", Confirmed: 10, Deaths: 2, Recovered: 1},
@@ -89,7 +89,7 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 	s := mockSaver.NewSaver(t)
 	r := mockRouter.NewRouter(t)
 	db := mockCovidStore.NewCovidStore(t)
-	db.On("GetLatestForCountries", []string{"Belgium", "US"}).Return(map[string]models.CountryEntry{
+	db.On("GetLatestForCountries").Return(map[string]models.CountryEntry{
 		"US":      {},
 		"Belgium": {},
 	}, nil)
@@ -144,18 +144,3 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 	_, err = p.Update(context.Background())
 	require.NoError(t, err)
 }
-
-/*
-func TestCovid19Probe_Describe(t *testing.T) {
-	p := covid.Probe{}
-	ch := make(chan *prometheus.Desc)
-	go p.Describe(ch)
-
-	for _, name := range []string{
-		"covid_reported_count",
-	} {
-		metric := <-ch
-		assert.Contains(t, metric.String(), "\""+name+"\"")
-	}
-}
-*/

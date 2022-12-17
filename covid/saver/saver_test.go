@@ -14,7 +14,7 @@ func TestStoreSaver_SaveNewEntries(t *testing.T) {
 	db := mockCovidStore.NewCovidStore(t)
 	timeStamp := time.Now()
 	db.
-		On("GetLatestForCountries", []string{"Belgium", "US"}).
+		On("GetLatestForCountries").
 		Return(
 			map[string]models.CountryEntry{
 				"Belgium": {Timestamp: timeStamp, Name: "Belgium", Code: "BE", Confirmed: 10, Deaths: 2, Recovered: 1},
@@ -42,22 +42,10 @@ func TestStoreSaver_SaveNewEntries(t *testing.T) {
 func TestStoreSaver_SaveNewEntries_Errors(t *testing.T) {
 	db := mockCovidStore.NewCovidStore(t)
 	timeStamp := time.Now()
-	db.
-		On("GetLatestForCountries", []string{"Belgium", "US"}).
-		Return(nil, fmt.Errorf("unable to get latest entries for countries")).
-		Once()
-
 	s := saver.StoreSaver{Store: db}
 
-	_, err := s.SaveNewEntries([]models.CountryEntry{
-		{Timestamp: timeStamp.Add(-24 * time.Hour), Name: "Belgium", Code: "BE", Confirmed: 8, Deaths: 1, Recovered: 0},
-		{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10},
-	})
-
-	require.Error(t, err)
-
 	db.
-		On("GetLatestForCountries", []string{"Belgium", "US"}).
+		On("GetLatestForCountries").
 		Return(
 			map[string]models.CountryEntry{
 				"Belgium": {Timestamp: timeStamp, Name: "Belgium", Code: "BE", Confirmed: 10, Deaths: 2, Recovered: 1},
@@ -71,7 +59,7 @@ func TestStoreSaver_SaveNewEntries_Errors(t *testing.T) {
 		Return(fmt.Errorf("unable to store records")).
 		Once()
 
-	_, err = s.SaveNewEntries([]models.CountryEntry{
+	_, err := s.SaveNewEntries([]models.CountryEntry{
 		{Timestamp: timeStamp.Add(-24 * time.Hour), Name: "Belgium", Code: "BE", Confirmed: 8, Deaths: 1, Recovered: 0},
 		{Timestamp: timeStamp.Add(24 * time.Hour), Name: "US", Code: "US", Confirmed: 120, Deaths: 25, Recovered: 10},
 	})

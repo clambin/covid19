@@ -17,16 +17,16 @@ func TestTimestampClause(t *testing.T) {
 		},
 		{
 			from:     time.Date(2022, time.January, 21, 0, 0, 0, 0, time.UTC),
-			expected: `WHERE time >= '2022-01-21T00:00:00Z'`,
+			expected: `time >= '2022-01-21T00:00:00Z'`,
 		},
 		{
 			to:       time.Date(2022, time.January, 21, 0, 0, 0, 0, time.UTC),
-			expected: `WHERE time <= '2022-01-21T00:00:00Z'`,
+			expected: `time <= '2022-01-21T00:00:00Z'`,
 		},
 		{
 			from:     time.Date(2022, time.January, 21, 0, 0, 0, 0, time.UTC),
 			to:       time.Date(2022, time.January, 21, 0, 0, 0, 0, time.UTC),
-			expected: `WHERE time >= '2022-01-21T00:00:00Z' AND time <= '2022-01-21T00:00:00Z'`,
+			expected: `time >= '2022-01-21T00:00:00Z' AND time <= '2022-01-21T00:00:00Z'`,
 		},
 	}
 

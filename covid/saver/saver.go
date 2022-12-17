@@ -5,7 +5,6 @@ import (
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	log "github.com/sirupsen/logrus"
-	"sort"
 )
 
 // Saver stores new entries in the database
@@ -42,10 +41,8 @@ func (storeSaver *StoreSaver) SaveNewEntries(entries []models.CountryEntry) (new
 }
 
 func (storeSaver *StoreSaver) getNewRecords(entries []models.CountryEntry) (newEntries []models.CountryEntry, err error) {
-	countries := getCountries(entries)
-
 	var latest map[string]models.CountryEntry
-	latest, err = storeSaver.Store.GetLatestForCountries(countries)
+	latest, err = storeSaver.Store.GetLatestForCountries()
 
 	for _, entry := range entries {
 		latestEntry, found := latest[entry.Name]
@@ -55,17 +52,5 @@ func (storeSaver *StoreSaver) getNewRecords(entries []models.CountryEntry) (newE
 		}
 	}
 
-	return
-}
-
-func getCountries(entries []models.CountryEntry) (countries []string) {
-	uniqueCountries := make(map[string]struct{})
-	for _, entry := range entries {
-		uniqueCountries[entry.Name] = struct{}{}
-	}
-	for name := range uniqueCountries {
-		countries = append(countries, name)
-	}
-	sort.Strings(countries)
 	return
 }

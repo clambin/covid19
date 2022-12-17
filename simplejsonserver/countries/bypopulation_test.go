@@ -16,10 +16,7 @@ import (
 func TestConfirmedByCountryByPopulation(t *testing.T) {
 	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
-		On("GetAllCountryNames").
-		Return([]string{"Belgium", "US"}, nil)
-	dbh.
-		On("GetLatestForCountriesByTime", []string{"Belgium", "US"}, time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
+		On("GetLatestForCountriesByTime", time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
 		Return(map[string]models.CountryEntry{
 			"Belgium": {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Confirmed: 200},
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
@@ -52,10 +49,7 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 func TestDeathsByCountryByPopulation(t *testing.T) {
 	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
-		On("GetAllCountryNames").
-		Return([]string{"Belgium", "US"}, nil)
-	dbh.
-		On("GetLatestForCountriesByTime", []string{"Belgium", "US"}, time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
+		On("GetLatestForCountriesByTime", time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
 		Return(map[string]models.CountryEntry{
 			"Belgium": {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Deaths: 200},
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Deaths: 200},
@@ -88,10 +82,7 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 func TestConfirmedByCountryByPopulation_Errors(t *testing.T) {
 	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
-		On("GetAllCountryNames").
-		Return([]string{"Belgium", "US"}, nil)
-	dbh.
-		On("GetLatestForCountriesByTime", []string{"Belgium", "US"}, time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
+		On("GetLatestForCountriesByTime", time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
 		Return(map[string]models.CountryEntry{
 			"Belgium": {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Confirmed: 200},
 			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},

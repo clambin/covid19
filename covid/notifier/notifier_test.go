@@ -18,7 +18,7 @@ func TestNotifier_Notify(t *testing.T) {
 
 	timestamp := time.Now()
 	db.
-		On("GetLatestForCountries", []string{"Belgium"}).
+		On("GetLatestForCountries").
 		Return(map[string]models.CountryEntry{"Belgium": {Name: "Belgium", Code: "BE", Timestamp: timestamp, Confirmed: 5, Recovered: 1, Deaths: 0}}, nil).
 		Once()
 
@@ -54,7 +54,7 @@ func TestNotifier_Notify_Failure(t *testing.T) {
 
 	timestamp := time.Now()
 	db.
-		On("GetLatestForCountries", []string{"Belgium"}).
+		On("GetLatestForCountries").
 		Return(map[string]models.CountryEntry{
 			"Belgium": {
 				Name:      "Belgium",
@@ -93,7 +93,7 @@ func TestNotifier_DB_Failure(t *testing.T) {
 	r := mockRouter.NewRouter(t)
 
 	db.
-		On("GetLatestForCountries", []string{"Belgium"}).
+		On("GetLatestForCountries").
 		Return(nil, fmt.Errorf("db unavailable")).
 		Once()
 

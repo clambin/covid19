@@ -79,7 +79,7 @@ func TestCovidStore(t *testing.T) {
 	assert.Equal(t, "???", countryNames[0])
 
 	var latest map[string]models.CountryEntry
-	latest, err = covidStore.GetLatestForCountries([]string{"???"})
+	latest, err = covidStore.GetLatestForCountries()
 	require.NoError(t, err)
 	entry, found := latest["???"]
 	require.True(t, found)
@@ -88,7 +88,7 @@ func TestCovidStore(t *testing.T) {
 	assert.Equal(t, int64(5), entry.Deaths)
 	assert.Equal(t, int64(4), entry.Recovered)
 
-	latest, err = covidStore.GetLatestForCountriesByTime([]string{"???"}, first)
+	latest, err = covidStore.GetLatestForCountriesByTime(first)
 	require.NoError(t, err)
 	entry, found = latest["???"]
 	require.True(t, found)

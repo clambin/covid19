@@ -33,8 +33,7 @@ func TestServer(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, `["country-confirmed","country-confirmed-population","country-deaths","country-deaths-population","country-deaths-vs-confirmed","cumulative","evolution","incremental","updates"]`, string(body))
 
-	covidDB.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
-	covidDB.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
+	covidDB.On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
 		"A": {Timestamp: time.Date(2022, 1, 19, 0, 0, 0, 0, time.UTC), Code: "A", Confirmed: 4, Deaths: 1},
 		"B": {Timestamp: time.Date(2022, 1, 19, 0, 0, 0, 0, time.UTC), Code: "B", Confirmed: 10, Deaths: 5},
 	}, nil)

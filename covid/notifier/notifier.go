@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
+	"github.com/clambin/go-common/set"
 )
 
 // Notifier sends notifications when we receive new updates for selected countries
@@ -14,15 +15,17 @@ type Notifier struct {
 
 // NewNotifier creates a new RealNotifier
 func NewNotifier(r Router, countries []string, db db.CovidStore) (*Notifier, error) {
-	lastDBEntries := make(map[string]models.CountryEntry)
-
-	entries, err := db.GetLatestForCountries(countries)
+	entries, err := db.GetLatestForCountries()
 	if err != nil {
 		return nil, fmt.Errorf("database: %w", err)
 	}
 
+	uniqueCountries := set.Create(countries)
+	lastDBEntries := make(map[string]models.CountryEntry)
 	for name, entry := range entries {
-		lastDBEntries[name] = entry
+		if uniqueCountries.Has(name) {
+			lastDBEntries[name] = entry
+		}
 	}
 
 	return &Notifier{Router: r, lastDBEntries: lastDBEntries}, nil

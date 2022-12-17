@@ -17,10 +17,7 @@ import (
 func TestHandler(t *testing.T) {
 	dbh := mockCovidStore.NewCovidStore(t)
 	dbh.
-		On("GetAllCountryNames").
-		Return([]string{"AA", "BB", "CC"}, nil)
-	dbh.
-		On("GetLatestForCountriesByTime", []string{"AA", "BB", "CC"}, mock.AnythingOfType("time.Time")).
+		On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).
 		Return(map[string]models.CountryEntry{
 			"AA": {
 				Timestamp: time.Date(2021, 12, 17, 0, 0, 0, 0, time.UTC),
@@ -62,20 +59,9 @@ func TestHandler_Errors(t *testing.T) {
 	ctx := context.Background()
 
 	dbh.
-		On("GetAllCountryNames").
-		Return(nil, errors.New("db error")).
-		Once()
-
-	_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
-	require.Error(t, err)
-
-	dbh.
-		On("GetAllCountryNames").
-		Return([]string{"AA", "BB", "CC"}, nil)
-	dbh.
-		On("GetLatestForCountriesByTime", []string{"AA", "BB", "CC"}, mock.AnythingOfType("time.Time")).
+		On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).
 		Return(nil, errors.New("db error"))
 
-	_, err = h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
+	_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.Error(t, err)
 }
