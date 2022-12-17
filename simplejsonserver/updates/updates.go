@@ -22,7 +22,6 @@ func (handler *Handler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
-	// TODO: have CountEntriesByTime return a (sorted) slice of timestamp/count pairs so we don't have to sort here.
 	entries, err := handler.CovidDB.CountEntriesByTime(req.Args.Range.From, req.Args.Range.To)
 	if err != nil {
 		return nil, err
