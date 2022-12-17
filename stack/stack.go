@@ -10,6 +10,7 @@ import (
 	populationProbe "github.com/clambin/covid19/population"
 	"github.com/clambin/covid19/simplejsonserver"
 	"github.com/clambin/simplejson/v5"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
@@ -18,11 +19,13 @@ import (
 // Stack groups the different components that make up the application
 type Stack struct {
 	Cfg              *configuration.Configuration
+	DB               *db.DB
 	CovidStore       db.CovidStore
 	PopulationStore  db.PopulationStore
 	SimpleJSONServer *simplejson.Server
-	SkipBackFill     bool
 }
+
+var _ prometheus.Collector = &Stack{}
 
 // CreateStack creates an application stack for the provided configuration
 func CreateStack(cfg *configuration.Configuration) (*Stack, error) {
@@ -30,11 +33,9 @@ func CreateStack(cfg *configuration.Configuration) (*Stack, error) {
 	if err != nil {
 		log.WithError(err).Fatal("failed to connect to database")
 	}
-	return CreateStackWithStores(cfg, db.NewCovidStore(dbh), db.NewPopulationStore(dbh))
-}
 
-// CreateStackWithStores creates an application stack for the provided configuration and stores
-func CreateStackWithStores(cfg *configuration.Configuration, covidStore db.CovidStore, populationStore db.PopulationStore) (*Stack, error) {
+	covidStore := db.NewCovidStore(dbh)
+	populationStore := db.NewPopulationStore(dbh)
 	s, err := simplejsonserver.New(cfg, covidStore, populationStore)
 	if err != nil {
 		return nil, err
@@ -42,6 +43,7 @@ func CreateStackWithStores(cfg *configuration.Configuration, covidStore db.Covid
 
 	return &Stack{
 		Cfg:              cfg,
+		DB:               dbh,
 		CovidStore:       covidStore,
 		PopulationStore:  populationStore,
 		SimpleJSONServer: s,
@@ -68,10 +70,8 @@ func (stack *Stack) StopHandler() error {
 
 // Load retrieves the latest covid19 figures and stores them in the database
 func (stack *Stack) Load() {
-	if !stack.SkipBackFill {
-		if stack.loadIfEmpty() {
-			return
-		}
+	if stack.loadIfEmpty() {
+		return
 	}
 
 	start := time.Now()
@@ -84,9 +84,9 @@ func (stack *Stack) Load() {
 }
 
 func (stack *Stack) loadIfEmpty() bool {
-	if _, found, err := stack.CovidStore.GetFirstEntry(); err != nil {
+	if rows, err := stack.CovidStore.Rows(); err != nil {
 		log.WithError(err).Fatal("could not access database")
-	} else if found {
+	} else if rows > 0 {
 		return false
 	}
 
@@ -112,4 +112,16 @@ func (stack *Stack) LoadPopulation() {
 	} else {
 		log.WithError(err).Error("failed to update population figures")
 	}
+}
+
+// Describe implements the prometheus.Collector interface
+func (stack *Stack) Describe(descs chan<- *prometheus.Desc) {
+	stack.DB.Collector.Describe(descs)
+	stack.SimpleJSONServer.Describe(descs)
+}
+
+// Collect implements the prometheus.Collector interface
+func (stack *Stack) Collect(metrics chan<- prometheus.Metric) {
+	stack.DB.Collector.Collect(metrics)
+	stack.SimpleJSONServer.Collect(metrics)
 }

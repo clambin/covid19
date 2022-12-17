@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"github.com/clambin/covid19/configuration"
 	"github.com/clambin/covid19/covid"
-	"github.com/clambin/covid19/covid/fetcher"
 	mockFetcher "github.com/clambin/covid19/covid/fetcher/mocks"
 	"github.com/clambin/covid19/covid/notifier"
 	mockRouter "github.com/clambin/covid19/covid/notifier/mocks"
 	mockSaver "github.com/clambin/covid19/covid/saver/mocks"
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/go-metrics/tools"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -28,7 +26,7 @@ func TestCovid19Probe_Update(t *testing.T) {
 	db := mockCovidStore.NewCovidStore(t)
 	timeStamp := time.Now()
 	db.
-		On("GetLatestForCountries", []string{"Belgium", "US"}).
+		On("GetLatestForCountries").
 		Return(
 			map[string]models.CountryEntry{
 				"Belgium": {Timestamp: timeStamp, Name: "Belgium", Code: "BE", Confirmed: 10, Deaths: 2, Recovered: 1},
@@ -37,6 +35,8 @@ func TestCovid19Probe_Update(t *testing.T) {
 			nil,
 		)
 	p := covid.New(&cfg, db)
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(p)
 
 	f := mockFetcher.NewFetcher(t)
 	r := mockRouter.NewRouter(t)
@@ -69,18 +69,21 @@ func TestCovid19Probe_Update(t *testing.T) {
 	_, err := p.Update(context.Background())
 	require.NoError(t, err)
 
-	ch := make(chan prometheus.Metric)
-	go p.Collect(ch)
-
-	for i := len(fetcher.CountryCodes); i > 0; i-- {
-		metric := <-ch
-		country := tools.MetricLabel(metric, "country")
-		target := 0.0
-		if country == "US" {
-			target = 1.0
+	metrics, err := reg.Gather()
+	require.NoError(t, err)
+	for _, metric := range metrics {
+		assert.Equal(t, "covid_reported_count", metric.GetName())
+		for _, m := range metric.GetMetric() {
+			labels := m.GetLabel()
+			require.Len(t, labels, 1)
+			assert.Equal(t, "country", labels[0].GetName())
+			var target float64
+			switch labels[0].GetValue() {
+			case "US":
+				target = 1.0
+			}
+			assert.Equal(t, target, m.Counter.GetValue(), labels[0].GetValue())
 		}
-
-		assert.Equal(t, target, tools.MetricValue(metric).GetCounter().GetValue(), country)
 	}
 }
 
@@ -89,7 +92,7 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 	s := mockSaver.NewSaver(t)
 	r := mockRouter.NewRouter(t)
 	db := mockCovidStore.NewCovidStore(t)
-	db.On("GetLatestForCountries", []string{"Belgium", "US"}).Return(map[string]models.CountryEntry{
+	db.On("GetLatestForCountries").Return(map[string]models.CountryEntry{
 		"US":      {},
 		"Belgium": {},
 	}, nil)
@@ -144,18 +147,3 @@ func TestCovid19Probe_Update_Errors(t *testing.T) {
 	_, err = p.Update(context.Background())
 	require.NoError(t, err)
 }
-
-/*
-func TestCovid19Probe_Describe(t *testing.T) {
-	p := covid.Probe{}
-	ch := make(chan *prometheus.Desc)
-	go p.Describe(ch)
-
-	for _, name := range []string{
-		"covid_reported_count",
-	} {
-		metric := <-ch
-		assert.Contains(t, metric.String(), "\""+name+"\"")
-	}
-}
-*/

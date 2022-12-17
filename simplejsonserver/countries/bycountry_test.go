@@ -18,12 +18,11 @@ func TestConfirmedByCountry(t *testing.T) {
 	dbh := mockCovidStore.NewCovidStore(t)
 
 	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
-	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
-	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
+	dbh.On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
 		"A": {Timestamp: timestamp, Confirmed: 3},
 		"B": {Timestamp: timestamp, Confirmed: 10},
 	}, nil)
-	dbh.On("GetLatestForCountries", []string{"A", "B"}).Return(map[string]models.CountryEntry{
+	dbh.On("GetLatestForCountries").Return(map[string]models.CountryEntry{
 		"A": {Timestamp: timestamp, Confirmed: 3},
 		"B": {Timestamp: timestamp, Confirmed: 10},
 	}, nil)
@@ -53,12 +52,11 @@ func TestDeathsByCountry(t *testing.T) {
 	dbh := mockCovidStore.NewCovidStore(t)
 
 	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
-	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
-	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
+	dbh.On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
 		"A": {Timestamp: timestamp, Deaths: 0},
 		"B": {Timestamp: timestamp, Deaths: 1},
 	}, nil)
-	dbh.On("GetLatestForCountries", []string{"A", "B"}).Return(map[string]models.CountryEntry{
+	dbh.On("GetLatestForCountries").Return(map[string]models.CountryEntry{
 		"A": {Timestamp: timestamp, Deaths: 0},
 		"B": {Timestamp: timestamp, Deaths: 1},
 	}, nil)
@@ -94,13 +92,8 @@ func TestConfirmedByCountry_Errors(t *testing.T) {
 	ctx := context.Background()
 	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 
-	dbh.On("GetAllCountryNames").Return(nil, errors.New("db error")).Once()
+	dbh.On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).Return(nil, errors.New("db error")).Once()
+
 	_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
-	assert.Error(t, err)
-
-	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil).Once()
-	dbh.On("GetLatestForCountriesByTime", []string{"A", "B"}, mock.AnythingOfType("time.Time")).Return(nil, errors.New("db error")).Once()
-
-	_, err = h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	assert.Error(t, err)
 }

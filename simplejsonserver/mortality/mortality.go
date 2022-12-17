@@ -2,9 +2,10 @@ package mortality
 
 import (
 	"context"
+	"fmt"
 	covidStore "github.com/clambin/covid19/db"
-	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v5"
+	"sort"
 	"time"
 )
 
@@ -21,29 +22,24 @@ func (handler *Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (response simplejson.Response, err error) {
+func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
+	entries, err := handler.CovidDB.GetLatestForCountriesByTime(req.Args.Range.To)
+	if err != nil {
+		return nil, fmt.Errorf("database: %w", err)
+	}
+
 	var countryNames []string
-	countryNames, err = handler.CovidDB.GetAllCountryNames()
-	if err != nil {
-		return
+	for countryName := range entries {
+		countryNames = append(countryNames, countryName)
 	}
+	sort.Strings(countryNames)
 
-	var entries map[string]models.CountryEntry
-	entries, err = handler.CovidDB.GetLatestForCountriesByTime(countryNames, req.Args.Range.To)
-	if err != nil {
-		return
-	}
-
-	var timestamps []time.Time
 	var countryCodes []string
+	var timestamps []time.Time
 	var ratios []float64
 
 	for _, countryName := range countryNames {
-		entry, found := entries[countryName]
-		if !found {
-			continue
-		}
-
+		entry := entries[countryName]
 		timestamps = append(timestamps, entry.Timestamp)
 		countryCodes = append(countryCodes, entry.Code)
 		var ratio float64
@@ -53,9 +49,10 @@ func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryReques
 		ratios = append(ratios, ratio)
 	}
 
-	return &simplejson.TableResponse{Columns: []simplejson.Column{
+	response := simplejson.TableResponse{Columns: []simplejson.Column{
 		{Text: "timestamp", Data: simplejson.TimeColumn(timestamps)},
 		{Text: "country", Data: simplejson.StringColumn(countryCodes)},
 		{Text: "ratio", Data: simplejson.NumberColumn(ratios)},
-	}}, nil
+	}}
+	return &response, nil
 }

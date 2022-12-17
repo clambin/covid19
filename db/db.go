@@ -1,15 +1,15 @@
 package db
 
 import (
-	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"github.com/clambin/covid19/configuration"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	// postgres sql driver
@@ -18,46 +18,38 @@ import (
 
 // DB hold the handle to a database.  Provides a Prometheus DBStatsCollector to monitor DB connections
 type DB struct {
-	Handle   *sql.DB
-	psqlInfo string
-	database string
+	Handle    *sqlx.DB
+	Collector prometheus.Collector
+	database  string
 }
 
 // New creates a new DB connector
-func New(cfg configuration.PostgresDB) (db *DB, err error) {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database)
-	db = &DB{
-		psqlInfo: psqlInfo,
-		database: cfg.Database,
-	}
-	if db.Handle, err = sql.Open("postgres", db.psqlInfo); err != nil {
-		return
+func New(cfg configuration.PostgresDB) (*DB, error) {
+	dbh, err := sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database))
+	if err != nil {
+		return nil, fmt.Errorf("connect: %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			_ = db.Handle.Close()
-		}
-	}()
-
-	if err = db.Handle.Ping(); err != nil {
-		return
+	db := &DB{
+		Handle:    dbh,
+		database:  cfg.Database,
+		Collector: collectors.NewDBStatsCollector(dbh.DB, cfg.Database),
 	}
+
 	if err = db.migrate(); err != nil {
-		return
+		return nil, fmt.Errorf("migrate: %w", err)
 	}
-	err = prometheus.Register(collectors.NewDBStatsCollector(db.Handle, db.database))
-	return
+
+	return db, err
 }
 
 func (db *DB) migrate() error {
-	m, err := db.prepareMigration()
+	migration, err := db.prepareMigration()
 	if err != nil {
-		return fmt.Errorf("unable to migrate database: %w", err)
+		return fmt.Errorf("prepare migration: %w", err)
 	}
-
-	if err = m.Up(); err == migrate.ErrNoChange {
+	if err = migration.Up(); errors.Is(err, migrate.ErrNoChange) {
 		err = nil
 	}
 
@@ -66,26 +58,26 @@ func (db *DB) migrate() error {
 
 // RemoveAll deletes all database tables
 func (db *DB) RemoveAll() error {
-	m, err := db.prepareMigration()
+	migration, err := db.prepareMigration()
 	if err != nil {
-		return fmt.Errorf("unable to migrate database: %w", err)
+		return fmt.Errorf("prepare migration: %w", err)
 	}
-
-	return m.Down()
+	return migration.Down()
 }
 
 //go:embed migrations/*
 var migrations embed.FS
 
-func (db *DB) prepareMigration() (m *migrate.Migrate, err error) {
-	var src source.Driver
-	if src, err = iofs.New(migrations, "migrations"); err != nil {
-		return nil, fmt.Errorf("invalid migration source: %w", err)
+func (db *DB) prepareMigration() (*migrate.Migrate, error) {
+	src, err := iofs.New(migrations, "migrations")
+	if err != nil {
+		return nil, fmt.Errorf("iofs: %w", err)
 	}
 
 	var dbDriver database.Driver
-	if dbDriver, err = postgres.WithInstance(db.Handle, &postgres.Config{DatabaseName: db.database}); err != nil {
-		return nil, fmt.Errorf("invalid migration target: %w", err)
+	dbDriver, err = postgres.WithInstance(db.Handle.DB, &postgres.Config{DatabaseName: db.database})
+	if err != nil {
+		return nil, fmt.Errorf("db: %w", err)
 	}
 
 	return migrate.NewWithInstance("migrations", src, db.database, dbDriver)
