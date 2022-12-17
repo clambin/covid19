@@ -5,6 +5,7 @@ import (
 	"fmt"
 	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/simplejson/v5"
+	"sort"
 	"time"
 )
 
@@ -27,11 +28,18 @@ func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryReques
 		return nil, fmt.Errorf("database: %w", err)
 	}
 
-	var timestamps []time.Time
+	var countryNames []string
+	for countryName := range entries {
+		countryNames = append(countryNames, countryName)
+	}
+	sort.Strings(countryNames)
+
 	var countryCodes []string
+	var timestamps []time.Time
 	var ratios []float64
 
-	for _, entry := range entries {
+	for _, countryName := range countryNames {
+		entry := entries[countryName]
 		timestamps = append(timestamps, entry.Timestamp)
 		countryCodes = append(countryCodes, entry.Code)
 		var ratio float64
