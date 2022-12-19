@@ -3,7 +3,7 @@ module github.com/clambin/covid19
 go 1.18
 
 require (
-	github.com/clambin/go-common/httpserver v0.2.0
+	github.com/clambin/go-common/httpserver v0.3.0
 	github.com/clambin/go-common/set v0.1.2
 	github.com/clambin/go-rapidapi v0.2.0
 	github.com/clambin/simplejson/v5 v5.1.0
@@ -32,7 +32,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.145.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
