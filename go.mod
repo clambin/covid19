@@ -3,7 +3,7 @@ module github.com/clambin/covid19
 go 1.18
 
 require (
-	github.com/clambin/go-common/httpserver v0.3.0
+	github.com/clambin/go-common/httpserver v0.4.0
 	github.com/clambin/go-common/set v0.1.2
 	github.com/clambin/go-rapidapi v0.2.0
 	github.com/clambin/simplejson/v5 v5.1.0
