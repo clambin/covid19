@@ -4,7 +4,7 @@ import (
 	"github.com/clambin/covid19/covid/fetcher"
 	"github.com/clambin/covid19/models"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"time"
 )
 
@@ -32,7 +32,7 @@ func (probe *Probe) Collect(ch chan<- prometheus.Metric) {
 		count := probe.newUpdates[country]
 		ch <- prometheus.MustNewConstMetric(metricUpdates, prometheus.CounterValue, float64(count), country)
 	}
-	log.WithField("duration", time.Since(start)).Debug("prometheus scrape done")
+	slog.Debug("prometheus scrape done", "duration", time.Since(start))
 }
 
 func (probe *Probe) setCountryUpdates(newEntries []models.CountryEntry) {

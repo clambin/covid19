@@ -8,47 +8,48 @@ import (
 	"github.com/clambin/covid19/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
-	"github.com/xonvanetta/shutdown/pkg/shutdown"
+	"golang.org/x/exp/slog"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 )
 
 func main() {
 	cmd, cfg, err := GetConfiguration("covid19", os.Args)
 	if err != nil {
-		log.WithError(err).Fatal("failed to initialize application")
+		panic(fmt.Errorf("failed to initialize application: %w", err))
 	}
+
+	var opts slog.HandlerOptions
+	if cfg.Debug {
+		opts.Level = slog.LevelDebug
+		opts.AddSource = true
+	}
+	slog.SetDefault(slog.New(opts.NewTextHandler(os.Stdout)))
+
+	slog.Info("covid19 starting", "version", version.BuildVersion)
 
 	var s *stack.Stack
 	if s, err = stack.CreateStack(cfg); err != nil {
-		log.WithError(err).Fatal("app init failed")
+		slog.Error("app init failed", err)
+		os.Exit(1)
 	}
 	prometheus.DefaultRegisterer.MustRegister(s)
 
 	switch cmd {
 	case handlerCmd.FullCommand():
 		go runPrometheusServer(cfg.PrometheusPort)
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			if err = s.RunHandler(); err != nil {
-				log.WithError(err).Fatal("failed to start simplejson handler")
-			}
-			wg.Done()
-		}()
-		<-shutdown.Chan()
-		_ = s.StopHandler()
-		wg.Wait()
+		if err = s.RunHandler(); !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("failed to start simplejson handler", err)
+			os.Exit(1)
+		}
 	case loaderCmd.FullCommand():
 		s.Load()
 	case populationLoaderCmd.FullCommand():
 		s.LoadPopulation()
 	default:
-		log.Fatalf("invalid command: %s", cmd)
+		slog.Warn("invalid command", "command", cmd)
 	}
 }
 
@@ -65,7 +66,6 @@ func GetConfiguration(application string, args []string) (cmd string, cfg *confi
 		configFileName string
 	)
 
-	log.WithField("version", version.BuildVersion).Info(application + " starting")
 	a := kingpin.New(filepath.Base(args[0]), application)
 
 	a.Version(version.BuildVersion)
@@ -84,7 +84,7 @@ func GetConfiguration(application string, args []string) (cmd string, cfg *confi
 
 	var f *os.File
 	if f, err = os.OpenFile(configFileName, os.O_RDONLY, 0); err != nil {
-		log.WithField("err", err).Fatal("Failed to access config file")
+		return "", nil, fmt.Errorf("configuration: %w", err)
 	}
 	defer func() { _ = f.Close() }()
 
@@ -102,6 +102,6 @@ func GetConfiguration(application string, args []string) (cmd string, cfg *confi
 func runPrometheusServer(port int) {
 	http.Handle("/metrics", promhttp.Handler())
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); !errors.Is(err, http.ErrServerClosed) {
-		log.WithError(err).Fatal("failed to start Prometheus listener")
+		slog.Error("failed to start Prometheus listener", err)
 	}
 }

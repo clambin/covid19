@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/go-rapidapi"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"time"
 )
 
@@ -53,7 +53,7 @@ func (client *Client) filterUnsupportedCountries(stats *statsResponse) (entries 
 
 		if !found {
 			if found = client.invalidCountries.Set(entry.Country); !found {
-				log.WithField("name", entry.Country).Warning("unknown country name received from COVID-19 API")
+				slog.Warn("unknown country name received from COVID-19 API", "name", entry.Country)
 				continue
 			}
 		}

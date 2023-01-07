@@ -4,8 +4,8 @@ import (
 	"fmt"
 	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v5"
-	"github.com/clambin/simplejson/v5/pkg/data"
+	"github.com/clambin/simplejson/v6"
+	"github.com/clambin/simplejson/v6/pkg/data"
 	"sort"
 	"time"
 )

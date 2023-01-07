@@ -49,9 +49,6 @@ const (
 func (store *PGCovidStore) GetAll() ([]models.CountryEntry, error) {
 	var countryEntries []models.CountryEntry
 	err := store.DB.Handle.Select(&countryEntries, queryStatement+` ORDER BY 1`)
-	if err != nil {
-		err = fmt.Errorf("database query: %w", err)
-	}
 	return countryEntries, err
 }
 
@@ -59,9 +56,6 @@ func (store *PGCovidStore) GetAll() ([]models.CountryEntry, error) {
 func (store *PGCovidStore) GetAllForRange(from, to time.Time) ([]models.CountryEntry, error) {
 	var countryEntries []models.CountryEntry
 	err := store.DB.Handle.Select(&countryEntries, queryStatement+` WHERE `+makeTimestampClause(from, to)+` ORDER BY 1`)
-	if err != nil {
-		err = fmt.Errorf("database query: %w", err)
-	}
 	return countryEntries, err
 }
 
@@ -69,9 +63,6 @@ func (store *PGCovidStore) GetAllForRange(from, to time.Time) ([]models.CountryE
 func (store *PGCovidStore) GetAllForCountryName(countryName string) ([]models.CountryEntry, error) {
 	var countryEntries []models.CountryEntry
 	err := store.DB.Handle.Select(&countryEntries, queryStatement+` WHERE country_name = '`+escapeString(countryName)+`' ORDER BY 1`)
-	if err != nil {
-		err = fmt.Errorf("database query: %w", err)
-	}
 	return countryEntries, err
 }
 
@@ -94,11 +85,11 @@ func (store *PGCovidStore) GetLatestForCountriesByTime(endTime time.Time) (map[s
 			continue
 		}
 		if err != nil {
-			return nil, fmt.Errorf("database: %w", err)
+			break
 		}
 		entries[countryName] = entry
 	}
-	return entries, nil
+	return entries, err
 }
 
 func (store *PGCovidStore) getLatestForCountry(countryName string, endTime time.Time) (models.CountryEntry, error) {

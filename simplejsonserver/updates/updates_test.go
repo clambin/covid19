@@ -4,7 +4,7 @@ import (
 	"context"
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/simplejsonserver/updates"
-	"github.com/clambin/simplejson/v5"
+	"github.com/clambin/simplejson/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"

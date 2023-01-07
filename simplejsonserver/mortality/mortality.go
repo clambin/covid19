@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	covidStore "github.com/clambin/covid19/db"
-	"github.com/clambin/simplejson/v5"
+	"github.com/clambin/simplejson/v6"
 	"sort"
 	"time"
 )

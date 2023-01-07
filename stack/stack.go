@@ -2,16 +2,16 @@ package stack
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"github.com/clambin/covid19/backfill"
 	"github.com/clambin/covid19/configuration"
 	covidProbe "github.com/clambin/covid19/covid"
 	"github.com/clambin/covid19/db"
 	populationProbe "github.com/clambin/covid19/population"
 	"github.com/clambin/covid19/simplejsonserver"
-	"github.com/clambin/simplejson/v5"
+	"github.com/clambin/simplejson/v6"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"time"
 )
@@ -31,41 +31,24 @@ var _ prometheus.Collector = &Stack{}
 func CreateStack(cfg *configuration.Configuration) (*Stack, error) {
 	dbh, err := db.New(cfg.Postgres)
 	if err != nil {
-		log.WithError(err).Fatal("failed to connect to database")
+		return nil, fmt.Errorf("database: %w", err)
 	}
 
 	covidStore := db.NewCovidStore(dbh)
 	populationStore := db.NewPopulationStore(dbh)
-	s, err := simplejsonserver.New(cfg, covidStore, populationStore)
-	if err != nil {
-		return nil, err
-	}
 
 	return &Stack{
 		Cfg:              cfg,
 		DB:               dbh,
 		CovidStore:       covidStore,
 		PopulationStore:  populationStore,
-		SimpleJSONServer: s,
+		SimpleJSONServer: simplejsonserver.New(covidStore, populationStore),
 	}, nil
 }
 
 // RunHandler runs the SimpleJSON server
 func (stack *Stack) RunHandler() error {
-	err := stack.SimpleJSONServer.Serve()
-	if err != nil {
-		if errors.Is(err, http.ErrServerClosed) {
-			err = nil
-		} else {
-			log.WithError(err).Error("failed to start SimpleJSON server")
-		}
-	}
-	return err
-}
-
-// StopHandler stops the SimpleJSON server
-func (stack *Stack) StopHandler() error {
-	return stack.SimpleJSONServer.Shutdown(5 * time.Second)
+	return http.ListenAndServe(fmt.Sprintf(":%d", stack.Cfg.Port), stack.SimpleJSONServer)
 }
 
 // Load retrieves the latest covid19 figures and stores them in the database
@@ -77,29 +60,30 @@ func (stack *Stack) Load() {
 	start := time.Now()
 	cp := covidProbe.New(&stack.Cfg.Monitor, stack.CovidStore)
 	if count, err := cp.Update(context.Background()); err == nil {
-		log.Infof("discovered %d country population figures in %v", count, time.Since(start))
+		slog.Info("discovered country population figures", "count", count, "duration", time.Since(start))
 	} else {
-		log.WithError(err).Error("failed to update COVID-19 figures")
+		slog.Error("failed to update COVID-19 figures", err)
 	}
 }
 
 func (stack *Stack) loadIfEmpty() bool {
 	if rows, err := stack.CovidStore.Rows(); err != nil {
-		log.WithError(err).Fatal("could not access database")
+		slog.Error("could not access database", err)
+		return false
 	} else if rows > 0 {
 		return false
 	}
 
-	log.Info("database is empty. backfilling ... ")
+	slog.Info("database is empty. backfilling ... ")
 
 	start := time.Now()
 	bf := backfill.New(stack.CovidStore)
 	if err := bf.Run(); err != nil {
-		log.WithError(err).Error("failed to populate database")
+		slog.Error("failed to populate database", err)
 		return false
 	}
 
-	log.Infof("historic data loaded in %v", time.Since(start))
+	slog.Info("historic data loaded", "duration", time.Since(start))
 	return true
 }
 
@@ -108,9 +92,9 @@ func (stack *Stack) LoadPopulation() {
 	start := time.Now()
 	cp := populationProbe.New(stack.Cfg.Monitor.RapidAPIKey, stack.PopulationStore)
 	if count, err := cp.Update(context.Background()); err == nil {
-		log.Infof("discovered %d country population figures in %v", count, time.Since(start))
+		slog.Info("discovered country population figures", "count", count, "duration", time.Since(start))
 	} else {
-		log.WithError(err).Error("failed to update population figures")
+		slog.Error("failed to update population figures", err)
 	}
 }
 

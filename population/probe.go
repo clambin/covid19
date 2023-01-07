@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/clambin/covid19/covid/fetcher"
 	"github.com/clambin/covid19/db"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -31,7 +31,7 @@ func (probe *Probe) Update(ctx context.Context) (count int, err error) {
 		country, found := countryNames[code]
 
 		if !found {
-			log.WithField("code", code).Warning("unsupported country code received from population API. skipping")
+			slog.Warn("unsupported country code received from population API. skipping", "code", code)
 			continue
 		}
 
@@ -42,7 +42,7 @@ func (probe *Probe) Update(ctx context.Context) (count int, err error) {
 			localError := probe.update(ctx, code, country)
 
 			if localError != nil {
-				log.WithError(localError).Errorf("failed to update population stats for %s", country)
+				slog.Error("failed to update population stats", localError, "country", countryNames)
 			}
 
 			maxJobs.Release(1)
@@ -66,7 +66,7 @@ func (probe *Probe) update(ctx context.Context, code, country string) (err error
 	population, err = probe.APIClient.GetPopulation(ctx, country)
 
 	if err == nil && population > 0 {
-		log.WithFields(log.Fields{"country": country, "population": population}).Debug("found population")
+		slog.Debug("found population", "country", country, "population", population)
 		err = probe.store.Add(code, population)
 	}
 	return

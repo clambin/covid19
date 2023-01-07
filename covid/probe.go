@@ -9,7 +9,7 @@ import (
 	"github.com/clambin/covid19/covid/saver"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/go-rapidapi"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"sync"
 )
 
@@ -35,7 +35,8 @@ func New(cfg *configuration.MonitorConfiguration, db db.CovidStore) *Probe {
 			n, err = notifier.NewNotifier(r, cfg.Notifications.Countries, db)
 		}
 		if err != nil {
-			log.WithError(err).Fatal("failed to create notification router")
+			slog.Error("failed to create notification router", err)
+			panic(err)
 		}
 
 	}
@@ -59,7 +60,7 @@ func (probe *Probe) Update(ctx context.Context) (int, error) {
 
 	if probe.Notifier != nil {
 		if err = probe.Notifier.Notify(countryStats); err != nil {
-			log.WithError(err).Error("failed to send notification")
+			slog.Error("failed to send notification", err)
 		}
 	}
 

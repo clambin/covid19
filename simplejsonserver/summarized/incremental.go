@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/covid19/models"
-	"github.com/clambin/simplejson/v5"
+	"github.com/clambin/simplejson/v6"
 )
 
 // IncrementalHandler returns the incremental number of cases & deaths. If an adhoc filter exists, it returns the

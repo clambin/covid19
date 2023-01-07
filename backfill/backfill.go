@@ -2,9 +2,10 @@ package backfill
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"time"
 )
@@ -33,7 +34,7 @@ func (backFiller *Backfiller) Run() error {
 	for slug, details := range countries {
 		records := make([]models.CountryEntry, 0)
 		realName := lookupCountryName(details.Name)
-		log.Debugf("Getting data for %s (slug: %s)", realName, slug)
+		slog.Debug("Getting country data", "name", realName, "slug", slug)
 
 		var entries []struct {
 			Confirmed int64
@@ -44,7 +45,7 @@ func (backFiller *Backfiller) Run() error {
 		entries, err = backFiller.getHistoricalData(slug)
 
 		if err != nil {
-			log.WithError(err).WithField("country", slug).Warning("failed to get history")
+			slog.Error("failed to get history", err, "country", slug)
 			continue
 		}
 
@@ -60,7 +61,7 @@ func (backFiller *Backfiller) Run() error {
 
 		err = backFiller.Store.Add(records)
 		if err == nil {
-			log.Infof("Received data for %s. %d entries added", realName, len(records))
+			slog.Info("Received country data ", "name", realName, "count", len(records))
 		}
 	}
 	return err
@@ -73,26 +74,31 @@ func (backFiller *Backfiller) getCountries() (result map[string]struct{ Name, Co
 	var resp *http.Response
 	resp, err = backFiller.slowCall(req)
 
-	if err == nil {
-		if resp.StatusCode == http.StatusOK {
-			var stats []struct {
-				Country string
-				Slug    string
-				ISO2    string
-			}
+	if err != nil {
+		return
+	}
 
-			decoder := json.NewDecoder(resp.Body)
-			if err = decoder.Decode(&stats); err == nil {
-				result = make(map[string]struct{ Name, Code string })
-				for _, entry := range stats {
-					result[entry.Slug] = struct {
-						Name string
-						Code string
-					}{Name: entry.Country, Code: entry.ISO2}
-				}
-			}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf(resp.Status)
+		return
+	}
+	var stats []struct {
+		Country string
+		Slug    string
+		ISO2    string
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	if err = decoder.Decode(&stats); err == nil {
+		result = make(map[string]struct{ Name, Code string })
+		for _, entry := range stats {
+			result[entry.Slug] = struct {
+				Name string
+				Code string
+			}{Name: entry.Country, Code: entry.ISO2}
 		}
-		_ = resp.Body.Close()
 	}
 
 	return result, err
@@ -129,7 +135,7 @@ func (backFiller *Backfiller) slowCall(req *http.Request) (resp *http.Response, 
 	for err == nil && resp.StatusCode == http.StatusTooManyRequests {
 		_ = resp.Body.Close()
 
-		log.WithField("waitTime", waitTime).Debug("429 recv'd. Slowing down")
+		slog.Debug("429 recv'd. Slowing down", "waitTime", waitTime)
 		time.Sleep(waitTime)
 
 		resp, err = client.Do(req)

@@ -1,7 +1,6 @@
 package simplejsonserver_test
 
 import (
-	"github.com/clambin/covid19/configuration"
 	mockCovidStore "github.com/clambin/covid19/db/mocks"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver"
@@ -17,11 +16,9 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	cfg := configuration.Configuration{}
 	covidDB := mockCovidStore.NewCovidStore(t)
 	popDB := mockCovidStore.NewPopulationStore(t)
-	s, err := simplejsonserver.New(&cfg, covidDB, popDB)
-	require.NoError(t, err)
+	s := simplejsonserver.New(covidDB, popDB)
 
 	req, _ := http.NewRequest(http.MethodPost, "/search", nil)
 	resp := httptest.NewRecorder()

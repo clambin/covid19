@@ -1,18 +1,17 @@
 package simplejsonserver
 
 import (
-	"github.com/clambin/covid19/configuration"
 	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/simplejsonserver/countries"
 	"github.com/clambin/covid19/simplejsonserver/evolution"
 	"github.com/clambin/covid19/simplejsonserver/mortality"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
 	"github.com/clambin/covid19/simplejsonserver/updates"
-	"github.com/clambin/go-common/httpserver"
-	"github.com/clambin/simplejson/v5"
+	"github.com/clambin/go-common/httpserver/middleware"
+	"github.com/clambin/simplejson/v6"
 )
 
-func New(cfg *configuration.Configuration, covidDB covidStore.CovidStore, popDB covidStore.PopulationStore) (*simplejson.Server, error) {
+func New(covidDB covidStore.CovidStore, popDB covidStore.PopulationStore) *simplejson.Server {
 	handlers := map[string]simplejson.Handler{
 		"country-confirmed": &countries.ByCountryHandler{
 			CovidDB: covidDB,
@@ -51,6 +50,10 @@ func New(cfg *configuration.Configuration, covidDB covidStore.CovidStore, popDB 
 
 	return simplejson.New(handlers,
 		simplejson.WithQueryMetrics{Name: "covid19"},
-		simplejson.WithHTTPServerOption{Option: httpserver.WithPort{Port: cfg.Port}},
+		simplejson.WithHTTPMetrics{Option: middleware.PrometheusMetricsOptions{
+			Namespace:   "covid",
+			Subsystem:   "simplejson",
+			Application: "covid19",
+		}},
 	)
 }

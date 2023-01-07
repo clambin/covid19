@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
 // Saver stores new entries in the database
@@ -24,18 +24,12 @@ var _ Saver = &StoreSaver{}
 // SaveNewEntries takes a list of entries and adds any newer stats to the database
 func (storeSaver *StoreSaver) SaveNewEntries(entries []models.CountryEntry) ([]models.CountryEntry, error) {
 	newEntries, err := storeSaver.getNewRecords(entries)
-	if err != nil {
-		return nil, fmt.Errorf("SaveNewEntries: %w", err)
-	}
-
-	if len(newEntries) == 0 {
-		return newEntries, nil
-	}
-
-	log.WithField("entries", len(newEntries)).Debug("adding new probe-19 data to the database")
-	err = storeSaver.Store.Add(newEntries)
-	if err != nil {
-		err = fmt.Errorf("SaveNewEntries: %w", err)
+	if err == nil && len(newEntries) > 0 {
+		slog.Debug("adding new probe-19 data to the database", "entries", len(newEntries))
+		err = storeSaver.Store.Add(newEntries)
+		if err != nil {
+			err = fmt.Errorf("add: %w", err)
+		}
 	}
 	return newEntries, err
 }
