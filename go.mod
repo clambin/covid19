@@ -6,13 +6,13 @@ require (
 	github.com/clambin/go-common/httpserver v0.4.1
 	github.com/clambin/go-common/set v0.1.2
 	github.com/clambin/go-rapidapi v0.2.0
-	github.com/clambin/simplejson/v6 v6.0.0
+	github.com/clambin/simplejson/v6 v6.0.1
 	github.com/containrrr/shoutrrr v0.6.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.7
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3
+	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v3 v3.0.1
 
