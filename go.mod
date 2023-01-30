@@ -7,7 +7,7 @@ require (
 	github.com/clambin/go-common/set v0.1.2
 	github.com/clambin/go-rapidapi v0.2.0
 	github.com/clambin/simplejson/v6 v6.0.1
-	github.com/containrrr/shoutrrr v0.7.0
+	github.com/containrrr/shoutrrr v0.7.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.7
