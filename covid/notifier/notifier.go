@@ -20,10 +20,10 @@ func NewNotifier(r Router, countries []string, db db.CovidStore) (*Notifier, err
 		return nil, fmt.Errorf("database: %w", err)
 	}
 
-	uniqueCountries := set.Create(countries)
+	uniqueCountries := set.Create(countries...)
 	lastDBEntries := make(map[string]models.CountryEntry)
 	for name, entry := range entries {
-		if uniqueCountries.Has(name) {
+		if uniqueCountries.Contains(name) {
 			lastDBEntries[name] = entry
 		}
 	}
