@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/clambin/go-common/httpserver v0.4.1
-	github.com/clambin/go-common/set v0.1.2
+	github.com/clambin/go-common/set v0.2.0
 	github.com/clambin/go-rapidapi v0.2.0
 	github.com/clambin/simplejson/v6 v6.0.1
 	github.com/containrrr/shoutrrr v0.7.1
