@@ -26,7 +26,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/containerd/containerd v1.6.13 // indirect
+	github.com/containerd/containerd v1.6.18 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-chi/chi/v5 v5.0.8 // indirect
