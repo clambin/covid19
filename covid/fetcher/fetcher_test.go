@@ -2,54 +2,71 @@ package fetcher_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/clambin/covid19/covid/fetcher"
+	"github.com/clambin/covid19/models"
 	"github.com/clambin/go-rapidapi/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+	"sort"
 	"testing"
+	"time"
 )
 
-func TestGetCountryStats(t *testing.T) {
-	mockAPI := &mocks.API{}
-	client := fetcher.Client{API: mockAPI}
-
-	mockAPI.
-		On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
-		Return([]byte(goodResponse), nil).
-		Once()
-
-	response, err := client.GetCountryStats(context.Background())
-	require.NoError(t, err)
-	require.Len(t, response, 2)
-
-	indexBE := 0
-	indexUS := 1
-	if response[0].Code == "US" {
-		indexBE = 1
-		indexUS = 0
+func TestClient_Fetch(t *testing.T) {
+	tests := []struct {
+		name         string
+		responseBody []byte
+		responseErr  error
+		wantErr      assert.ErrorAssertionFunc
+		want         []models.CountryEntry
+	}{
+		{
+			name:         "valid",
+			responseBody: []byte(goodResponse),
+			responseErr:  nil,
+			wantErr:      assert.NoError,
+			want: []models.CountryEntry{
+				{Timestamp: time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC), Code: "", Name: "Belgium", Confirmed: 3, Recovered: 1, Deaths: 2},
+				{Timestamp: time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC), Code: "", Name: "US", Confirmed: 6, Recovered: 4, Deaths: 5},
+				{Timestamp: time.Date(2020, time.December, 3, 5, 28, 22, 0, time.UTC), Code: "", Name: "invalid_country", Confirmed: 1, Recovered: 1, Deaths: 1},
+			},
+		},
+		{
+			name:         "call fails",
+			responseBody: []byte(""),
+			responseErr:  errors.New("fail"),
+			wantErr:      assert.Error,
+			want:         nil,
+		},
+		{
+			name:         "invalid data",
+			responseBody: []byte("invalid data"),
+			responseErr:  errors.New("fail"),
+			wantErr:      assert.Error,
+			want:         nil,
+		},
 	}
 
-	assert.Equal(t, "BE", response[indexBE].Code)
-	assert.Equal(t, "Belgium", response[indexBE].Name)
-	assert.Equal(t, int64(3), response[indexBE].Confirmed)
-	assert.Equal(t, int64(2), response[indexBE].Deaths)
-	assert.Equal(t, int64(1), response[indexBE].Recovered)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockAPI := &mocks.API{}
+			client := fetcher.Client{API: mockAPI}
 
-	assert.Equal(t, "US", response[indexUS].Code)
-	assert.Equal(t, "US", response[indexUS].Name)
-	assert.Equal(t, int64(6), response[indexUS].Confirmed)
-	assert.Equal(t, int64(5), response[indexUS].Deaths)
-	assert.Equal(t, int64(4), response[indexUS].Recovered)
+			mockAPI.
+				On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
+				Return(tt.responseBody, tt.responseErr).
+				Once()
 
-	mockAPI.
-		On("CallWithContext", mock.AnythingOfType("*context.emptyCtx"), "/v1/stats").
-		Return([]byte(``), fmt.Errorf("500 - Internal Server Error")).
-		Once()
-
-	_, err = client.GetCountryStats(context.Background())
-	require.Error(t, err)
+			response, err := client.Fetch(context.Background())
+			tt.wantErr(t, err)
+			sort.Slice(response, func(i, j int) bool {
+				// API only returns entries for the current day, so no need to sort on date
+				return response[i].Name < response[j].Name
+			})
+			assert.Equal(t, tt.want, response)
+		})
+	}
 }
 
 const goodResponse = `

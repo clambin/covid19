@@ -11,8 +11,8 @@ import (
 
 var (
 	DB         *db.DB
-	covidStore db.CovidStore
-	popStore   db.PopulationStore
+	covidStore *db.PGCovidStore
+	popStore   *db.PGPopulationStore
 )
 
 func TestMain(m *testing.M) {
@@ -30,7 +30,7 @@ postgres:
 	}
 
 	if !config.Postgres.IsValid() {
-		fmt.Println("Could not find all CovidDB env variables. Skipping this test")
+		fmt.Println("Could not find all DB env variables. Skipping this test")
 		return
 	}
 

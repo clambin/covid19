@@ -1,4 +1,4 @@
-package fetcher
+package covid
 
 // CountryCodes maps the country names (as provided by RapidAPI) to official country codes
 var CountryCodes = map[string]string{

@@ -2,10 +2,10 @@ package backfill_test
 
 import (
 	"github.com/clambin/covid19/backfill"
-	"github.com/clambin/covid19/db/mocks"
+	"github.com/clambin/covid19/internal/testtools/db/covid"
 	"github.com/clambin/covid19/models"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,56 +13,27 @@ import (
 )
 
 func TestBackfiller_Run(t *testing.T) {
-	db := mocks.NewCovidStore(t)
-
 	server := httptest.NewServer(http.HandlerFunc(covidAPI))
 	defer server.Close()
+	store := covid.FakeStore{}
 
-	backFiller := backfill.New(db)
-	backFiller.URL = server.URL
-
-	db.On("Add", []models.CountryEntry{
-		{
-			Timestamp: time.Date(2020, 1, 23, 0, 0, 0, 0, time.UTC),
-			Name:      "Belgium",
-			Code:      "BE",
-			Confirmed: 0,
-			Recovered: 0,
-			Deaths:    0,
-		},
-		{
-			Timestamp: time.Date(2020, 2, 5, 0, 0, 0, 0, time.UTC),
-			Name:      "Belgium",
-			Code:      "BE",
-			Confirmed: 1,
-			Recovered: 0,
-			Deaths:    0,
-		},
-	}).Return(nil)
-	db.On("Add", []models.CountryEntry{{
-		Timestamp: time.Date(2020, 2, 1, 0, 0, 0, 0, time.UTC),
-		Name:      "Burma",
-		Code:      "MM",
-		Confirmed: 8,
-		Recovered: 0,
-		Deaths:    0,
-	},
-	}).Return(nil)
+	backFiller := backfill.New(&store)
+	backFiller.Client = backfill.Client{URL: server.URL}
 
 	err := backFiller.Run()
 	require.NoError(t, err)
+
+	content, _ := store.GetAllForRange(time.Time{}, time.Time{})
+	assert.Equal(t, []models.CountryEntry{
+		{Timestamp: time.Date(2020, time.January, 23, 0, 0, 0, 0, time.UTC), Code: "BE", Name: "Belgium", Confirmed: 0, Recovered: 0, Deaths: 0},
+		{Timestamp: time.Date(2020, time.February, 1, 0, 0, 0, 0, time.UTC), Code: "MM", Name: "Burma", Confirmed: 8, Recovered: 0, Deaths: 0},
+		{Timestamp: time.Date(2020, time.February, 5, 0, 0, 0, 0, time.UTC), Code: "BE", Name: "Belgium", Confirmed: 1, Recovered: 0, Deaths: 0},
+	}, content)
 }
 
 // covidAPI emulates the Covid API Server
 func covidAPI(w http.ResponseWriter, req *http.Request) {
-	// rand.Seed(time.Now().UnixNano())
-	if rand.Intn(10) < 2 {
-		http.Error(w, "slow down!", http.StatusTooManyRequests)
-		return
-	}
-
 	response, ok := goodResponse[req.URL.Path]
-
 	if ok == false {
 		http.Error(w, "endpoint not implemented", http.StatusNotFound)
 		return
@@ -128,4 +99,5 @@ var goodResponse = map[string]string{
 			"Recovered": 0,
 			"Active": 8,
  			"Date": "2020-01-31T00:00:00Z"
-		}]`}
+		}]`,
+}

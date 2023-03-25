@@ -2,7 +2,7 @@ package summarized_test
 
 import (
 	"context"
-	mockCovidStore "github.com/clambin/covid19/db/mocks"
+	"github.com/clambin/covid19/internal/testtools/db/covid"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
 	"github.com/clambin/simplejson/v6"
 	"github.com/stretchr/testify/assert"
@@ -12,10 +12,8 @@ import (
 )
 
 func TestIncrementalHandler_Global(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.On("GetTotalsPerDay").Return(dbTotals, nil)
-
-	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
+	db := covid.FakeStore{Records: dbTotals}
+	h := summarized.IncrementalHandler{Fetcher: summarized.Fetcher{DB: &db}}
 
 	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
 
@@ -36,10 +34,8 @@ func TestIncrementalHandler_Global(t *testing.T) {
 }
 
 func TestIncrementalHandler_Country(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.On("GetAllForCountryName", "A").Return(filterByName(dbContents, "A"), nil)
-
-	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
+	db := covid.FakeStore{Records: dbContents}
+	h := summarized.IncrementalHandler{Fetcher: summarized.Fetcher{DB: &db}}
 
 	args := simplejson.QueryArgs{
 		Args: simplejson.Args{
@@ -68,10 +64,8 @@ func TestIncrementalHandler_Country(t *testing.T) {
 }
 
 func TestIncrementalHandler_Tags(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
-
-	h := summarized.IncrementalHandler{Retriever: summarized.Retriever{DB: dbh}}
+	db := covid.FakeStore{Records: dbContents}
+	h := summarized.IncrementalHandler{Fetcher: summarized.Fetcher{DB: &db}}
 
 	ctx := context.Background()
 

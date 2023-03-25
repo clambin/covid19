@@ -2,7 +2,7 @@ package updates
 
 import (
 	"context"
-	covidStore "github.com/clambin/covid19/db"
+	"github.com/clambin/covid19/db"
 	"github.com/clambin/simplejson/v6"
 	"github.com/clambin/simplejson/v6/pkg/data"
 	"time"
@@ -10,7 +10,11 @@ import (
 
 // Handler calculates the number of updated countries by timestamp
 type Handler struct {
-	CovidDB covidStore.CovidStore
+	DB CovidGetter
+}
+
+type CovidGetter interface {
+	CountEntriesByTime(time.Time, time.Time) ([]db.TimestampCount, error)
 }
 
 var _ simplejson.Handler = &Handler{}
@@ -22,7 +26,7 @@ func (handler *Handler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
-	entries, err := handler.CovidDB.CountEntriesByTime(req.Args.Range.From, req.Args.Range.To)
+	entries, err := handler.DB.CountEntriesByTime(req.Args.Range.From, req.Args.Range.To)
 	if err != nil {
 		return nil, err
 	}

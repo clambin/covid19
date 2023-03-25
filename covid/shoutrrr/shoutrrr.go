@@ -1,4 +1,4 @@
-package notifier
+package shoutrrr
 
 import (
 	"fmt"
@@ -8,29 +8,29 @@ import (
 	"strings"
 )
 
-// Router interface for underlying notification routers
+// Sender interface for underlying notification routers
 //
-//go:generate mockery --name Router
-type Router interface {
+//go:generate mockery --name Sender
+type Sender interface {
 	Send(title, message string) (err error)
 }
 
-// ShoutrrrRouter implements the Router interface for Shoutrrr
-type ShoutrrrRouter struct {
+// Router implements the Sender interface for Shoutrrr
+type Router struct {
 	router *router.ServiceRouter
 }
 
-// NewRouter creates a new ShoutrrrRouter
-func NewRouter(url string) (*ShoutrrrRouter, error) {
+// NewRouter creates a new Router
+func NewRouter(url string) (*Router, error) {
 	r, err := shoutrrr.CreateSender(url)
 	if err != nil {
 		return nil, fmt.Errorf("shoutrrr: %w", err)
 	}
-	return &ShoutrrrRouter{router: r}, nil
+	return &Router{router: r}, nil
 }
 
 // Send a notification
-func (s *ShoutrrrRouter) Send(title, message string) error {
+func (s *Router) Send(title, message string) error {
 	if s.router == nil {
 		return fmt.Errorf("router not initialized")
 	}

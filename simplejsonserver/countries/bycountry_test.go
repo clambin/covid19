@@ -2,34 +2,24 @@ package countries_test
 
 import (
 	"context"
-	"errors"
-	mockCovidStore "github.com/clambin/covid19/db/mocks"
+	covid2 "github.com/clambin/covid19/internal/testtools/db/covid"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/countries"
 	"github.com/clambin/simplejson/v6"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 func TestConfirmedByCountry(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-
 	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
-	dbh.On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
-		"A": {Timestamp: timestamp, Confirmed: 3},
-		"B": {Timestamp: timestamp, Confirmed: 10},
-	}, nil)
-	dbh.On("GetLatestForCountries").Return(map[string]models.CountryEntry{
-		"A": {Timestamp: timestamp, Confirmed: 3},
-		"B": {Timestamp: timestamp, Confirmed: 10},
-	}, nil)
-
 	h := countries.ByCountryHandler{
-		CovidDB: dbh,
-		Mode:    countries.CountryConfirmed,
+		DB: &covid2.FakeStore{Records: []models.CountryEntry{
+			{Timestamp: timestamp, Name: "A", Code: "AA", Confirmed: 3, Recovered: 0, Deaths: 0},
+			{Timestamp: timestamp, Name: "B", Code: "BB", Confirmed: 10, Recovered: 1, Deaths: 1},
+		}},
+		Mode: countries.CountryConfirmed,
 	}
 
 	ctx := context.Background()
@@ -49,21 +39,13 @@ func TestConfirmedByCountry(t *testing.T) {
 }
 
 func TestDeathsByCountry(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-
 	timestamp := time.Date(2022, 1, 26, 0, 0, 0, 0, time.UTC)
-	dbh.On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).Return(map[string]models.CountryEntry{
-		"A": {Timestamp: timestamp, Deaths: 0},
-		"B": {Timestamp: timestamp, Deaths: 1},
-	}, nil)
-	dbh.On("GetLatestForCountries").Return(map[string]models.CountryEntry{
-		"A": {Timestamp: timestamp, Deaths: 0},
-		"B": {Timestamp: timestamp, Deaths: 1},
-	}, nil)
-
 	h := countries.ByCountryHandler{
-		CovidDB: dbh,
-		Mode:    countries.CountryDeaths,
+		DB: &covid2.FakeStore{Records: []models.CountryEntry{
+			{Timestamp: timestamp, Name: "A", Code: "AA", Confirmed: 3, Recovered: 0, Deaths: 0},
+			{Timestamp: timestamp, Name: "B", Code: "BB", Confirmed: 10, Recovered: 1, Deaths: 1},
+		}},
+		Mode: countries.CountryDeaths,
 	}
 
 	ctx := context.Background()
@@ -82,17 +64,13 @@ func TestDeathsByCountry(t *testing.T) {
 }
 
 func TestConfirmedByCountry_Errors(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-
 	h := countries.ByCountryHandler{
-		CovidDB: dbh,
-		Mode:    countries.CountryConfirmed,
+		DB:   &covid2.FakeStore{Fail: true},
+		Mode: countries.CountryConfirmed,
 	}
 
 	ctx := context.Background()
 	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
-
-	dbh.On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).Return(nil, errors.New("db error")).Once()
 
 	_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	assert.Error(t, err)

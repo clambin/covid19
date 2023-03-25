@@ -2,24 +2,14 @@ package countries
 
 import (
 	"fmt"
-	covidStore "github.com/clambin/covid19/db"
-	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v6"
 	"github.com/clambin/simplejson/v6/pkg/data"
 	"sort"
 	"time"
 )
 
-func getStatsByCountry(db covidStore.CovidStore, args simplejson.QueryArgs, mode int) (*data.Table, error) {
-	var err error
-	var entries map[string]models.CountryEntry
-
-	if args.Range.To.IsZero() {
-		entries, err = db.GetLatestForCountries()
-	} else {
-		entries, err = db.GetLatestForCountriesByTime(args.Range.To)
-	}
-
+func getStatsByCountry(db CovidGetter, args simplejson.QueryArgs, mode int) (*data.Table, error) {
+	entries, err := db.GetLatestForCountries(args.Range.To)
 	if err != nil {
 		return nil, fmt.Errorf("database: %w", err)
 	}

@@ -1,7 +1,6 @@
 package simplejsonserver
 
 import (
-	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/simplejsonserver/countries"
 	"github.com/clambin/covid19/simplejsonserver/evolution"
 	"github.com/clambin/covid19/simplejsonserver/mortality"
@@ -11,15 +10,27 @@ import (
 	"github.com/clambin/simplejson/v6"
 )
 
-func New(covidDB covidStore.CovidStore, popDB covidStore.PopulationStore) *simplejson.Server {
+type CovidGetter interface {
+	countries.CovidGetter
+	mortality.CovidGetter
+	summarized.CovidGetter
+	evolution.CovidGetter
+	updates.CovidGetter
+}
+
+type PopulationGetter interface {
+	countries.PopulationGetter
+}
+
+func New(covidDB CovidGetter, popDB PopulationGetter) *simplejson.Server {
 	handlers := map[string]simplejson.Handler{
 		"country-confirmed": &countries.ByCountryHandler{
-			CovidDB: covidDB,
-			Mode:    countries.CountryConfirmed,
+			DB:   covidDB,
+			Mode: countries.CountryConfirmed,
 		},
 		"country-deaths": &countries.ByCountryHandler{
-			CovidDB: covidDB,
-			Mode:    countries.CountryDeaths,
+			DB:   covidDB,
+			Mode: countries.CountryDeaths,
 		},
 		"country-confirmed-population": &countries.ByCountryByPopulationHandler{
 			CovidDB: covidDB,
@@ -35,16 +46,16 @@ func New(covidDB covidStore.CovidStore, popDB covidStore.PopulationStore) *simpl
 			CovidDB: covidDB,
 		},
 		"cumulative": &summarized.CumulativeHandler{
-			Retriever: summarized.Retriever{DB: covidDB},
+			Fetcher: summarized.Fetcher{DB: covidDB},
 		},
 		"incremental": &summarized.IncrementalHandler{
-			Retriever: summarized.Retriever{DB: covidDB},
+			Fetcher: summarized.Fetcher{DB: covidDB},
 		},
 		"evolution": &evolution.Handler{
 			CovidDB: covidDB,
 		},
 		"updates": &updates.Handler{
-			CovidDB: covidDB,
+			DB: covidDB,
 		},
 	}
 

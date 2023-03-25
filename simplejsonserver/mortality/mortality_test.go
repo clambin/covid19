@@ -2,43 +2,38 @@ package mortality_test
 
 import (
 	"context"
-	"errors"
-	mockCovidStore "github.com/clambin/covid19/db/mocks"
+	"github.com/clambin/covid19/internal/testtools/db/covid"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/mortality"
 	"github.com/clambin/simplejson/v6"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
 func TestHandler(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.
-		On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).
-		Return(map[string]models.CountryEntry{
-			"AA": {
+	db := covid.FakeStore{}
+	_ = db.Add(
+		[]models.CountryEntry{
+			{
 				Timestamp: time.Date(2021, 12, 17, 0, 0, 0, 0, time.UTC),
 				Code:      "A",
 				Name:      "AA",
 				Confirmed: 100,
 				Deaths:    10,
 			},
-			"BB": {
+			{
 				Timestamp: time.Date(2021, 12, 17, 0, 0, 0, 0, time.UTC),
 				Code:      "B",
 				Name:      "BB",
 				Confirmed: 200,
 				Deaths:    10,
 			},
-		}, nil)
-
-	h := mortality.Handler{CovidDB: dbh}
+		})
+	h := mortality.Handler{CovidDB: &db}
 
 	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
-
 	ctx := context.Background()
 
 	response, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
@@ -51,16 +46,10 @@ func TestHandler(t *testing.T) {
 }
 
 func TestHandler_Errors(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	h := mortality.Handler{CovidDB: dbh}
-
+	db := covid.FakeStore{Fail: true}
+	h := mortality.Handler{CovidDB: &db}
 	args := simplejson.QueryArgs{}
-
 	ctx := context.Background()
-
-	dbh.
-		On("GetLatestForCountriesByTime", mock.AnythingOfType("time.Time")).
-		Return(nil, errors.New("db error"))
 
 	_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	require.Error(t, err)

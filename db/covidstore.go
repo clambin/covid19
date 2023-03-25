@@ -10,27 +10,6 @@ import (
 	"time"
 )
 
-// CovidStore represents a database holding COVID-19 statistics
-//
-//go:generate mockery --name CovidStore
-type CovidStore interface {
-	GetAll() (entries []models.CountryEntry, err error)
-	GetAllForRange(from, to time.Time) (entries []models.CountryEntry, err error)
-	GetAllForCountryName(name string) (entries []models.CountryEntry, err error)
-	GetLatestForCountries() (entries map[string]models.CountryEntry, err error)
-	GetLatestForCountriesByTime(endTime time.Time) (entries map[string]models.CountryEntry, err error)
-	Rows() (rows int, err error)
-	Add(entries []models.CountryEntry) (err error)
-	GetAllCountryNames() (names []string, err error)
-	CountEntriesByTime(from, to time.Time) (entries []struct {
-		Timestamp time.Time
-		Count     int
-	}, err error)
-	GetTotalsPerDay() (entries []models.CountryEntry, err error)
-}
-
-var _ CovidStore = &PGCovidStore{}
-
 // PGCovidStore implements CovidStore for Postgres databases
 type PGCovidStore struct {
 	DB *DB
@@ -44,13 +23,6 @@ func NewCovidStore(db *DB) *PGCovidStore {
 const (
 	queryStatement = `SELECT time "timestamp", country_code "code", country_name "name", confirmed, recovered, death "deaths" FROM covid19`
 )
-
-// GetAll returns all entries in the database, sorted by timestamp
-func (store *PGCovidStore) GetAll() ([]models.CountryEntry, error) {
-	var countryEntries []models.CountryEntry
-	err := store.DB.Handle.Select(&countryEntries, queryStatement+` ORDER BY 1`)
-	return countryEntries, err
-}
 
 // GetAllForRange returns all entries in the database, sorted by timestamp
 func (store *PGCovidStore) GetAllForRange(from, to time.Time) ([]models.CountryEntry, error) {
@@ -66,17 +38,18 @@ func (store *PGCovidStore) GetAllForCountryName(countryName string) ([]models.Co
 	return countryEntries, err
 }
 
-// GetLatestForCountries gets the last entries for each specified country
-func (store *PGCovidStore) GetLatestForCountries() (map[string]models.CountryEntry, error) {
-	return store.GetLatestForCountriesByTime(time.Time{})
-}
-
-// GetLatestForCountriesByTime gets the last entries for each specified country
-func (store *PGCovidStore) GetLatestForCountriesByTime(endTime time.Time) (map[string]models.CountryEntry, error) {
+// GetLatestForCountries gets the last entries for each country up the specified endTime.
+// If endTime is time.Time{}, it will get the latest entries up to the current time.
+func (store *PGCovidStore) GetLatestForCountries(endTime time.Time) (map[string]models.CountryEntry, error) {
 	countryNames, err := store.GetAllCountryNames()
 	if err != nil {
 		return nil, err
 	}
+
+	if endTime.IsZero() {
+		endTime = time.Now()
+	}
+
 	entries := make(map[string]models.CountryEntry)
 	for _, countryName := range countryNames {
 		var entry models.CountryEntry
@@ -97,7 +70,7 @@ func (store *PGCovidStore) getLatestForCountry(countryName string, endTime time.
 	if timestampClause != "" {
 		timestampClause = " AND " + timestampClause
 	}
-	statement := `SELECT time "timestamp", country_code "code", country_name "name", confirmed, recovered, death "deaths" FROM covid19 WHERE country_name = '%s'` + timestampClause + ` ORDER BY 1 DESC`
+	statement := queryStatement + ` WHERE country_name = '%s'` + timestampClause + ` ORDER BY 1 DESC`
 
 	var entry models.CountryEntry
 	err := store.DB.Handle.Get(&entry, fmt.Sprintf(statement, escapeString(countryName)))
@@ -142,15 +115,14 @@ func (store *PGCovidStore) GetAllCountryNames() (names []string, err error) {
 	return names, err
 }
 
-// CountEntriesByTime counts updates per timestamp
-func (store *PGCovidStore) CountEntriesByTime(from, to time.Time) ([]struct {
+type TimestampCount struct {
 	Timestamp time.Time
 	Count     int
-}, error) {
-	var updates []struct {
-		Timestamp time.Time
-		Count     int
-	}
+}
+
+// CountEntriesByTime counts updates per timestamp
+func (store *PGCovidStore) CountEntriesByTime(from, to time.Time) ([]TimestampCount, error) {
+	var updates []TimestampCount
 	whereClause := makeTimestampClause(from, to)
 	if whereClause != "" {
 		whereClause = " WHERE " + whereClause

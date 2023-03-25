@@ -1,26 +1,33 @@
 package summarized
 
 import (
-	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v6"
 	"github.com/clambin/simplejson/v6/pkg/data"
 	"time"
 )
 
-type Retriever struct {
-	DB db.CovidStore
+type Fetcher struct {
+	DB CovidGetter
 }
 
-func (r *Retriever) getTotalsForCountry(args simplejson.QueryArgs) (entries []models.CountryEntry, err error) {
-	var countryName string
-	countryName, err = evaluateAdHocFilter(args.AdHocFilters)
+type CovidGetter interface {
+	GetAllForCountryName(string) ([]models.CountryEntry, error)
+	GetAllCountryNames() ([]string, error)
+	GetTotalsPerDay() ([]models.CountryEntry, error)
+}
 
-	if err != nil {
-		return
+func (f *Fetcher) getTotals(args simplejson.QueryArgs) ([]models.CountryEntry, error) {
+	if len(args.Args.AdHocFilters) == 0 {
+		return f.DB.GetTotalsPerDay()
 	}
 
-	return r.DB.GetAllForCountryName(countryName)
+	countryName, err := evaluateAdHocFilter(args.AdHocFilters)
+	if err != nil {
+		return nil, err
+	}
+
+	return f.DB.GetAllForCountryName(countryName)
 }
 
 func dbEntriesToTable(entries []models.CountryEntry) (table *data.Table) {

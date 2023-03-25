@@ -2,9 +2,10 @@ package countries
 
 import (
 	"context"
-	covidStore "github.com/clambin/covid19/db"
+	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v6"
 	"github.com/clambin/simplejson/v6/pkg/data"
+	"time"
 )
 
 const (
@@ -14,8 +15,12 @@ const (
 
 // ByCountryHandler returns the latest stats by country
 type ByCountryHandler struct {
-	CovidDB covidStore.CovidStore
-	Mode    int
+	DB   CovidGetter
+	Mode int
+}
+
+type CovidGetter interface {
+	GetLatestForCountries(time time.Time) (map[string]models.CountryEntry, error)
 }
 
 var _ simplejson.Handler = &ByCountryHandler{}
@@ -28,7 +33,7 @@ func (handler *ByCountryHandler) Endpoints() (endpoints simplejson.Endpoints) {
 
 func (handler *ByCountryHandler) tableQuery(_ context.Context, req simplejson.QueryRequest) (response simplejson.Response, err error) {
 	var d *data.Table
-	d, err = getStatsByCountry(handler.CovidDB, req.QueryArgs, handler.Mode)
+	d, err = getStatsByCountry(handler.DB, req.QueryArgs, handler.Mode)
 	if err != nil {
 		return
 	}

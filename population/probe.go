@@ -2,8 +2,7 @@ package population
 
 import (
 	"context"
-	"github.com/clambin/covid19/covid/fetcher"
-	"github.com/clambin/covid19/db"
+	"github.com/clambin/covid19/covid"
 	"golang.org/x/exp/slog"
 	"golang.org/x/sync/semaphore"
 )
@@ -11,11 +10,15 @@ import (
 // Probe downloads the latest population stats per country and stores them in the database
 type Probe struct {
 	APIClient
-	store db.PopulationStore
+	store Adder
+}
+
+type Adder interface {
+	Add(string, int64) error
 }
 
 // New creates a new Probe
-func New(apiKey string, store db.PopulationStore) *Probe {
+func New(apiKey string, store Adder) *Probe {
 	return &Probe{
 		APIClient: NewAPIClient(apiKey),
 		store:     store,
@@ -42,7 +45,7 @@ func (probe *Probe) Update(ctx context.Context) (count int, err error) {
 			localError := probe.update(ctx, code, country)
 
 			if localError != nil {
-				slog.Error("failed to update population stats", localError, "country", countryNames)
+				slog.Error("failed to update population stats", "err", localError, "country", countryNames)
 			}
 
 			maxJobs.Release(1)
@@ -55,7 +58,7 @@ func (probe *Probe) Update(ctx context.Context) (count int, err error) {
 }
 
 func countryCodes() (codes []string) {
-	for _, code := range fetcher.CountryCodes {
+	for _, code := range covid.CountryCodes {
 		codes = append(codes, code)
 	}
 	return

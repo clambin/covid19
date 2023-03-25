@@ -1,54 +1,54 @@
 package backfill
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	"golang.org/x/exp/slog"
-	"net/http"
 	"time"
 )
 
 // Backfiller retrieves historic COVID19 data and adds it to the database
 type Backfiller struct {
-	URL   string
-	Store db.CovidStore
+	Client CovidGetter
+	Store  CovidStoreAdder
+}
+
+type CovidStoreAdder interface {
+	Add([]models.CountryEntry) error
+}
+
+type CovidGetter interface {
+	GetCountries() (Countries, error)
+	GetHistoricalData(string) ([]CountryData, error)
 }
 
 // New creates a new Backfiller object
-func New(store db.CovidStore) *Backfiller {
-	return &Backfiller{URL: covid19url, Store: store}
+func New(store CovidStoreAdder) *Backfiller {
+	return &Backfiller{
+		Client: Client{URL: covid19url},
+		Store:  store}
 }
 
 // Run the backfiller.  Get all supported countries from the API
 // Then add any historical record that is older than the first
-// record in the CovidDB
-func (backFiller *Backfiller) Run() error {
+// record in the DB
+func (b *Backfiller) Run() error {
 
-	countries, err := backFiller.getCountries()
+	countries, err := b.Client.GetCountries()
 	if err != nil {
 		return err
 	}
 
 	for slug, details := range countries {
-		records := make([]models.CountryEntry, 0)
 		realName := lookupCountryName(details.Name)
 		slog.Debug("Getting country data", "name", realName, "slug", slug)
 
-		var entries []struct {
-			Confirmed int64
-			Recovered int64
-			Deaths    int64
-			Date      time.Time
-		}
-		entries, err = backFiller.getHistoricalData(slug)
-
-		if err != nil {
-			slog.Error("failed to get history", err, "country", slug)
+		var entries []CountryData
+		if entries, err = b.Client.GetHistoricalData(slug); err != nil {
+			slog.Error("failed to get history", "err", err, "country", slug)
 			continue
 		}
 
+		var records []models.CountryEntry
 		for _, entry := range entries {
 			records = append(records, models.CountryEntry{
 				Timestamp: entry.Date.Add(24 * time.Hour),
@@ -59,8 +59,7 @@ func (backFiller *Backfiller) Run() error {
 				Recovered: entry.Recovered})
 		}
 
-		err = backFiller.Store.Add(records)
-		if err == nil {
+		if err = b.Store.Add(records); err == nil {
 			slog.Info("Received country data ", "name", realName, "count", len(records))
 		}
 	}
@@ -68,85 +67,6 @@ func (backFiller *Backfiller) Run() error {
 }
 
 const covid19url = "https://api.covid19api.com"
-
-func (backFiller *Backfiller) getCountries() (result map[string]struct{ Name, Code string }, err error) {
-	req, _ := http.NewRequest(http.MethodGet, backFiller.URL+"/countries", nil)
-	var resp *http.Response
-	resp, err = backFiller.slowCall(req)
-
-	if err != nil {
-		return
-	}
-
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf(resp.Status)
-		return
-	}
-	var stats []struct {
-		Country string
-		Slug    string
-		ISO2    string
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-	if err = decoder.Decode(&stats); err == nil {
-		result = make(map[string]struct{ Name, Code string })
-		for _, entry := range stats {
-			result[entry.Slug] = struct {
-				Name string
-				Code string
-			}{Name: entry.Country, Code: entry.ISO2}
-		}
-	}
-
-	return result, err
-}
-
-func (backFiller *Backfiller) getHistoricalData(slug string) (stats []struct {
-	Confirmed int64
-	Recovered int64
-	Deaths    int64
-	Date      time.Time
-}, err error) {
-	req, _ := http.NewRequest(http.MethodGet, backFiller.URL+"/total/country/"+slug, nil)
-	var resp *http.Response
-	resp, err = backFiller.slowCall(req)
-
-	if err == nil {
-		if resp.StatusCode == http.StatusOK {
-			decoder := json.NewDecoder(resp.Body)
-			err = decoder.Decode(&stats)
-		}
-		_ = resp.Body.Close()
-	}
-
-	return stats, err
-}
-
-// slowCall handles 429 errors, slowing down before trying again
-func (backFiller *Backfiller) slowCall(req *http.Request) (resp *http.Response, err error) {
-	client := &http.Client{}
-	resp, err = client.Do(req)
-
-	waitTime := 250 * time.Millisecond
-
-	for err == nil && resp.StatusCode == http.StatusTooManyRequests {
-		_ = resp.Body.Close()
-
-		slog.Debug("429 recv'd. Slowing down", "waitTime", waitTime)
-		time.Sleep(waitTime)
-
-		resp, err = client.Do(req)
-
-		if waitTime < 5*time.Second {
-			waitTime *= 2
-		}
-	}
-
-	return
-}
 
 // rapidapi's Covid API uses different country names than covidapi
 var (

@@ -2,17 +2,20 @@ package countries
 
 import (
 	"context"
-	"github.com/clambin/covid19/covid/fetcher"
-	covidStore "github.com/clambin/covid19/db"
+	"github.com/clambin/covid19/covid"
 	"github.com/clambin/simplejson/v6"
 	"time"
 )
 
 // ByCountryByPopulationHandler returns the latest stats by country
 type ByCountryByPopulationHandler struct {
-	CovidDB covidStore.CovidStore
-	PopDB   covidStore.PopulationStore
+	CovidDB CovidGetter
+	PopDB   PopulationGetter
 	Mode    int
+}
+
+type PopulationGetter interface {
+	List() (map[string]int64, error)
 }
 
 var _ simplejson.Handler = &ByCountryHandler{}
@@ -47,7 +50,7 @@ func (handler *ByCountryByPopulationHandler) tableQuery(_ context.Context, req s
 			continue
 		}
 
-		code, codeFound := fetcher.CountryCodes[country]
+		code, codeFound := covid.CountryCodes[country]
 		if !codeFound {
 			code = country
 		}

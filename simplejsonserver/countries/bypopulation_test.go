@@ -2,8 +2,8 @@ package countries_test
 
 import (
 	"context"
-	"errors"
-	mockCovidStore "github.com/clambin/covid19/db/mocks"
+	covid2 "github.com/clambin/covid19/internal/testtools/db/covid"
+	"github.com/clambin/covid19/internal/testtools/db/population"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/countries"
 	"github.com/clambin/simplejson/v6"
@@ -14,23 +14,18 @@ import (
 )
 
 func TestConfirmedByCountryByPopulation(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.
-		On("GetLatestForCountriesByTime", time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
-		Return(map[string]models.CountryEntry{
-			"Belgium": {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Confirmed: 200},
-			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
-		}, nil)
+	db := covid2.FakeStore{Records: []models.CountryEntry{
+		{Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Confirmed: 200},
+		{Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
+	}}
 
-	dbh2 := mockCovidStore.NewPopulationStore(t)
-	dbh2.On("List").Return(map[string]int64{
-		"BE": 10,
-		"US": 20,
-	}, nil)
+	db2 := population.FakeStore{}
+	_ = db2.Add("BE", 10)
+	_ = db2.Add("US", 20)
 
 	h := countries.ByCountryByPopulationHandler{
-		CovidDB: dbh,
-		PopDB:   dbh2,
+		CovidDB: &db,
+		PopDB:   &db2,
 		Mode:    countries.CountryConfirmed,
 	}
 
@@ -47,23 +42,18 @@ func TestConfirmedByCountryByPopulation(t *testing.T) {
 }
 
 func TestDeathsByCountryByPopulation(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.
-		On("GetLatestForCountriesByTime", time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
-		Return(map[string]models.CountryEntry{
-			"Belgium": {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Deaths: 200},
-			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Deaths: 200},
-		}, nil)
+	db := covid2.FakeStore{Records: []models.CountryEntry{
+		{Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Deaths: 200},
+		{Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Deaths: 200},
+	}}
 
-	dbh2 := mockCovidStore.NewPopulationStore(t)
-	dbh2.On("List").Return(map[string]int64{
-		"BE": 10,
-		"US": 20,
-	}, nil)
+	db2 := population.FakeStore{}
+	_ = db2.Add("BE", 10)
+	_ = db2.Add("US", 20)
 
 	h := countries.ByCountryByPopulationHandler{
-		CovidDB: dbh,
-		PopDB:   dbh2,
+		CovidDB: &db,
+		PopDB:   &db2,
 		Mode:    countries.CountryDeaths,
 	}
 
@@ -80,26 +70,22 @@ func TestDeathsByCountryByPopulation(t *testing.T) {
 }
 
 func TestConfirmedByCountryByPopulation_Errors(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.
-		On("GetLatestForCountriesByTime", time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)).
-		Return(map[string]models.CountryEntry{
-			"Belgium": {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Confirmed: 200},
-			"US":      {Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
-		}, nil)
+	db := covid2.FakeStore{Records: []models.CountryEntry{
+		{Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "Belgium", Code: "BE", Confirmed: 200},
+		{Timestamp: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC), Name: "US", Code: "US", Confirmed: 200},
+	}}
 
-	dbh2 := mockCovidStore.NewPopulationStore(t)
+	db2 := population.FakeStore{Fail: true}
 
 	h := countries.ByCountryByPopulationHandler{
-		CovidDB: dbh,
-		PopDB:   dbh2,
+		CovidDB: &db,
+		PopDB:   &db2,
 		Mode:    countries.CountryConfirmed,
 	}
 
 	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Date(2020, 1, 3, 0, 0, 0, 0, time.UTC)}}}
 	ctx := context.Background()
 
-	dbh2.On("List").Return(nil, errors.New("db error"))
 	_, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
 	assert.Error(t, err)
 }

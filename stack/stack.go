@@ -20,8 +20,8 @@ import (
 type Stack struct {
 	Cfg              *configuration.Configuration
 	DB               *db.DB
-	CovidStore       db.CovidStore
-	PopulationStore  db.PopulationStore
+	CovidStore       *db.PGCovidStore
+	PopulationStore  *db.PGPopulationStore
 	SimpleJSONServer *simplejson.Server
 }
 
@@ -60,15 +60,15 @@ func (stack *Stack) Load() {
 	start := time.Now()
 	cp := covidProbe.New(&stack.Cfg.Monitor, stack.CovidStore)
 	if count, err := cp.Update(context.Background()); err == nil {
-		slog.Info("discovered country population figures", "count", count, "duration", time.Since(start))
+		slog.Info("discovered country figures", "count", count, "duration", time.Since(start))
 	} else {
-		slog.Error("failed to update COVID-19 figures", err)
+		slog.Error("failed to update COVID-19 figures", "err", err)
 	}
 }
 
 func (stack *Stack) loadIfEmpty() bool {
 	if rows, err := stack.CovidStore.Rows(); err != nil {
-		slog.Error("could not access database", err)
+		slog.Error("could not access database", "err", err)
 		return false
 	} else if rows > 0 {
 		return false
@@ -79,7 +79,7 @@ func (stack *Stack) loadIfEmpty() bool {
 	start := time.Now()
 	bf := backfill.New(stack.CovidStore)
 	if err := bf.Run(); err != nil {
-		slog.Error("failed to populate database", err)
+		slog.Error("failed to populate database", "err", err)
 		return false
 	}
 
@@ -94,7 +94,7 @@ func (stack *Stack) LoadPopulation() {
 	if count, err := cp.Update(context.Background()); err == nil {
 		slog.Info("discovered country population figures", "count", count, "duration", time.Since(start))
 	} else {
-		slog.Error("failed to update population figures", err)
+		slog.Error("failed to update population figures", "err", err)
 	}
 }
 

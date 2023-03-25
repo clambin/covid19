@@ -12,11 +12,13 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.7
 	github.com/stretchr/testify v1.8.2
-	golang.org/x/exp v0.0.0-20230206171751-46f607a40771
+	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v3 v3.0.1
 
 )
+
+require github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 
 require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect

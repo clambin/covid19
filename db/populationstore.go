@@ -4,16 +4,6 @@ import (
 	"fmt"
 )
 
-// PopulationStore represents a database holding Population count per country
-//
-//go:generate mockery --name PopulationStore
-type PopulationStore interface {
-	List() (map[string]int64, error)
-	Add(string, int64) error
-}
-
-var _ PopulationStore = &PGPopulationStore{}
-
 // PGPopulationStore implements PopulationStore for Postgres databases
 type PGPopulationStore struct {
 	DB *DB

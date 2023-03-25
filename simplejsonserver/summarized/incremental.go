@@ -3,14 +3,13 @@ package summarized
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v6"
 )
 
 // IncrementalHandler returns the incremental number of cases & deaths. If an adhoc filter exists, it returns the
 // incremental cases/deaths for that country
 type IncrementalHandler struct {
-	Retriever
+	Fetcher
 }
 
 var _ simplejson.Handler = &IncrementalHandler{}
@@ -23,18 +22,12 @@ func (handler IncrementalHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *IncrementalHandler) tableQuery(_ context.Context, req simplejson.QueryRequest) (response simplejson.Response, err error) {
-	var entries []models.CountryEntry
-	if len(req.Args.AdHocFilters) > 0 {
-		entries, err = handler.Retriever.getTotalsForCountry(req.QueryArgs)
-	} else {
-		entries, err = handler.Retriever.DB.GetTotalsPerDay()
+func (handler *IncrementalHandler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
+	entries, err := handler.Fetcher.getTotals(req.QueryArgs)
+	if err != nil {
+		return nil, err
 	}
-
-	if err == nil {
-		response = createDeltas(dbEntriesToTable(entries)).Filter(req.Args).CreateTableResponse()
-	}
-	return
+	return createDeltas(dbEntriesToTable(entries)).Filter(req.Args).CreateTableResponse(), nil
 }
 
 func (handler *IncrementalHandler) tagKeys(_ context.Context) []string {
@@ -46,5 +39,5 @@ func (handler *IncrementalHandler) tagValues(_ context.Context, key string) (val
 		return values, fmt.Errorf("unsupported tag '%s'", key)
 	}
 
-	return handler.Retriever.DB.GetAllCountryNames()
+	return handler.Fetcher.DB.GetAllCountryNames()
 }

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/go-rapidapi"
-	"golang.org/x/exp/slog"
 	"time"
 )
 
@@ -14,7 +13,7 @@ import (
 //
 //go:generate mockery --name Fetcher
 type Fetcher interface {
-	GetCountryStats(ctx context.Context) (countryEntry []models.CountryEntry, err error)
+	Fetch(ctx context.Context) (countryEntry []models.CountryEntry, err error)
 }
 
 // CountryStats contains total figures for one country
@@ -30,50 +29,32 @@ var _ Fetcher = &Client{}
 // Client implements the Fetcher interface
 type Client struct {
 	rapidapi.API
-	invalidCountries StringSet
 }
 
-// GetCountryStats called the API to retrieve the latest COVID-19 stats
-func (client *Client) GetCountryStats(ctx context.Context) (countryEntry []models.CountryEntry, err error) {
-	var stats statsResponse
-	stats, err = client.getStats(ctx)
-
+// Fetch called the API to retrieve the latest (raw) COVID-19 stats
+func (client *Client) Fetch(ctx context.Context) ([]models.CountryEntry, error) {
+	stats, err := client.getStats(ctx)
 	if err != nil {
-		return
+		return nil, err
 	}
-
-	countryEntry = client.filterUnsupportedCountries(&stats)
-	countryEntry = sumByCountry(countryEntry)
-	return
-}
-
-func (client *Client) filterUnsupportedCountries(stats *statsResponse) (entries []models.CountryEntry) {
+	var records []models.CountryEntry
 	for _, entry := range stats.Data.Covid19Stats {
-		code, found := CountryCodes[entry.Country]
-
-		if !found {
-			if found = client.invalidCountries.Set(entry.Country); !found {
-				slog.Warn("unknown country name received from COVID-19 API", "name", entry.Country)
-				continue
-			}
-		}
-		entries = append(entries, models.CountryEntry{
-			Timestamp: entry.LastUpdate,
-			Code:      code,
+		records = append(records, models.CountryEntry{
+			Timestamp: entry.LastUpdate.UTC(),
 			Name:      entry.Country,
 			Confirmed: entry.Confirmed,
 			Recovered: entry.Recovered,
 			Deaths:    entry.Deaths,
 		})
 	}
-	return
+	return sumByCountry(records), nil
 }
 
 func sumByCountry(entries []models.CountryEntry) (sum []models.CountryEntry) {
 	summed := make(map[string]models.CountryEntry)
 
 	for _, entry := range entries {
-		sumEntry, found := summed[entry.Code]
+		sumEntry, found := summed[entry.Name]
 		if !found {
 			sumEntry = models.CountryEntry{
 				Timestamp: entry.Timestamp,
@@ -84,7 +65,7 @@ func sumByCountry(entries []models.CountryEntry) (sum []models.CountryEntry) {
 		sumEntry.Confirmed += entry.Confirmed
 		sumEntry.Recovered += entry.Recovered
 		sumEntry.Deaths += entry.Deaths
-		summed[entry.Code] = sumEntry
+		summed[entry.Name] = sumEntry
 	}
 
 	for _, entry := range summed {
@@ -110,15 +91,12 @@ type statsResponse struct {
 	}
 }
 
-func (client *Client) getStats(ctx context.Context) (stats statsResponse, err error) {
+func (client *Client) getStats(ctx context.Context) (statsResponse, error) {
 	const endpoint = "/v1/stats"
-
-	var body []byte
-	body, err = client.API.CallWithContext(ctx, endpoint)
-
+	var stats statsResponse
+	body, err := client.API.CallWithContext(ctx, endpoint)
 	if err == nil {
 		err = json.NewDecoder(bytes.NewReader(body)).Decode(&stats)
 	}
-
-	return
+	return stats, err
 }

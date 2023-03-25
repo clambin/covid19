@@ -2,7 +2,6 @@ package evolution
 
 import (
 	"context"
-	covidStore "github.com/clambin/covid19/db"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v6"
 	"sort"
@@ -14,7 +13,11 @@ const Window = 7
 
 // Handler calculates the 7-day average increase in confirmed cases by country
 type Handler struct {
-	CovidDB covidStore.CovidStore
+	CovidDB CovidGetter
+}
+
+type CovidGetter interface {
+	GetAllForRange(time.Time, time.Time) ([]models.CountryEntry, error)
 }
 
 var _ simplejson.Handler = &Handler{}
@@ -25,18 +28,15 @@ func (handler *Handler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (response simplejson.Response, err error) {
+func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
 	end := req.Args.Range.To
-
-	var entries []models.CountryEntry
-
 	if end.IsZero() {
-		entries, err = handler.CovidDB.GetAll()
-	} else {
-		entries, err = handler.CovidDB.GetAllForRange(end.Add(-Window*24*time.Hour), end)
+		end = time.Now()
 	}
+
+	entries, err := handler.CovidDB.GetAllForRange(end.Add(-Window*24*time.Hour), end)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	var (
@@ -120,7 +120,7 @@ func (e *evolution) process(entry models.CountryEntry) {
 	}
 }
 
-func (e evolution) increase() float64 {
+func (e *evolution) increase() float64 {
 	if e.first.timestamp.IsZero() || e.last.timestamp.IsZero() {
 		return 0
 	}

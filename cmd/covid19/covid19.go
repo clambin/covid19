@@ -32,7 +32,7 @@ func main() {
 
 	var s *stack.Stack
 	if s, err = stack.CreateStack(cfg); err != nil {
-		slog.Error("app init failed", err)
+		slog.Error("app init failed", "err", err)
 		os.Exit(1)
 	}
 	prometheus.DefaultRegisterer.MustRegister(s)
@@ -41,7 +41,7 @@ func main() {
 	case handlerCmd.FullCommand():
 		go runPrometheusServer(cfg.PrometheusPort)
 		if err = s.RunHandler(); !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("failed to start simplejson handler", err)
+			slog.Error("failed to start simplejson handler", "err", err)
 			os.Exit(1)
 		}
 	case loaderCmd.FullCommand():
@@ -102,6 +102,6 @@ func GetConfiguration(application string, args []string) (cmd string, cfg *confi
 func runPrometheusServer(port int) {
 	http.Handle("/metrics", promhttp.Handler())
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("failed to start Prometheus listener", err)
+		slog.Error("failed to start Prometheus listener", "err", err)
 	}
 }

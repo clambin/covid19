@@ -2,7 +2,8 @@ package updates_test
 
 import (
 	"context"
-	mockCovidStore "github.com/clambin/covid19/db/mocks"
+	"github.com/clambin/covid19/internal/testtools/db/covid"
+	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/updates"
 	"github.com/clambin/simplejson/v6"
 	"github.com/stretchr/testify/assert"
@@ -12,18 +13,15 @@ import (
 )
 
 func TestHandler_Updates(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.
-		On("CountEntriesByTime", time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC), time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC)).
-		Return([]struct {
-			Timestamp time.Time
-			Count     int
-		}{
-			{Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC), Count: 1},
-			{Timestamp: time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC), Count: 5},
-		}, nil)
-
-	h := updates.Handler{CovidDB: dbh}
+	covidDB := covid.FakeStore{Records: []models.CountryEntry{
+		{Timestamp: time.Date(2020, time.November, 2, 0, 0, 0, 0, time.UTC)},
+		{Timestamp: time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC)},
+		{Timestamp: time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC)},
+		{Timestamp: time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC)},
+		{Timestamp: time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC)},
+		{Timestamp: time.Date(2020, time.November, 3, 0, 0, 0, 0, time.UTC)},
+	}}
+	h := updates.Handler{DB: &covidDB}
 
 	args := simplejson.QueryArgs{
 		Args: simplejson.Args{Range: simplejson.Range{

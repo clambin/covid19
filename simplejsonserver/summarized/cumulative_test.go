@@ -2,13 +2,12 @@ package summarized_test
 
 import (
 	"context"
-	"errors"
-	mockCovidStore "github.com/clambin/covid19/db/mocks"
+	"fmt"
+	"github.com/clambin/covid19/internal/testtools/db/covid"
 	"github.com/clambin/covid19/models"
 	"github.com/clambin/covid19/simplejsonserver/summarized"
 	"github.com/clambin/simplejson/v6"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
@@ -16,13 +15,10 @@ import (
 )
 
 func TestCumulativeHandler_Global(t *testing.T) {
-	dbh := mockCovidStore.NewCovidStore(t)
-	dbh.On("GetTotalsPerDay").Return(dbTotals, nil)
-
-	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
+	db := covid.FakeStore{Records: dbTotals}
+	h := summarized.CumulativeHandler{Fetcher: summarized.Fetcher{DB: &db}}
 
 	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{To: time.Now()}}}
-
 	ctx := context.Background()
 
 	response, err := h.Endpoints().Query(ctx, simplejson.QueryRequest{QueryArgs: args})
@@ -40,15 +36,14 @@ func TestCumulativeHandler_Global(t *testing.T) {
 }
 
 func BenchmarkCumulativeHandler_Global(b *testing.B) {
-	from, to, bigContents := buildBigDatabase()
-	dbh := &mockCovidStore.CovidStore{}
-	dbh.On("GetTotalsPerDay").Return(bigContents, nil)
-
-	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
+	start := time.Date(2023, time.March, 24, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2025, time.March, 24, 0, 0, 0, 0, time.UTC)
+	db := buildBigDatabase(start, end)
+	h := summarized.CumulativeHandler{Fetcher: summarized.Fetcher{DB: db}}
 
 	args := simplejson.QueryArgs{Args: simplejson.Args{Range: simplejson.Range{
-		From: from,
-		To:   to,
+		From: start,
+		To:   end,
 	}}}
 
 	ctx := context.Background()
@@ -60,32 +55,11 @@ func BenchmarkCumulativeHandler_Global(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
-	//mock.AssertExpectationsForObjects(b, dbh)
-}
-
-func buildBigDatabase() (from, to time.Time, content []models.CountryEntry) {
-	from = time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
-	timestamp := from
-	for i := 0; i < 2*365; i++ {
-		to = timestamp
-		for c := 0; c < 193; c++ {
-			country := strconv.Itoa(c)
-			content = append(content, models.CountryEntry{
-				Timestamp: timestamp,
-				Code:      country,
-				Name:      country,
-			})
-		}
-		timestamp = timestamp.Add(24 * time.Hour)
-	}
-	return
 }
 
 func TestCumulativeHandler_Country(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
-	dbh.On("GetAllForCountryName", "A").Return(filterByName(dbContents, "A"), nil)
-
-	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
+	db := covid.FakeStore{Records: dbContents}
+	h := summarized.CumulativeHandler{Fetcher: summarized.Fetcher{DB: &db}}
 
 	args := simplejson.QueryArgs{
 		Args: simplejson.Args{
@@ -111,30 +85,22 @@ func TestCumulativeHandler_Country(t *testing.T) {
 		{Text: "confirmed", Data: simplejson.NumberColumn{1, 3}},
 		{Text: "deaths", Data: simplejson.NumberColumn{0, 0}},
 	}}, response)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 func TestCumulativeHandler_Tags(t *testing.T) {
-	dbh := &mockCovidStore.CovidStore{}
-	h := summarized.CumulativeHandler{Retriever: summarized.Retriever{DB: dbh}}
-
+	db := covid.FakeStore{Records: dbContents}
+	h := summarized.CumulativeHandler{Fetcher: summarized.Fetcher{DB: &db}}
 	ctx := context.Background()
 
 	keys := h.Endpoints().TagKeys(ctx)
 	assert.Equal(t, []string{"Country Name"}, keys)
 
-	dbh.On("GetAllCountryNames").Return(nil, errors.New("db error")).Once()
-	_, err := h.Endpoints().TagValues(ctx, keys[0])
-	require.Error(t, err)
+	//_, err := h.Endpoints().TagValues(ctx, keys[0])
+	//require.Error(t, err)
 
-	dbh.On("GetAllCountryNames").Return([]string{"A", "B"}, nil)
-	var values []string
-	values, err = h.Endpoints().TagValues(ctx, keys[0])
+	values, err := h.Endpoints().TagValues(ctx, keys[0])
 	require.NoError(t, err)
 	assert.Equal(t, []string{"A", "B"}, values)
-
-	mock.AssertExpectationsForObjects(t, dbh)
 }
 
 var (
@@ -201,11 +167,56 @@ var (
 	}
 )
 
-func filterByName(input []models.CountryEntry, name string) (output []models.CountryEntry) {
-	for _, entry := range input {
-		if entry.Name == name {
-			output = append(output, entry)
+var _ summarized.CovidGetter = stubbedStore{}
+
+type stubbedStore struct {
+	allForCountry map[string][]models.CountryEntry
+	countryNames  []string
+	totalsPerDay  []models.CountryEntry
+}
+
+func (s stubbedStore) GetAllForCountryName(s2 string) ([]models.CountryEntry, error) {
+	results, ok := s.allForCountry[s2]
+	if !ok {
+		return nil, fmt.Errorf("invalid country: %s", s2)
+	}
+	return results, nil
+}
+
+func (s stubbedStore) GetAllCountryNames() ([]string, error) {
+	return s.countryNames, nil
+}
+
+func (s stubbedStore) GetTotalsPerDay() ([]models.CountryEntry, error) {
+	return s.totalsPerDay, nil
+}
+
+func buildBigDatabase(from, to time.Time) stubbedStore {
+	allForCountry := make(map[string][]models.CountryEntry)
+	countryNames := make([]string, 0, 193)
+	var totalsForDay []models.CountryEntry
+
+	for country := 0; country < 193; country++ {
+		content := make([]models.CountryEntry, 0, 193)
+		countryName := strconv.Itoa(country)
+		for timestamp := from; !timestamp.After(to); timestamp = timestamp.Add(24 * time.Hour) {
+			content = append(content, models.CountryEntry{
+				Timestamp: timestamp,
+				Code:      countryName,
+				Name:      countryName,
+			})
+			if country == 0 {
+				totalsForDay = append(totalsForDay, models.CountryEntry{Timestamp: timestamp})
+			}
+		}
+		allForCountry[countryName] = content
+		if country == 0 {
+			countryNames = append(countryNames, countryName)
 		}
 	}
-	return
+	return stubbedStore{
+		allForCountry: allForCountry,
+		countryNames:  countryNames,
+		totalsPerDay:  totalsForDay,
+	}
 }

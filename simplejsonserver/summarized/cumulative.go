@@ -3,14 +3,13 @@ package summarized
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v6"
 )
 
 // CumulativeHandler returns the incremental number of cases & deaths. If an adhoc filter exists, it returns the
 // cumulative cases/deaths for that country
 type CumulativeHandler struct {
-	Retriever
+	Fetcher
 }
 
 var _ simplejson.Handler = &CumulativeHandler{}
@@ -23,18 +22,12 @@ func (handler *CumulativeHandler) Endpoints() (endpoints simplejson.Endpoints) {
 	}
 }
 
-func (handler *CumulativeHandler) tableQuery(_ context.Context, req simplejson.QueryRequest) (response simplejson.Response, err error) {
-	var entries []models.CountryEntry
-	if len(req.Args.AdHocFilters) > 0 {
-		entries, err = handler.Retriever.getTotalsForCountry(req.QueryArgs)
-	} else {
-		entries, err = handler.Retriever.DB.GetTotalsPerDay()
+func (handler *CumulativeHandler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
+	entries, err := handler.Fetcher.getTotals(req.QueryArgs)
+	if err != nil {
+		return nil, err
 	}
-
-	if err == nil {
-		response = dbEntriesToTable(entries).Filter(req.QueryArgs.Args).CreateTableResponse()
-	}
-	return
+	return dbEntriesToTable(entries).Filter(req.QueryArgs.Args).CreateTableResponse(), nil
 }
 
 func (handler *CumulativeHandler) tagKeys(_ context.Context) []string {
@@ -46,5 +39,5 @@ func (handler *CumulativeHandler) tagValues(_ context.Context, key string) (valu
 		return values, fmt.Errorf("unsupported tag '%s'", key)
 	}
 
-	return handler.Retriever.DB.GetAllCountryNames()
+	return handler.Fetcher.DB.GetAllCountryNames()
 }

@@ -35,7 +35,8 @@ func TestCovidStore(t *testing.T) {
 		rows  int
 	)
 
-	entries, err := covidStore.GetAll()
+	end := time.Date(2023, time.March, 21, 0, 0, 0, 0, time.UTC)
+	entries, err := covidStore.GetAllForRange(end.Add(-7*24*time.Hour), end)
 	require.NoError(t, err)
 	assert.Len(t, entries, 0)
 
@@ -50,7 +51,7 @@ func TestCovidStore(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, rows)
 
-	entries, err = covidStore.GetAll()
+	entries, err = covidStore.GetAllForRange(first, last)
 	require.NoError(t, err)
 	require.Len(t, entries, 2)
 	assert.True(t, entries[0].Timestamp.Equal(first))
@@ -78,7 +79,7 @@ func TestCovidStore(t *testing.T) {
 	assert.Equal(t, "???", countryNames[0])
 
 	var latest map[string]models.CountryEntry
-	latest, err = covidStore.GetLatestForCountries()
+	latest, err = covidStore.GetLatestForCountries(time.Time{})
 	require.NoError(t, err)
 	entry, found := latest["???"]
 	require.True(t, found)
@@ -87,7 +88,7 @@ func TestCovidStore(t *testing.T) {
 	assert.Equal(t, int64(5), entry.Deaths)
 	assert.Equal(t, int64(4), entry.Recovered)
 
-	latest, err = covidStore.GetLatestForCountriesByTime(first)
+	latest, err = covidStore.GetLatestForCountries(first)
 	require.NoError(t, err)
 	entry, found = latest["???"]
 	require.True(t, found)

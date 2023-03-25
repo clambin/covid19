@@ -3,7 +3,7 @@ package mortality
 import (
 	"context"
 	"fmt"
-	covidStore "github.com/clambin/covid19/db"
+	"github.com/clambin/covid19/models"
 	"github.com/clambin/simplejson/v6"
 	"sort"
 	"time"
@@ -11,7 +11,11 @@ import (
 
 // Handler returns the mortality by nr. of confirmed cases
 type Handler struct {
-	CovidDB covidStore.CovidStore
+	CovidDB CovidGetter
+}
+
+type CovidGetter interface {
+	GetLatestForCountries(time2 time.Time) (map[string]models.CountryEntry, error)
 }
 
 var _ simplejson.Handler = &Handler{}
@@ -23,7 +27,7 @@ func (handler *Handler) Endpoints() (endpoints simplejson.Endpoints) {
 }
 
 func (handler *Handler) tableQuery(_ context.Context, req simplejson.QueryRequest) (simplejson.Response, error) {
-	entries, err := handler.CovidDB.GetLatestForCountriesByTime(req.Args.Range.To)
+	entries, err := handler.CovidDB.GetLatestForCountries(req.Args.Range.To)
 	if err != nil {
 		return nil, fmt.Errorf("database: %w", err)
 	}
