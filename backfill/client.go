@@ -96,11 +96,7 @@ func (c Client) GetHistoricalData(slug string) ([]CountryData, error) {
 
 func makeRetry() *retry.Retry {
 	return &retry.Retry{
-		Scheduler: &retry.Doubler{
-			MaxRetry: MaxRetries,
-			Delay:    250 * time.Millisecond,
-			MaxDelay: 5 * time.Second,
-		},
+		BackOff: retry.NewDoublerBackoff(MaxRetries, 250*time.Millisecond, 5*time.Second),
 		ShouldRetry: func(err error) bool {
 			return err.Error() == "429 Too Many Requests"
 		},

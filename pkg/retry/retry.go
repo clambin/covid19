@@ -6,11 +6,11 @@ import (
 )
 
 type Retry struct {
-	Scheduler
+	BackOff
 	ShouldRetry func(error) bool
 }
 
-type Scheduler interface {
+type BackOff interface {
 	GetNext() time.Duration
 }
 
@@ -31,7 +31,7 @@ func (r *Retry) DoWithContext(ctx context.Context, f func() error) error {
 			return err
 		}
 
-		delay := r.Scheduler.GetNext()
+		delay := r.BackOff.GetNext()
 		if delay == Stop {
 			return err
 		}

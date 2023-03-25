@@ -11,7 +11,7 @@ import (
 )
 
 func TestRetry_Do(t *testing.T) {
-	r := retry.Retry{Scheduler: &retry.Constant{MaxRetry: 4, Delay: 100 * time.Millisecond}}
+	r := retry.Retry{BackOff: retry.NewConstantBackoff(4, 100*time.Millisecond)}
 
 	var count int
 	err := r.Do(func() error {
@@ -24,7 +24,7 @@ func TestRetry_Do(t *testing.T) {
 
 func TestRetry_Do_WithShouldRetry(t *testing.T) {
 	r := retry.Retry{
-		Scheduler: &retry.Constant{MaxRetry: 4, Delay: 100 * time.Millisecond},
+		BackOff: retry.NewConstantBackoff(4, 100*time.Millisecond),
 		ShouldRetry: func(err error) bool {
 			return err.Error() != "error 2"
 		},
@@ -40,7 +40,7 @@ func TestRetry_Do_WithShouldRetry(t *testing.T) {
 }
 
 func TestRetry_Do_Success(t *testing.T) {
-	r := retry.Retry{Scheduler: &retry.Constant{MaxRetry: 4, Delay: 100 * time.Millisecond}}
+	r := retry.Retry{BackOff: retry.NewConstantBackoff(4, 100*time.Millisecond)}
 
 	var count int
 	err := r.Do(func() error {
@@ -55,7 +55,7 @@ func TestRetry_Do_Success(t *testing.T) {
 }
 
 func TestRetry_DoWithContext(t *testing.T) {
-	r := retry.Retry{Scheduler: &retry.Constant{MaxRetry: 4, Delay: 100 * time.Millisecond}}
+	r := retry.Retry{BackOff: retry.NewConstantBackoff(4, 100*time.Millisecond)}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
