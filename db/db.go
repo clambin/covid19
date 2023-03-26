@@ -18,9 +18,9 @@ import (
 
 // DB hold the handle to a database.  Provides a Prometheus DBStatsCollector to monitor DB connections
 type DB struct {
-	Handle    *sqlx.DB
 	Collector prometheus.Collector
 	database  string
+	Handle    *sqlx.DB
 }
 
 // New creates a new DB connector

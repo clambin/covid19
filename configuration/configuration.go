@@ -8,20 +8,20 @@ import (
 
 // Configuration for covid19 app
 type Configuration struct {
+	Postgres       PostgresDB           `yaml:"postgres"`
+	Monitor        MonitorConfiguration `yaml:"monitor"`
 	Port           int                  `yaml:"port"`
 	PrometheusPort int                  `yaml:"prometheusPort"`
 	Debug          bool                 `yaml:"debug"`
-	Postgres       PostgresDB           `yaml:"postgres"`
-	Monitor        MonitorConfiguration `yaml:"monitor"`
 }
 
 // PostgresDB configuration parameters
 type PostgresDB struct {
 	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
 	Database string `yaml:"database"`
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
+	Port     int    `yaml:"port"`
 }
 
 // IsValid checks if the postgres configuration is valid
@@ -35,15 +35,15 @@ func (pg PostgresDB) IsValid() bool {
 
 // MonitorConfiguration parameters
 type MonitorConfiguration struct {
-	RapidAPIKey   string                    `yaml:"rapidAPIKey"`
 	Notifications NotificationConfiguration `yaml:"notifications"`
+	RapidAPIKey   string                    `yaml:"rapidAPIKey"`
 }
 
 // NotificationConfiguration allows to set a notification when a country gets new data
 type NotificationConfiguration struct {
-	Enabled   bool     `yaml:"enabled"`
-	URL       string   `yaml:"url"`
 	Countries []string `yaml:"countries"`
+	URL       string   `yaml:"url"`
+	Enabled   bool     `yaml:"enabled"`
 }
 
 // LoadConfiguration loads the configuration file from memory

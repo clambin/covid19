@@ -76,19 +76,19 @@ func sumByCountry(entries []models.CountryEntry) (sum []models.CountryEntry) {
 }
 
 type statsResponse struct {
-	Error      bool
-	StatusCode int
-	Message    string
-	Data       struct {
+	Data struct {
 		LastChecked  time.Time
 		Covid19Stats []struct {
-			Country    string
 			LastUpdate time.Time
+			Country    string
 			Confirmed  int64
 			Deaths     int64
 			Recovered  int64
 		}
 	}
+	Message    string
+	StatusCode int
+	Error      bool
 }
 
 func (client *Client) getStats(ctx context.Context) (statsResponse, error) {

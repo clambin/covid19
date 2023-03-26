@@ -9,8 +9,8 @@ import (
 )
 
 type Notifier struct {
-	Countries set.Set[string]
 	shoutrrr.Sender
+	Countries set.Set[string]
 }
 
 func (n Notifier) Notify(current map[string]models.CountryEntry, updates []models.CountryEntry) error {

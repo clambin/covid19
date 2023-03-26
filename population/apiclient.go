@@ -32,8 +32,8 @@ func NewAPIClient(apiKey string) *RapidAPIClient {
 }
 
 type populationResponse struct {
-	OK   bool                   `json:"ok"`
 	Body populationResponseBody `json:"body"`
+	OK   bool                   `json:"ok"`
 }
 
 type populationResponseBody struct {
@@ -65,10 +65,10 @@ func (client *RapidAPIClient) GetPopulation(ctx context.Context, country string)
 // GetCountries returns all country names that the RapidAPI API supports
 func (client *RapidAPIClient) GetCountries(ctx context.Context) ([]string, error) {
 	var stats struct {
-		OK   bool
 		Body struct {
 			Countries []string
 		}
+		OK bool
 	}
 
 	body, err := client.Call(ctx, "/allcountriesname")

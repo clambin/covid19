@@ -12,9 +12,6 @@ import (
 
 func TestLoadConfiguration(t *testing.T) {
 	const configString = `
-port: 9090
-prometheusPort: 9092
-debug: true
 postgres:
   host: localhost
   port: 31000
@@ -30,6 +27,9 @@ monitor:
     countries:
       - Belgium
       - US
+port: 9090
+prometheusPort: 9092
+debug: true
 `
 
 	err := os.Setenv("pg_password", "some-password")
@@ -42,23 +42,23 @@ monitor:
 
 	body, err := yaml.Marshal(&cfg)
 	require.NoError(t, err)
-	assert.Equal(t, `port: 9090
-prometheusPort: 9092
-debug: true
-postgres:
+	assert.Equal(t, `postgres:
     host: localhost
-    port: 31000
     database: test
     user: test19
     password: some-password
+    port: 31000
 monitor:
-    rapidAPIKey: some-key
     notifications:
-        enabled: true
-        url: https://example.com/123
         countries:
             - Belgium
             - US
+        url: https://example.com/123
+        enabled: true
+    rapidAPIKey: some-key
+port: 9090
+prometheusPort: 9092
+debug: true
 `, string(body))
 }
 
@@ -73,20 +73,20 @@ func TestLoadConfiguration_Defaults(t *testing.T) {
 
 	body, err := yaml.Marshal(&cfg)
 	require.NoError(t, err)
-	assert.Equal(t, `port: 8080
-prometheusPort: 9090
-debug: false
-postgres:
+	assert.Equal(t, `postgres:
     host: postgres
-    port: 5432
     database: covid19
     user: covid
     password: ""
+    port: 5432
 monitor:
-    rapidAPIKey: ""
     notifications:
-        enabled: false
-        url: ""
         countries: []
+        url: ""
+        enabled: false
+    rapidAPIKey: ""
+port: 8080
+prometheusPort: 9090
+debug: false
 `, string(body))
 }
