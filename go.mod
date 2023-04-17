@@ -10,7 +10,7 @@ require (
 	github.com/containrrr/shoutrrr v0.7.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/lib/pq v1.10.7
+	github.com/lib/pq v1.10.8
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
